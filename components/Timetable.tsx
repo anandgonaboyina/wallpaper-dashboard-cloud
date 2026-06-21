@@ -207,7 +207,7 @@ export default function Timetable() {
                   }
 
                   const isDayFocused = focusedCell?.day === day;
-                  const isActiveBlock = isToday && activeTimeIndex === index;
+                  const isActiveBlock = false;
 
                   let roundedClass = 'rounded-xl';
                   if (!isDayFocused) {
