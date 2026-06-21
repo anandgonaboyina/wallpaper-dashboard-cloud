@@ -137,6 +137,14 @@ export default function Dashboard() {
     setIsMobile(window.innerWidth <= 768);
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
+
+    // Try to lock orientation to landscape automatically
+    if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {
+        // Silently fail if browser doesn't allow locking without user interaction
+      });
+    }
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -151,6 +159,17 @@ export default function Dashboard() {
 
   return (
     <main className="relative overflow-hidden w-full flex-1">
+      {/* Portrait Lock Overlay */}
+      <div className="portrait-lock-overlay hidden fixed inset-0 z-[10000] bg-black flex-col items-center justify-center text-center p-8">
+        <div className="w-20 h-20 border-4 border-white/20 rounded-3xl flex items-center justify-center mb-6 animate-[spin_2s_ease-in-out_infinite]">
+          <div className="w-16 h-8 border-2 border-white rounded-xl" />
+        </div>
+        <h1 className="text-3xl font-black text-white tracking-widest uppercase mb-4">Rotate Device</h1>
+        <p className="text-white/60 text-lg max-w-md leading-relaxed">
+          The Productive Dashboard requires <b>Landscape Mode</b>. Please rotate your phone horizontally to continue.
+        </p>
+      </div>
+
       <VideoBackground />
       {(!isHidden || !hideConfig.deadlineAlerts) && showDeadlineAlerts && <DeadlineAlerts />}
       {!isPanicHidden && (

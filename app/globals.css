@@ -118,3 +118,10 @@ body {
     justify-content: center !important;
     padding: 20px !important;
   }
+
+  /* Force Landscape Overlay */
+  @media screen and (orientation: portrait) and (max-width: 1000px) {
+    .portrait-lock-overlay {
+      display: flex !important;
+    }
+  }
