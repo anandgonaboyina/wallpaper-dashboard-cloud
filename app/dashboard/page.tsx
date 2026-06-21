@@ -22,6 +22,7 @@ import DeadlineAlerts from "@/components/DeadlineAlerts";
 import StartupUpdateChecker from "@/components/StartupUpdateChecker";
 import FriendRequestPopup from "@/components/FriendRequestPopup";
 import GlobalBroadcastPopup from "@/components/GlobalBroadcastPopup";
+import VideoBackground from "@/components/VideoBackground";
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, CalendarDays, Settings } from "lucide-react";
 import { useDashboardStore, hasUnsavedChanges } from "@/store/dashboardStore";
@@ -140,6 +141,7 @@ export default function Dashboard() {
 
   return (
     <main className="relative overflow-hidden w-full flex-1">
+      <VideoBackground />
       {(!isHidden || !hideConfig.deadlineAlerts) && showDeadlineAlerts && <DeadlineAlerts />}
       {!isPanicHidden && (
         <>

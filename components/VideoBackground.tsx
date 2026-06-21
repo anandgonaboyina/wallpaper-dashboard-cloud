@@ -33,7 +33,10 @@ export default function VideoBackground() {
         .then(data => {
           if (data.backgrounds && data.backgrounds.length > 0) {
             // Filter out hidden wallpapers using the reactive store value
-            const visibleBackgrounds = data.backgrounds.filter((bg: any) => !hiddenWallpapers.includes(bg.filename));
+            const visibleBackgrounds = data.backgrounds.filter((bg: any) => 
+              !hiddenWallpapers.includes(bg.filename) && 
+              bg.filename !== 'kakashi_portrait.jpg'
+            );
             
             // If all are hidden, fallback to naruto.webp
             if (visibleBackgrounds.length === 0) {
