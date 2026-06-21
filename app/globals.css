@@ -99,13 +99,13 @@ body {
 /* Force landscape via CSS rotation on portrait devices */
 @media screen and (orientation: portrait) {
   body {
-    transform: rotate(-90deg) !important;
+    transform: rotate(-90deg) translateX(-100%) !important;
     transform-origin: left top !important;
     width: 100vh !important;
     height: 100vw !important;
     overflow-x: hidden !important;
     position: absolute !important;
-    top: 100% !important;
+    top: 0 !important;
     left: 0 !important;
   }
 }
