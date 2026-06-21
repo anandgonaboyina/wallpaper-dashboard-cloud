@@ -173,7 +173,7 @@ export default function Dashboard() {
 
           {/* Top Left: Background Switcher */}
           {(!isHidden || !hideConfig.bgSwitcher) && showBgSwitcher && (
-          <div className="absolute top-6 left-4 z-50 hidden md:block">
+          <div className="absolute top-6 left-4 z-50">
             <button
               onClick={cycleBackground}
               className="group flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-2xl"
