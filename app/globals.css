@@ -59,14 +59,17 @@ body {
 .arrow-scrollbar::-webkit-scrollbar {
   width: 12px;
 }
+
 .arrow-scrollbar::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
 }
+
 .arrow-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 8px;
 }
+
 .arrow-scrollbar::-webkit-scrollbar-button:single-button {
   background-color: transparent;
   display: block;
@@ -75,45 +78,44 @@ body {
   background-size: 12px;
   background-repeat: no-repeat;
 }
+
 .arrow-scrollbar::-webkit-scrollbar-button:single-button:vertical:decrement {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M18 15l-6-6-6 6'/></svg>");
   background-position: center bottom;
 }
+
 .arrow-scrollbar::-webkit-scrollbar-button:single-button:vertical:increment {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
   background-position: center top;
 }
+
 .arrow-scrollbar::-webkit-scrollbar-button:single-button:vertical:decrement:hover,
 .arrow-scrollbar::-webkit-scrollbar-button:single-button:vertical:increment:hover {
-  background-color: rgba(255,255,255,0.15);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 @keyframes shimmer-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(300%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
 }
+
 .animate-shimmer-sweep {
   animation: shimmer-sweep 3s infinite linear;
 }
 
 /* Force landscape via CSS rotation on portrait devices */
 @media screen and (orientation: portrait) {
-  :root {
-    /* Change this value to manually manipulate the horizontal size of the UI in mobile view. 
-       Default is 100svh to fill the screen, but you can set it to a fixed pixel size like 1200px */
-    --mobile-ui-width: 100svh;
-  }
-
-  html {
-    overflow: hidden !important;
-  }
-
   body {
     transform: rotate(-90deg) translateX(-100%) !important;
     transform-origin: left top !important;
-    width: var(--mobile-ui-width) !important;
+    width: 100vh !important;
     height: 100vw !important;
-    overflow: hidden !important;
+    overflow: auto !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
