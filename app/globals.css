@@ -101,7 +101,7 @@ body {
   body {
     transform: rotate(-90deg) translateX(-100%) !important;
     transform-origin: left top !important;
-    width: 100vh !important;
+    width: 100svh !important;
     height: 100vw !important;
     overflow: auto !important;
     position: absolute !important;
