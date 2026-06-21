@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   width: 600,
-  height: 100,
   initialScale: 0.5, // Force fully scaled down on load
   maximumScale: 5,   // Allow heavy zooming
   userScalable: true,
@@ -33,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased bg-black`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

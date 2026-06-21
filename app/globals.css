@@ -98,10 +98,20 @@ body {
 
 /* Force landscape via CSS rotation on portrait devices */
 @media screen and (orientation: portrait) {
+  :root {
+    /* Change this value to manually manipulate the horizontal size of the UI in mobile view. 
+       Default is 100svh to fill the screen, but you can set it to a fixed pixel size like 1200px */
+    --mobile-ui-width: 100svh;
+  }
+
+  html {
+    overflow: hidden !important;
+  }
+
   body {
     transform: rotate(-90deg) translateX(-100%) !important;
     transform-origin: left top !important;
-    width: 100svh !important;
+    width: var(--mobile-ui-width) !important;
     height: 100vw !important;
     overflow: hidden !important;
     position: absolute !important;
