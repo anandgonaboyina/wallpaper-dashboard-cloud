@@ -591,7 +591,11 @@ export const useDashboardStore = create<DashboardState>()(
       toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
       setSettingsActiveTab: (tab) => set({ settingsActiveTab: tab }),
       timerTrigger: null,
-      triggerTimer: (mins, taskId, taskTitle) => set({ timerTrigger: { mins, ts: Date.now(), taskId, taskTitle } }),
+      triggerTimer: (mins, taskId, taskTitle) => set((state) => ({ 
+        timerTrigger: { mins, ts: Date.now(), taskId, taskTitle },
+        showTimer: true,
+        hideConfig: { ...state.hideConfig, timer: false }
+      })),
 
       activeTaskId: null,
       activeTaskTitle: null,
