@@ -77,6 +77,8 @@ interface DashboardState {
   toggleStats: () => void;
   isTimerOpen: boolean;
   toggleTimer: () => void;
+  isCalendarOpen: boolean;
+  toggleCalendar: () => void;
   isClockOpen: boolean;
   toggleClock: () => void;
   isSettingsOpen: boolean;
@@ -175,6 +177,10 @@ interface DashboardState {
   weekdayTimes: string[];
   weekendTimes: string[];
   updateTimetableTime: (isWeekend: boolean, index: number, newTime: string) => void;
+  addTimetableRow: (isWeekend: boolean) => void;
+  deleteTimetableRow: (isWeekend: boolean, index: number) => void;
+  useTimetableRange: boolean;
+  toggleTimetableRange: () => void;
   isTimetableOpen: boolean;
   setIsTimetableOpen: (isOpen: boolean) => void;
 
@@ -572,6 +578,8 @@ export const useDashboardStore = create<DashboardState>()(
       toggleStats: () => set((state) => ({ isStatsOpen: !state.isStatsOpen })),
       isTimerOpen: false,
       toggleTimer: () => set((state) => ({ isTimerOpen: !state.isTimerOpen })),
+      isCalendarOpen: true,
+      toggleCalendar: () => set((state) => ({ isCalendarOpen: !state.isCalendarOpen })),
       isClockOpen: true,
       toggleClock: () => set((state) => ({ isClockOpen: !state.isClockOpen })),
       isSettingsOpen: false,
@@ -799,6 +807,47 @@ export const useDashboardStore = create<DashboardState>()(
           ? { weekendTimes: newTimes, timetableGrid: newGrid }
           : { weekdayTimes: newTimes, timetableGrid: newGrid };
       }),
+      addTimetableRow: (isWeekend) => set((state) => {
+        const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
+        const fallbackArray = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+        const timesList = targetArray || fallbackArray;
+        
+        let newTime = "06:00 PM";
+        if (timesList.length > 0) {
+          const lastTime = timesList[timesList.length - 1];
+          const match = lastTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+          if (match) {
+            let h = parseInt(match[1]);
+            const ampm = h === 11 ? (match[3].toUpperCase() === "AM" ? "PM" : "AM") : match[3].toUpperCase();
+            h = h === 12 ? 1 : h + 1;
+            newTime = `${h.toString().padStart(2, '0')}:${match[2]} ${ampm}`;
+          }
+        }
+        
+        const newTimes = [...timesList, newTime];
+        return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
+      }),
+      deleteTimetableRow: (isWeekend, index) => set((state) => {
+        const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
+        const timesList = targetArray || ["09:00 AM"];
+        const oldTime = timesList[index];
+        const newTimes = timesList.filter((_, i) => i !== index);
+        
+        const newGrid = { ...state.timetableGrid };
+        const targetDays = isWeekend ? ["Sat", "Sun"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        targetDays.forEach(day => {
+          if (newGrid[day] && newGrid[day][oldTime] !== undefined) {
+            newGrid[day] = { ...newGrid[day] };
+            delete newGrid[day][oldTime];
+          }
+        });
+        
+        return isWeekend 
+          ? { weekendTimes: newTimes, timetableGrid: newGrid }
+          : { weekdayTimes: newTimes, timetableGrid: newGrid };
+      }),
+      useTimetableRange: true,
+      toggleTimetableRange: () => set((state) => ({ useTimetableRange: !state.useTimetableRange })),
       isTimetableOpen: false,
       setIsTimetableOpen: (isOpen) => set({ isTimetableOpen: isOpen }),
 

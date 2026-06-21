@@ -1,4 +1,11 @@
 import { MongoClient } from 'mongodb';
+import dns from 'dns';
+
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (err) {
+  console.warn('Failed to set custom DNS servers:', err);
+}
 
 const uri = process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/productivedashboard';
 const options = {};

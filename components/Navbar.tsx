@@ -21,16 +21,31 @@ export default function Dock({ onOpenNotes }: DockProps) {
 
             {/* Notes */}
             <button
-                onClick={onOpenNotes}
+                onClick={() => {
+                    const isAndroid = /Android/i.test(navigator.userAgent);
+                    if (isAndroid) {
+                        window.location.href = 'intent://keep.google.com#Intent;scheme=https;package=com.google.android.keep;S.browser_fallback_url=https%3A%2F%2Fkeep.google.com;end';
+                    } else {
+                        window.open('https://keep.google.com', '_blank');
+                    }
+                }}
                 className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-[#FADB5F]/90 to-[#e3c02d] text-amber-900 shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
-                title="Quick Notes"
+                title="Google Keep"
             >
                 <StickyNote size={28} className="group-hover:scale-150 transition-transform duration-300" />
             </button>
 
             {/* Gemini */}
             <button
-                onClick={() => window.open('https://gemini.google.com', '_blank')}
+                onClick={() => {
+                    const isAndroid = /Android/i.test(navigator.userAgent);
+                    if (isAndroid) {
+                        // Targets the Gemini Android app directly, falls back to browser if uninstalled
+                        window.location.href = 'intent://gemini.google.com#Intent;scheme=https;package=com.google.android.apps.bard;S.browser_fallback_url=https%3A%2F%2Fgemini.google.com;end';
+                    } else {
+                        window.open('https://gemini.google.com', '_blank');
+                    }
+                }}
                 className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-black text-transparent shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
                 title="Google Gemini"
             >
@@ -49,7 +64,14 @@ export default function Dock({ onOpenNotes }: DockProps) {
 
             {/* WhatsApp */}
             <button
-                onClick={() => window.open('whatsapp://', '_blank')}
+                onClick={() => {
+                    const isAndroid = /Android/i.test(navigator.userAgent);
+                    if (isAndroid) {
+                        window.location.href = 'intent://#Intent;package=com.whatsapp;scheme=whatsapp;end';
+                    } else {
+                        window.open('whatsapp://', '_blank');
+                    }
+                }}
                 className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-[#25D366]/90 to-[#128c7e] text-white shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
                 title="WhatsApp"
             >
@@ -68,7 +90,7 @@ export default function Dock({ onOpenNotes }: DockProps) {
             {/* VS Code */}
             <button
                 onClick={() => window.open('vscode://', '_blank')}
-                className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0066b8] text-white shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
+                className="group relative hidden sm:flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0066b8] text-white shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
                 title="VS Code"
             >
                 <svg className="group-hover:scale-150 transition-transform duration-300 w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -79,7 +101,7 @@ export default function Dock({ onOpenNotes }: DockProps) {
             {/* Antigravity */}
             <button
                 onClick={() => window.open('antigravity://', '_blank')}
-                className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-gray-800 to-black text-white shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl border border-white/10"
+                className="group relative hidden sm:flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-gray-800 to-black text-white shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl border border-white/10"
                 title="Antigravity"
             >
                 <svg className="group-hover:scale-150 transition-transform duration-300 w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

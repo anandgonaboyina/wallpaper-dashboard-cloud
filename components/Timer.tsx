@@ -20,7 +20,8 @@ export default function Timer() {
     addMins,
     showQuotePopup, isHidden,
     activeTaskId, activeTaskTitle, setActiveTask, updateTaskDuration,
-    alarmSound, alarmVolume
+    alarmSound, alarmVolume,
+    isTimerOpen
   } = useDashboardStore();
 
   const [customMins, setCustomMins] = useState('');
@@ -251,6 +252,8 @@ export default function Timer() {
       setEditMins(m.toString().padStart(2, '0'));
     }
   };
+
+  if (!isTimerOpen) return null;
 
   return (
     <DraggableWidget id="timer">

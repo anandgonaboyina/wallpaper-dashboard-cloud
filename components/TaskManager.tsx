@@ -174,7 +174,7 @@ export default function TaskManager() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-2 shrink-0 mt-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => triggerTimer(task.duration, task.id, task.title)}
                                                 className="p-1.5 bg-blue-500/20 text-blue-300 hover:bg-blue-500 hover:text-white rounded-lg transition-colors"

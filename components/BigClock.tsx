@@ -15,6 +15,16 @@ export default function BigClock() {
   const toggle24HourClock = useDashboardStore((state) => state.toggle24HourClock);
   const showClock = useDashboardStore((state) => state.showClock);
   const showTodayWork = useDashboardStore((state) => state.showTodayWork);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport size
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)');
+    setIsMobile(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
 
   useEffect(() => {
     // Initial set
@@ -32,7 +42,7 @@ export default function BigClock() {
   if (!time) {
     return (
       <div className={`flex flex-col justify-center pointer-events-none opacity-0 items-center`}>
-        <div className="text-[12rem] font-bold leading-none tracking-tighter">00:00</div>
+        <div className="text-[5rem] md:text-[12rem] font-bold leading-none tracking-tighter">00:00</div>
       </div>
     );
   }
@@ -68,14 +78,14 @@ export default function BigClock() {
         <>
           <div
             onClick={toggle24HourClock}
-            className={`${isTimetableOpen ? 'text-[5rem]' : 'text-[12rem]'} tabular-nums font-bold leading-none tracking-tighter pointer-events-auto cursor-pointer transition-all duration-700 text-transparent bg-clip-text bg-gradient-to-b from-white/90 via-white/50 to-white/10 [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)] drop-shadow-[0_30px_40px_rgba(0,0,0,0.8)] drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:from-white hover:to-white/40`}
+            className={`${(isTimetableOpen && !isMobile) ? 'text-[3.5rem] md:text-[5rem]' : 'text-[5.5rem] md:text-[12rem]'} tabular-nums font-bold leading-none tracking-tighter pointer-events-auto cursor-pointer transition-all duration-700 text-transparent bg-clip-text bg-gradient-to-b from-white/90 via-white/50 to-white/10 [-webkit-text-stroke:1px_rgba(255,255,255,0.5)] md:[-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)] drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] md:drop-shadow-[0_30px_40px_rgba(0,0,0,0.8)] drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] md:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:from-white hover:to-white/40`}
             title="Toggle 12/24 Hour Format"
           >
             {hours}:{minutes}
           </div>
-          <div className={`${isTimetableOpen ? 'text-2xl' : 'text-5xl'} font-semibold tracking-widest uppercase mt-1 transition-all duration-700 flex items-baseline`}>
+          <div className={`${(isTimetableOpen && !isMobile) ? 'text-lg md:text-2xl' : 'text-2xl md:text-5xl'} font-semibold tracking-widest uppercase mt-1 md:mt-2 transition-all duration-700 flex items-baseline`}>
             <span className="tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white/90 to-white/30 [-webkit-text-stroke:1px_rgba(255,255,255,0.4)] drop-shadow-[0_15px_20px_rgba(0,0,0,0.7)]">{seconds}</span>
-            {!is24HourClock && <span className="text-white/40 ml-2 [-webkit-text-stroke:0px]">{ampm}</span>}
+            {!is24HourClock && <span className="text-white/40 ml-1.5 md:ml-2 [-webkit-text-stroke:0px]">{ampm}</span>}
           </div>
         </>
       )}
@@ -85,12 +95,14 @@ export default function BigClock() {
         <div
           onClick={toggleHide}
           title="Toggle Hidden Mode (Ctrl+H)"
-          className={`flex items-center gap-2 text-white/60 font-medium tracking-wide bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${isTimetableOpen ? 'text-sm mt-0 scale-75 origin-top' : 'text-lg mt-1'}`}
+          className={`flex items-center gap-2 md:gap-2 text-white/60 font-medium tracking-wide bg-black/40 backdrop-blur-md px-5 py-3 md:px-4 md:py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${(isTimetableOpen && !isMobile) ? 'text-base md:text-sm mt-2 md:mt-0 scale-90 md:scale-75 origin-top' : 'text-xl md:text-lg mt-4 md:mt-1'}`}
         >
-          <Flame size={20} className="text-orange-400" />
-          <span>Today: <span className="text-white/90 font-bold">{focusText}</span></span>
-          <span className="text-white/30 mx-1">|</span>
-          <span className="text-white/80">{timeLeftText}</span>
+          <Flame className="text-orange-400 w-6 h-6 md:w-5 md:h-5" />
+          <pre>
+            <span>Today: <span className="text-white/90 font-bold">{focusText}</span></span>
+            <span className="text-white/30 mx-1">|</span>
+            <span className="text-white/80">{timeLeftText}</span>
+          </pre>
         </div>
       )}
     </div>

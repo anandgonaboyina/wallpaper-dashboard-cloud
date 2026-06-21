@@ -78,60 +78,60 @@ export default function Countdown({ id }: { id: string }) {
   const hasTime = examCountdown.endDate && examCountdown.endDate.includes('T') && examCountdown.endDate.split('T')[1] !== '';
 
   return (
-    <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-3xl p-3 shadow-2xl w-80 pointer-events-auto select-none">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-white/80 cursor-grab active:cursor-grabbing">
-          <Clock size={18} className="text-blue-400" />
-          <span className="font-semibold tracking-wide uppercase text-sm">
+    <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl w-[calc(100vw-32px)] max-w-[320px] sm:w-80 pointer-events-auto select-none">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-white/80 cursor-grab active:cursor-grabbing">
+          <Clock size={16} className="text-blue-400 sm:w-[18px] sm:h-[18px]" />
+          <span className="font-semibold tracking-wide uppercase text-xs sm:text-sm truncate max-w-[160px] sm:max-w-[200px]">
             {isEditing ? "Edit Target" : examCountdown.title}
           </span>
         </div>
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`p-2 rounded-xl transition-all border ${isEditing ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:border-green-500/50' : 'bg-white/5 border-white/10 hover:bg-white/15 hover:border-white/20'}`}
+          className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all border ${isEditing ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:border-green-500/50' : 'bg-white/5 border-white/10 hover:bg-white/15 hover:border-white/20'}`}
           title={isEditing ? "Save Target" : "Edit Target"}
         >
-          {isEditing ? <Check size={20} className="text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]" /> : <Edit2 size={18} className="text-white/80" />}
+          {isEditing ? <Check size={18} className="text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.5)] sm:w-5 sm:h-5" /> : <Edit2 size={16} className="text-white/80 sm:w-[18px] sm:h-[18px]" />}
         </button>
       </div>
 
       {isEditing ? (
-        <div className="space-y-3">
+        <div className="space-y-2.5 sm:space-y-3">
           <input
             type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-white/30 text-sm"
+            className="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 py-2 text-white outline-none focus:border-white/30 text-sm"
             placeholder="Target Title"
           />
-          <div className="flex gap-2 relative items-stretch">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-2 relative items-stretch">
+            <div className="flex-1 min-h-[40px] sm:min-h-0">
               <CustomDatePicker value={editDateOnly} onChange={setEditDateOnly} />
             </div>
-            <div className="w-28 shrink-0">
+            <div className="w-full sm:w-28 shrink-0 min-h-[40px] sm:min-h-0">
               <CustomTimePicker value={editTimeOnly} onChange={setEditTimeOnly} />
             </div>
           </div>
         </div>
       ) : hasTime ? (
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-white/5 rounded-2xl py-3 border border-white/5">
-            <div className="text-3xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
-            <div className="text-[10px] text-white/50 uppercase tracking-widest mt-1">Days</div>
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center">
+          <div className="bg-white/5 rounded-xl sm:rounded-2xl py-2 sm:py-3 border border-white/5">
+            <div className="text-2xl sm:text-3xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
+            <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-0.5 sm:mt-1">Days</div>
           </div>
-          <div className="bg-white/5 rounded-2xl py-3 border border-white/5">
-            <div className="text-3xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
-            <div className="text-[10px] text-white/50 uppercase tracking-widest mt-1">Hrs</div>
+          <div className="bg-white/5 rounded-xl sm:rounded-2xl py-2 sm:py-3 border border-white/5">
+            <div className="text-2xl sm:text-3xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
+            <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-0.5 sm:mt-1">Hrs</div>
           </div>
-          <div className="bg-white/5 rounded-2xl py-3 border border-white/5">
-            <div className="text-3xl font-bold text-white">{String(timeLeft.mins).padStart(2, '0')}</div>
-            <div className="text-[10px] text-white/50 uppercase tracking-widest mt-1">Min</div>
+          <div className="bg-white/5 rounded-xl sm:rounded-2xl py-2 sm:py-3 border border-white/5">
+            <div className="text-2xl sm:text-3xl font-bold text-white">{String(timeLeft.mins).padStart(2, '0')}</div>
+            <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-0.5 sm:mt-1">Min</div>
           </div>
         </div>
       ) : (
-        <div className="bg-white/5 rounded-2xl py-4 border border-white/5 text-center flex flex-col items-center justify-center">
-          <div className="text-5xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
-          <div className="text-xs text-white/50 uppercase tracking-widest mt-2">Days Remaining</div>
+        <div className="bg-white/5 rounded-xl sm:rounded-2xl py-3 sm:py-4 border border-white/5 text-center flex flex-col items-center justify-center">
+          <div className="text-4xl sm:text-5xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
+          <div className="text-[10px] sm:text-xs text-white/50 uppercase tracking-widest mt-1.5 sm:mt-2">Days Remaining</div>
         </div>
       )}
     </div>
@@ -149,36 +149,36 @@ function CustomTimePicker({ value, onChange }: { value: string, onChange: (time:
 
   return (
     <>
-      <div 
+      <div
         onClick={() => setIsOpen(true)}
-        className="w-full h-full bg-black/40 border border-white/10 rounded-xl px-3 text-white cursor-pointer hover:border-blue-500 transition-colors text-sm text-center flex items-center justify-center min-h-[42px]"
+        className="w-full h-full bg-black/40 border border-white/10 rounded-lg sm:rounded-xl px-3 text-white cursor-pointer hover:border-blue-500 transition-colors text-sm text-center flex items-center justify-center min-h-[40px] sm:min-h-[42px]"
       >
         <span className={value ? "text-white" : "text-white/40"}>{value || "Time"}</span>
       </div>
 
       {isOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-auto">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-auto p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-          <div className="relative bg-gray-900 border border-white/20 rounded-3xl p-6 z-10 w-72 animate-in zoom-in-95 shadow-2xl">
-            <h3 className="text-white text-center font-medium mb-4 tracking-wide">Target Time <span className="text-white/30 text-xs font-normal">(Optional)</span></h3>
-            
-            <input 
-              type="time" 
-              value={tempTime} 
-              onChange={e => setTempTime(e.target.value)} 
-              className="w-full bg-black/40 text-white rounded-xl px-4 py-4 border border-white/10 outline-none focus:border-blue-500 mb-6 [color-scheme:dark] text-2xl text-center shadow-inner" 
+          <div className="relative bg-gray-900 border border-white/20 rounded-2xl sm:rounded-3xl p-5 sm:p-6 z-10 w-full max-w-[280px] sm:w-72 animate-in zoom-in-95 shadow-2xl">
+            <h3 className="text-white text-center font-medium mb-3 sm:mb-4 tracking-wide text-sm sm:text-base">Target Time <span className="text-white/30 text-[10px] sm:text-xs font-normal">(Optional)</span></h3>
+
+            <input
+              type="time"
+              value={tempTime}
+              onChange={e => setTempTime(e.target.value)}
+              className="w-full bg-black/40 text-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-3 sm:py-4 border border-white/10 outline-none focus:border-blue-500 mb-5 sm:mb-6 [color-scheme:dark] text-xl sm:text-2xl text-center shadow-inner"
             />
-            
-            <div className="flex gap-3">
-              <button 
-                onClick={() => { onChange(''); setIsOpen(false); }} 
-                className="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-sm font-medium transition-colors"
+
+            <div className="flex gap-2 sm:gap-3">
+              <button
+                onClick={() => { onChange(''); setIsOpen(false); }}
+                className="flex-1 py-2.5 sm:py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-colors"
               >
                 Clear
               </button>
-              <button 
-                onClick={() => { onChange(tempTime); setIsOpen(false); }} 
-                className="flex-[2] py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-blue-500/20"
+              <button
+                onClick={() => { onChange(tempTime); setIsOpen(false); }}
+                className="flex-[2] py-2.5 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-colors shadow-lg shadow-blue-500/20"
               >
                 Save
               </button>

@@ -9,6 +9,16 @@ export default function DraggableClock({ children }: { children: React.ReactNode
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport size
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)');
+    setIsMobile(media.matches);
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
 
   // Sync with store when background changes
   useEffect(() => {
@@ -20,7 +30,7 @@ export default function DraggableClock({ children }: { children: React.ReactNode
   }, [currentBgSrc, clockOffsets]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (lockedWidgets.includes('clock')) return;
+    if (lockedWidgets.includes('clock') || isMobile) return;
 
     // Only allow dragging on the wrapper itself, not on interactive children (buttons, toggles)
     if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('.cursor-pointer')) {
@@ -59,6 +69,7 @@ export default function DraggableClock({ children }: { children: React.ReactNode
   };
 
   const handleDoubleClick = () => {
+    if (isMobile) return;
     if (currentBgSrc) {
       resetClockOffset(currentBgSrc);
       setPosition({ x: 0, y: 0 });
@@ -67,9 +78,9 @@ export default function DraggableClock({ children }: { children: React.ReactNode
 
   return (
     <div 
-      className={`relative inline-block w-fit h-fit p-8 pointer-events-auto outline-none focus:outline-none transition-transform ${!isDragging ? 'duration-300' : 'duration-0'} ${lockedWidgets.includes('clock') ? '' : 'cursor-move'} group`}
+      className={`relative inline-block w-fit h-fit p-8 pointer-events-auto outline-none focus:outline-none transition-transform ${!isDragging ? 'duration-300' : 'duration-0'} ${(lockedWidgets.includes('clock') || isMobile) ? '' : 'cursor-move'} group`}
       style={{ 
-        transform: isTimetableOpen ? 'none' : `translate(${position.x}px, ${position.y}px)`,
+        transform: (isTimetableOpen || isMobile) ? 'none' : `translate(${position.x}px, ${position.y}px)`,
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none'
@@ -79,9 +90,9 @@ export default function DraggableClock({ children }: { children: React.ReactNode
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onDoubleClick={handleDoubleClick}
-      title={lockedWidgets.includes('clock') ? '' : "Drag to move. Double-click to reset position."}
+      title={(lockedWidgets.includes('clock') || isMobile) ? '' : "Drag to move. Double-click to reset position."}
     >
-      {!lockedWidgets.includes('clock') && (
+      {!lockedWidgets.includes('clock') && !isMobile && (
         <div className={`absolute inset-0 border-2 border-white/20 bg-white/5 rounded-3xl opacity-0 transition-opacity pointer-events-none ${isDragging ? 'opacity-100' : 'group-hover:opacity-100'}`}></div>
       )}
       <div className="relative pointer-events-auto">

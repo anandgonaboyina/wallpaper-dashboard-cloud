@@ -1,7 +1,7 @@
 'use client';
 
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock } from 'lucide-react';
+import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock, Timer as TimerIcon, Calendar } from 'lucide-react';
 import DraggableWidget from './DraggableWidget';
 
 export default function RightToolbar() {
@@ -16,15 +16,24 @@ export default function RightToolbar() {
   const isStatsOpen = useDashboardStore((state) => state.isStatsOpen);
   const toggleStats = useDashboardStore((state) => state.toggleStats);
   
+  const isStopwatchOpen = useDashboardStore((state) => state.isStopwatchOpen);
+  const toggleStopwatch = useDashboardStore((state) => state.toggleStopwatch);
+  const showStopwatch = useDashboardStore((state) => state.showStopwatch);
+
+  const isTimerOpen = useDashboardStore((state) => state.isTimerOpen);
+  const toggleTimer = useDashboardStore((state) => state.toggleTimer);
+  const showTimer = useDashboardStore((state) => state.showTimer);
+
+  const isCalendarOpen = useDashboardStore((state) => state.isCalendarOpen);
+  const toggleCalendar = useDashboardStore((state) => state.toggleCalendar);
+  const showCalendar = useDashboardStore((state) => state.showCalendar);
+  
   const isNotesOpen = useDashboardStore((state) => state.isNotesOpen);
   const toggleNotes = useDashboardStore((state) => state.toggleNotes);
   
   const toggleSettings = useDashboardStore((state) => state.toggleSettings);
   const showSettingsBtn = useDashboardStore((state) => state.showSettingsBtn);
   const hideConfig = useDashboardStore((state) => state.hideConfig);
-  const isStopwatchOpen = useDashboardStore((state) => state.isStopwatchOpen);
-  const toggleStopwatch = useDashboardStore((state) => state.toggleStopwatch);
-  const showStopwatch = useDashboardStore((state) => state.showStopwatch);
   const showPlans = useDashboardStore((state) => state.showPlans);
   const showTasks = useDashboardStore((state) => state.showTasks);
   const showStats = useDashboardStore((state) => state.showStats);
@@ -32,15 +41,26 @@ export default function RightToolbar() {
 
   return (
     <DraggableWidget id="toolbar">
-      <div className="flex flex-col gap-3 pointer-events-auto">
+      <div className="flex flex-col gap-2 md:gap-3 pointer-events-auto">
         {/* Plans Toggle Button */}
         {(!isHidden || !hideConfig.plans) && showPlans && (
           <button
             onClick={togglePlans}
-            className={`p-3 rounded-2xl border border-white/20 shadow-xl transition-all ${isPlansOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isPlansOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
             title="Roadmap & Plans"
           >
-            <Map size={24} />
+            <Map size={20} className="sm:w-6 sm:h-6" />
+          </button>
+        )}
+
+        {/* Calendar Toggle Button */}
+        {(!isHidden || !hideConfig.calendar) && showCalendar && (
+          <button
+            onClick={toggleCalendar}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isCalendarOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            title="Calendar"
+          >
+            <Calendar size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -48,10 +68,10 @@ export default function RightToolbar() {
         {(!isHidden || !hideConfig.tasks) && showTasks && (
           <button
             onClick={toggleTaskManager}
-            className={`p-3 rounded-2xl border border-white/20 shadow-xl transition-all ${isTaskManagerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTaskManagerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
             title="Toggle Tasks"
           >
-            <ListTodo size={24} />
+            <ListTodo size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -59,10 +79,10 @@ export default function RightToolbar() {
         {(!isHidden || !hideConfig.stats) && showStats && (
           <button
             onClick={toggleStats}
-            className={`p-3 rounded-2xl border border-white/20 shadow-xl transition-all ${isStatsOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStatsOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
             title="Focus History"
           >
-            <BarChart2 size={24} />
+            <BarChart2 size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -70,10 +90,21 @@ export default function RightToolbar() {
         {(!isHidden || !hideConfig.stopwatch) && showStopwatch && (
           <button
             onClick={toggleStopwatch}
-            className={`p-3 rounded-2xl border border-white/20 shadow-xl transition-all ${isStopwatchOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStopwatchOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
             title="Stopwatch"
           >
-            <Clock size={24} />
+            <Clock size={20} className="sm:w-6 sm:h-6" />
+          </button>
+        )}
+
+        {/* Timer Toggle Button */}
+        {(!isHidden || !hideConfig.timer) && showTimer && (
+          <button
+            onClick={toggleTimer}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTimerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            title="Session Timer"
+          >
+            <TimerIcon size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -81,10 +112,10 @@ export default function RightToolbar() {
         {(!isHidden || !hideConfig.notes) && showNotes && (
           <button
             onClick={toggleNotes}
-            className={`p-3 rounded-2xl border border-white/20 shadow-xl transition-all ${isNotesOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isNotesOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
             title="Quick Notes"
           >
-            <StickyNote size={24} />
+            <StickyNote size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -92,10 +123,10 @@ export default function RightToolbar() {
         {(!isHidden || !hideConfig.settingsBtn) && showSettingsBtn && (
           <button
             onClick={toggleSettings}
-            className="p-3 rounded-2xl border border-white/20 shadow-xl transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl"
+            className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl"
             title="Settings"
           >
-            <Settings size={24} />
+            <Settings size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
       </div>
