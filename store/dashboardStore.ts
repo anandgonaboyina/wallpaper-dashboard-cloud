@@ -105,6 +105,10 @@ interface DashboardState {
   isAlarmPlaying: boolean;
   alarmSound: string;
   alarmVolume: number;
+  enableAlarmSound: boolean;
+  enableAlarmVibration: boolean;
+  setEnableAlarmSound: (enabled: boolean) => void;
+  setEnableAlarmVibration: (enabled: boolean) => void;
   setTimerEndAt: (time: number | null) => void;
   setTimerPausedLeft: (time: number | null) => void;
   setTimerInitialMins: (mins: number | null) => void;
@@ -620,6 +624,10 @@ export const useDashboardStore = create<DashboardState>()(
       alarmDurationSecs: 60,
       setAlarmDurationSecs: (secs) => set({ alarmDurationSecs: secs }),
       setAlarmVolume: (vol) => set({ alarmVolume: vol }),
+      enableAlarmSound: true,
+      enableAlarmVibration: true,
+      setEnableAlarmSound: (enabled) => set({ enableAlarmSound: enabled }),
+      setEnableAlarmVibration: (enabled) => set({ enableAlarmVibration: enabled }),
 
       currentQuote: null,
       isQuotePopupOpen: false,

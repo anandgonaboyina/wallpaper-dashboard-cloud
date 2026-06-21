@@ -21,6 +21,7 @@ export default function Timer() {
     showQuotePopup, isHidden,
     activeTaskId, activeTaskTitle, setActiveTask, updateTaskDuration,
     alarmSound, alarmVolume,
+    enableAlarmSound, enableAlarmVibration,
     isTimerOpen
   } = useDashboardStore();
 
@@ -158,6 +159,29 @@ export default function Timer() {
       }
     }
   }, [timerTrigger]);
+
+  // Handle vibration pattern when alarm is playing
+  useEffect(() => {
+    let vibeInterval: NodeJS.Timeout;
+    if (isAlarmPlaying && enableAlarmVibration) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([500, 500, 500, 500, 500]);
+        vibeInterval = setInterval(() => {
+          navigator.vibrate([500, 500, 500, 500, 500]);
+        }, 2500);
+      }
+    } else {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(0);
+      }
+    }
+    return () => {
+      if (vibeInterval) clearInterval(vibeInterval);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(0);
+      }
+    };
+  }, [isAlarmPlaying, enableAlarmVibration]);
 
   const playAlarm = () => {
     setIsAlarmPlaying(true);
@@ -383,7 +407,7 @@ export default function Timer() {
         )}
 
         {/* Hidden Audio Element */}
-        {isAlarmPlaying && <audio src={alarmSound} loop autoPlay />}
+        {isAlarmPlaying && enableAlarmSound && <audio src={alarmSound} loop autoPlay />}
       </div>
     </div>
     </DraggableWidget>

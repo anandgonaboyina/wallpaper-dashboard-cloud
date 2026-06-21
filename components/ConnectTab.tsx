@@ -3,7 +3,13 @@ import { useDashboardStore } from '@/store/dashboardStore';
 import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Check, X, ShieldAlert, BarChart2, Map, Clock } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
-export default function ConnectTab() {
+interface ConnectTabProps {
+  friendStats: {username: string, stats: any} | null;
+  setFriendStats: (stats: {username: string, stats: any} | null) => void;
+}
+
+export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabProps) {
+  const { history, tasks, timetableGrid } = useDashboardStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'friends' | 'requests' | 'broadcasts'>('profile');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -25,7 +31,6 @@ export default function ConnectTab() {
   const [friends, setFriends] = useState<{id: string, user: {id: string, username: string, lastActive?: string}}[]>([]);
   const [pendingRequests, setPendingRequests] = useState<{id: string, user: {id: string, username: string, lastActive?: string}}[]>([]);
   const [sentRequests, setSentRequests] = useState<{id: string, user: {id: string, username: string, lastActive?: string}}[]>([]);
-  const [friendStats, setFriendStats] = useState<{username: string, stats: any} | null>(null);
 
   // Broadcasts state
   const [broadcasts, setBroadcasts] = useState<{id: string, title: string, content: string, type: string, createdAt: string}[]>([]);
@@ -347,6 +352,21 @@ export default function ConnectTab() {
     }
   };
 
+  const viewMyStats = () => {
+    const state = useDashboardStore.getState();
+    setFriendStats({
+      username: `${username} (Me)`,
+      stats: {
+        history: state.history || {},
+        tasks: state.tasks || [],
+        deadlines: state.deadlines || [],
+        timetableGrid: state.timetableGrid || {},
+        createdAt: localStorage.getItem('dashboard_created_at') || new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      }
+    });
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto p-6">
@@ -520,7 +540,15 @@ export default function ConnectTab() {
         {activeTab === 'friends' && (
           <div className="flex flex-col gap-6">
             <div>
-              <h4 className="text-lg font-semibold mb-4 border-b border-white/10 pb-2">My Friends ({friends.length})</h4>
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                <h4 className="text-lg font-semibold">My Friends ({friends.length})</h4>
+                <button
+                  onClick={viewMyStats}
+                  className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 rounded-lg text-xs font-bold transition-colors border border-blue-500/20 flex items-center justify-center gap-1.5 animate-pulse"
+                >
+                  <BarChart2 size={14} /> Compare/View My Stats
+                </button>
+              </div>
               {friends.length === 0 ? (
                 <p className="text-white/40 italic">You haven't added any friends yet.</p>
               ) : (
@@ -722,156 +750,6 @@ export default function ConnectTab() {
           </div>
         )}
       </div>
-
-      {/* Friend Stats Modal Overlay */}
-      {friendStats && (() => {
-        const calculateHistory = (days: number) => {
-          if (!friendStats?.stats?.history) return 0;
-          let total = 0;
-          const today = new Date();
-          for (let i = 0; i < days; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            total += friendStats.stats.history[dateStr] || 0;
-          }
-          return total;
-        };
-        
-        const formatMins = (totalMins: number) => {
-          if (totalMins < 60) return `${totalMins}m`;
-          const hrs = Math.floor(totalMins / 60);
-          const mins = totalMins % 60;
-          return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
-        };
-        
-        const todayMins = formatMins(calculateHistory(1));
-        const sevenDaysMins = formatMins(calculateHistory(7));
-        const monthMins = formatMins(calculateHistory(30));
-        
-        const allTasks = friendStats.stats?.tasks || [];
-        const allDeadlines = friendStats.stats?.deadlines || [];
-        const timetableGrid = friendStats.stats?.timetableGrid || {};
-        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-        const hasTimetable = weekDays.some(day => Object.values(timetableGrid[day] || {}).some(subj => subj));
-
-        return (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-xl p-4 sm:p-6 animate-in fade-in duration-300 pointer-events-auto">
-          <div className="bg-[#111111]/80 backdrop-blur-md border border-white/10 w-full max-w-4xl h-[85vh] max-h-[850px] rounded-3xl overflow-hidden shadow-2xl relative flex flex-col animate-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
-              <div>
-                <h4 className="font-bold text-2xl flex items-center gap-3">
-                  <BarChart2 className="text-blue-400" size={28} /> {friendStats.username}
-                </h4>
-                <div className="flex items-center gap-3 mt-2 text-xs font-medium">
-                  {friendStats.stats?.createdAt && (
-                    <span className="bg-white/10 text-white/70 px-2.5 py-1 rounded-md">
-                      Joined {new Date(friendStats.stats.createdAt).toLocaleDateString()}
-                    </span>
-                  )}
-                  {friendStats.stats?.lastLogin && (
-                    <span className="bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                      Last Active: {new Date(friendStats.stats.lastLogin).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button onClick={() => setFriendStats(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/50 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-            <div className="relative flex-1 overflow-hidden flex flex-col">
-              <ScrollableWithArrows className="p-6 flex flex-col gap-8">
-              
-              {/* Top Stats */}
-              <div>
-                <h5 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3">Work History</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-blue-900/40 to-blue-900/10 border border-blue-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg shadow-blue-500/5 relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
-                    <span className="text-4xl font-black text-blue-400 mb-2 drop-shadow-md relative z-10">{todayMins}</span>
-                    <span className="text-xs font-bold text-blue-400/50 uppercase tracking-widest relative z-10">Today</span>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-900/40 to-purple-900/10 border border-purple-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg shadow-purple-500/5 relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
-                    <span className="text-4xl font-black text-purple-400 mb-2 drop-shadow-md relative z-10">{sevenDaysMins}</span>
-                    <span className="text-xs font-bold text-purple-400/50 uppercase tracking-widest relative z-10">7 Days</span>
-                  </div>
-                  <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg shadow-emerald-500/5 relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
-                    <span className="text-4xl font-black text-emerald-400 mb-2 drop-shadow-md relative z-10">{monthMins}</span>
-                    <span className="text-xs font-bold text-emerald-400/50 uppercase tracking-widest relative z-10">30 Days</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Task Manager */}
-                <div>
-                  <h5 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    Tasks <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded-full text-[10px]">{allTasks.length}</span>
-                  </h5>
-                  <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
-                    {allTasks.length === 0 ? (
-                      <p className="text-white/40 text-xs italic text-center py-4">No tasks found.</p>
-                    ) : (
-                      allTasks.map((t: any) => (
-                        <div key={t.id} className="flex flex-col gap-2 text-sm text-white/80 bg-white/5 p-3 rounded-lg border border-white/5 break-words whitespace-pre-wrap leading-relaxed">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className={t.completed ? 'line-through text-white/40' : ''}>{t.title || t.text}</span>
-                            {t.completed && (
-                              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded uppercase font-bold shrink-0">Done</span>
-                            )}
-                          </div>
-                          {(t.duration > 0 || t.timeSpent > 0) && (
-                            <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium">
-                              <span className="bg-white/10 px-1.5 py-0.5 rounded">
-                                Time: {formatMins(t.timeSpent || 0)} / {formatMins(t.duration || 0)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Timetable Overview */}
-                <div>
-                  <h5 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3">Timetable (Weekdays)</h5>
-                  <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
-                    {!hasTimetable ? (
-                      <p className="text-white/40 text-xs italic text-center py-4">No timetable set.</p>
-                    ) : (
-                      weekDays.map(day => {
-                        const dayData = timetableGrid[day] || {};
-                        const activeTimes = Object.entries(dayData).filter(([_, subj]) => subj);
-                        if (activeTimes.length === 0) return null;
-                        return (
-                          <div key={day} className="flex flex-col gap-1 text-xs border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                            <span className="text-blue-400 font-bold">{day}</span>
-                            <div className="flex flex-wrap gap-1">
-                              {activeTimes.map(([time, subject]) => (
-                                <span key={time} className="bg-white/10 px-1.5 py-0.5 rounded text-white/80">
-                                  <span className="text-white/40 mr-1">{time}</span>{subject as string}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <p className="text-center text-white/40 text-[10px] italic mt-auto pt-4 border-t border-white/10 shrink-0">Only public focus statistics are shared between friends.</p>
-              </ScrollableWithArrows>
-            </div>
-          </div>
-        </div>
-        );
-      })()}
     </div>
   );
 }

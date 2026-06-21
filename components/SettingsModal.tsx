@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { X, Upload, Trash2, Image as ImageIcon, Settings as SettingsIcon, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug } from 'lucide-react';
 import ConnectTab from './ConnectTab';
+import ScrollableWithArrows from './ScrollableWithArrows';
 
 const DEFAULT_WALLPAPERS = [
   'itachi-uchiha.png', 'kakashi.mp4', 'kakashi2.mp4', 'kakashi3.png',
@@ -12,7 +13,7 @@ const DEFAULT_WALLPAPERS = [
 ];
 
 export default function SettingsModal() {
-  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch } = useDashboardStore();
+  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid } = useDashboardStore();
 
   const handleShortcutCapture = (e: React.KeyboardEvent<HTMLInputElement>, setter: (val: string) => void) => {
     e.preventDefault();
@@ -40,7 +41,7 @@ export default function SettingsModal() {
 
   const [deleteDays, setDeleteDays] = useState<number>(60);
   const upiId = 'gonaboyinaanandkumar@ybl';
-  const [donationAmount, setDonationAmount] = useState<number | null>(50);
+  const [donationAmount, setDonationAmount] = useState<number | null>(100);
 
   const [feedbackType, setFeedbackType] = useState('feature');
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -88,12 +89,10 @@ export default function SettingsModal() {
   };
 
   const [wallpapers, setWallpapers] = useState<{ type: string, src: string, filename: string }[]>([]);
+  const [friendStats, setFriendStats] = useState<{username: string, stats: any} | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [alarms, setAlarms] = useState<string[]>([]);
-  const [isUploadingAlarm, setIsUploadingAlarm] = useState(false);
-  const alarmInputRef = useRef<HTMLInputElement>(null);
 
   const settingsScrollRef = useRef<HTMLDivElement>(null);
   const sidebarScrollRef = useRef<HTMLDivElement>(null);
@@ -195,75 +194,6 @@ export default function SettingsModal() {
 
 
 
-  const fetchAlarms = async () => {
-    try {
-      const res = await fetch('/api/alarms');
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setAlarms(data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch alarms', err);
-    }
-  };
-
-  const handleAlarmUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingAlarm(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/alarms', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAlarmSound(`/custom-alarms/${data.filename}`);
-        await fetchAlarms();
-      } else {
-        alert(data.error || 'Upload failed');
-      }
-    } catch (err) {
-      alert('Upload failed');
-    } finally {
-      setIsUploadingAlarm(false);
-      if (alarmInputRef.current) alarmInputRef.current.value = '';
-    }
-  };
-
-  const handleDeleteAlarm = async (filename: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
-
-    try {
-      const res = await fetch('/api/alarms', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename })
-      });
-      if (res.ok) {
-        if (alarmSound === `/custom-alarms/${filename}`) {
-          setAlarmSound('/ringtones/alarm.mp3');
-        }
-        await fetchAlarms();
-      }
-    } catch (err) {
-      alert('Failed to delete alarm');
-    }
-  };
-
-  useEffect(() => {
-    if (isSettingsOpen) {
-      fetchAlarms();
-    }
-  }, [isSettingsOpen]);
-
-
 
   const handleExportData = () => {
     try {
@@ -350,13 +280,13 @@ export default function SettingsModal() {
   if (!isSettingsOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pb-20 sm:p-6 sm:pb-24 pointer-events-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pointer-events-auto">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={toggleSettings}
       />
 
-      <div className="relative w-full max-w-4xl h-[85vh] max-h-[850px] flex flex-col bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden text-white animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-4xl h-[70vh] flex flex-col bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden text-white animate-in zoom-in-95 duration-200">
 
         <style dangerouslySetInnerHTML={{
           __html: `
@@ -425,7 +355,7 @@ export default function SettingsModal() {
 
             <button
               onClick={() => setSettingsActiveTab('focus')}
-              className={`flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all font-medium ${settingsActiveTab === 'focus' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'text-white/60 hover:bg-white/5 hover:text-white border border-transparent'}`}
+              className={`hidden md:flex shrink-0 whitespace-nowrap items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all font-medium ${settingsActiveTab === 'focus' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'text-white/60 hover:bg-white/5 hover:text-white border border-transparent'}`}
             >
               <EyeOff size={20} />
               Focus / Panic Mode
@@ -524,7 +454,7 @@ export default function SettingsModal() {
 
 
 
-              {settingsActiveTab === 'connect' && <ConnectTab />}
+              {settingsActiveTab === 'connect' && <ConnectTab friendStats={friendStats} setFriendStats={setFriendStats} />}
 
 
 
@@ -938,28 +868,38 @@ export default function SettingsModal() {
                       </div>
                     </div>
 
+                    {/* Enable Sound Toggle */}
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-white/80">Enable Alarm Sound</span>
+                        <p className="text-xs text-white/40">Play alarm sound when the timer finishes</p>
+                      </div>
+                      <button 
+                        onClick={() => setEnableAlarmSound(!enableAlarmSound)} 
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enableAlarmSound ? 'bg-blue-500' : 'bg-white/20'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enableAlarmSound ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+
+                    {/* Enable Vibration Toggle (Mobile Only) */}
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 md:hidden">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-white/80">Enable Device Vibration</span>
+                        <p className="text-xs text-white/40">Vibrate your device when the timer finishes</p>
+                      </div>
+                      <button 
+                        onClick={() => setEnableAlarmVibration(!enableAlarmVibration)} 
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enableAlarmVibration ? 'bg-blue-500' : 'bg-white/20'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enableAlarmVibration ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+
                     {/* Alarm Selection */}
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-semibold text-white/80">Select Alarm Sound</label>
-
-                        <div>
-                          <input
-                            type="file"
-                            accept="audio/*"
-                            className="hidden"
-                            ref={alarmInputRef}
-                            onChange={handleAlarmUpload}
-                          />
-                          <button
-                            onClick={() => alarmInputRef.current?.click()}
-                            disabled={isUploadingAlarm}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600/80 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
-                          >
-                            {isUploadingAlarm ? <RefreshCw size={14} className="animate-spin" /> : <UploadCloud size={14} />}
-                            Upload Custom Alarm
-                          </button>
-                        </div>
                       </div>
 
                       <div className="grid gap-2">
@@ -975,33 +915,6 @@ export default function SettingsModal() {
                             <span className="text-sm font-medium">Default Alarm</span>
                           </div>
                         </div>
-
-                        {/* Custom Alarms */}
-                        {alarms.map((alarm) => {
-                          const fullPath = `/custom-alarms/${alarm}`;
-                          const isActive = alarmSound === fullPath;
-                          return (
-                            <div
-                              key={alarm}
-                              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isActive ? 'bg-blue-500/20 border-blue-500/50' : 'bg-black/20 border-white/10 hover:border-white/30'}`}
-                              onClick={() => setAlarmSound(fullPath)}
-                            >
-                              <div className="flex items-center gap-3 overflow-hidden">
-                                <div className={`w-4 h-4 shrink-0 rounded-full border-2 flex items-center justify-center ${isActive ? 'border-blue-400' : 'border-white/30'}`}>
-                                  {isActive && <div className="w-2 h-2 rounded-full bg-blue-400" />}
-                                </div>
-                                <span className="text-sm font-medium truncate">{alarm}</span>
-                              </div>
-                              <button
-                                onClick={(e) => handleDeleteAlarm(alarm, e)}
-                                className="p-1.5 shrink-0 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition-colors"
-                                title="Delete Alarm"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          );
-                        })}
                       </div>
                     </div>
                   </div>
@@ -1623,6 +1536,168 @@ export default function SettingsModal() {
           </div>
         </div>
       </div>
+
+      {friendStats && (() => {
+        const calculateHistory = (days: number) => {
+          if (!friendStats?.stats?.history) return 0;
+          let total = 0;
+          const today = new Date();
+          for (let i = 0; i < days; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            total += friendStats.stats.history[dateStr] || 0;
+          }
+          return total;
+        };
+        
+        const formatMins = (totalMins: number) => {
+          if (totalMins < 60) return `${totalMins}m`;
+          const hrs = Math.floor(totalMins / 60);
+          const mins = totalMins % 60;
+          return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+        };
+        
+        const raw1 = calculateHistory(1);
+        const raw7 = calculateHistory(7);
+        const raw30 = calculateHistory(30);
+        
+        const todayMins = formatMins(raw1);
+        const sevenDaysMins = formatMins(raw7);
+        const monthMins = formatMins(raw30);
+        
+        const sevenDaysAvg = formatMins(Math.round(raw7 / 7));
+        const monthAvg = formatMins(Math.round(raw30 / 30));
+        
+        const allTasks = friendStats.stats?.tasks || [];
+        const allDeadlines = friendStats.stats?.deadlines || [];
+        const timetableGridData = friendStats.stats?.timetableGrid || {};
+        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        const hasTimetable = weekDays.some(day => Object.values(timetableGridData[day] || {}).some(subj => subj));
+
+        return (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-xl p-4 sm:p-6 animate-in fade-in duration-300 pointer-events-auto">
+            <div 
+              className="absolute inset-0 bg-transparent" 
+              onClick={() => setFriendStats(null)}
+            />
+            <div className="bg-[#111111]/80 backdrop-blur-md border border-white/10 w-full max-w-4xl h-[80vh] rounded-3xl overflow-hidden shadow-2xl relative flex flex-col animate-in zoom-in-95 duration-300">
+              <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
+                <div>
+                  <h4 className="font-bold text-2xl flex items-center gap-3 text-white">
+                    <BarChart2 className="text-blue-400" size={28} /> {friendStats.username}
+                  </h4>
+                  <div className="flex items-center gap-3 mt-2 text-xs font-medium">
+                    {friendStats.stats?.createdAt && (
+                      <span className="bg-white/10 text-white/70 px-2.5 py-1 rounded-md">
+                        Joined {new Date(friendStats.stats.createdAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    {friendStats.stats?.lastLogin && (
+                      <span className="bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-500/20">
+                        Last Active: {new Date(friendStats.stats.lastLogin).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setFriendStats(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/50 hover:text-white">
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="relative flex-1 overflow-hidden flex flex-col">
+                <ScrollableWithArrows className="p-6 flex flex-col gap-8">
+                
+                {/* Work History */}
+                <div>
+                  <h5 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3">Work History</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-gradient-to-br from-blue-900/40 to-blue-900/10 border border-blue-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg shadow-blue-500/5 relative overflow-hidden">
+                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+                      <span className="text-4xl font-black text-blue-400 mb-2 drop-shadow-md relative z-10">{todayMins}</span>
+                      <span className="text-xs font-bold text-blue-400/50 uppercase tracking-widest relative z-10">Today</span>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-900/40 to-purple-900/10 border border-purple-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg shadow-purple-500/5 relative overflow-hidden">
+                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+                      <span className="text-4xl font-black text-purple-400 mb-1 drop-shadow-md relative z-10">{sevenDaysMins}</span>
+                      <span className="text-xs text-white/50 mb-2 relative z-10">Avg: {sevenDaysAvg}/day</span>
+                      <span className="text-[10px] font-bold text-purple-400/50 uppercase tracking-widest relative z-10">7 Days</span>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg shadow-emerald-500/5 relative overflow-hidden">
+                      <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                      <span className="text-4xl font-black text-emerald-400 mb-1 drop-shadow-md relative z-10">{monthMins}</span>
+                      <span className="text-xs text-white/50 mb-2 relative z-10">Avg: {monthAvg}/day</span>
+                      <span className="text-[10px] font-bold text-emerald-400/50 uppercase tracking-widest relative z-10">30 Days</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Tasks */}
+                  <div>
+                    <h5 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      Tasks <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded-full text-[10px]">{allTasks.length}</span>
+                    </h5>
+                    <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
+                      {allTasks.length === 0 ? (
+                        <p className="text-white/40 text-xs italic text-center py-4">No tasks found.</p>
+                      ) : (
+                        allTasks.map((t: any) => (
+                          <div key={t.id} className="flex flex-col gap-2 text-sm text-white/80 bg-white/5 p-3 rounded-lg border border-white/5 break-words whitespace-pre-wrap leading-relaxed">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className={t.completed ? 'line-through text-white/40' : ''}>{t.title || t.text}</span>
+                              {t.completed && (
+                                <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded uppercase font-bold shrink-0">Done</span>
+                              )}
+                            </div>
+                            {(t.duration > 0 || t.timeSpent > 0) && (
+                              <div className="flex items-center gap-2 text-[10px] text-white/40 font-medium">
+                                <span className="bg-white/10 px-1.5 py-0.5 rounded">
+                                  Time: {formatMins(t.timeSpent || 0)} / {formatMins(t.duration || 0)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Timetable Overview */}
+                  <div>
+                    <h5 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-3">Timetable (Weekdays)</h5>
+                    <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
+                      {!hasTimetable ? (
+                        <p className="text-white/40 text-xs italic text-center py-4">No timetable set.</p>
+                      ) : (
+                        weekDays.map(day => {
+                          const dayData = timetableGridData[day] || {};
+                          const activeTimes = Object.entries(dayData).filter(([_, subj]) => subj);
+                          if (activeTimes.length === 0) return null;
+                          return (
+                            <div key={day} className="flex flex-col gap-1 text-xs border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                              <span className="text-blue-400 font-bold">{day}</span>
+                              <div className="flex flex-wrap gap-1">
+                                {activeTimes.map(([time, subject]) => (
+                                  <span key={time} className="bg-white/10 px-1.5 py-0.5 rounded text-white/80">
+                                    <span className="text-white/40 mr-1">{time}</span>{subject as string}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-center text-white/40 text-[10px] italic mt-auto pt-4 border-t border-white/10 shrink-0">Only public focus statistics are shared between friends.</p>
+                </ScrollableWithArrows>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

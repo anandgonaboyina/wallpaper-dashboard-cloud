@@ -120,10 +120,10 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 pb-16 sm:pb-24 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto">
       <div className="absolute inset-0" onClick={toggleNotes} />
 
-      <div className="relative w-full max-w-6xl h-[90vh] sm:h-[85vh] max-h-[850px] flex flex-col md:flex-row rounded-2xl md:rounded-3xl bg-black/60 backdrop-blur-2xl border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      <div className="relative w-full max-w-6xl h-[70vh] flex flex-col md:flex-row rounded-2xl md:rounded-3xl bg-black/60 backdrop-blur-2xl border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
 
         {/* Top/Left Sidebar: Notes List */}
         <div className="w-full md:w-1/4 md:max-w-[300px] h-1/4 md:h-auto min-h-[120px] bg-white/5 border-b md:border-b-0 md:border-r border-white/10 flex flex-col shrink-0">

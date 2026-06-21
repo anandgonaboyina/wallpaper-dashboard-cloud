@@ -50,10 +50,10 @@ function PlansEditor() {
   const selectedPlan = plans.find(p => p.id === selectedPlanId);
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 pb-16 sm:pb-24 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto">
       <div className="absolute inset-0" onClick={togglePlans} />
 
-      <div className="relative w-full max-w-5xl h-[90vh] sm:h-[85vh] max-h-[850px] flex flex-col rounded-2xl sm:rounded-3xl bg-black/60 backdrop-blur-2xl border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      <div className="relative w-full max-w-5xl h-[70vh] flex flex-col rounded-2xl sm:rounded-3xl bg-black/60 backdrop-blur-2xl border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
 
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-white/10 flex justify-between items-center bg-white/5 shrink-0">
