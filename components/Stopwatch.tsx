@@ -24,16 +24,7 @@ export default function Stopwatch() {
     return () => clearInterval(interval);
   }, [isRunning, startTime]);
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    setIsMobile(window.innerWidth <= 768);
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  if (!isMobile && !isStopwatchOpen) return null;
+  if (!isStopwatchOpen) return null;
 
   const handleStart = (e?: React.MouseEvent) => {
     e?.stopPropagation();

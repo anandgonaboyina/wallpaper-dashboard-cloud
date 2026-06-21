@@ -25,18 +25,6 @@ export default function Timer() {
 
   const [customMins, setCustomMins] = useState('');
 
-  const [isMobile, setIsMobile] = useState(false);
-  const isTimerOpen = useDashboardStore((state) => state.isTimerOpen);
-
-  useEffect(() => {
-    setIsMobile(window.innerWidth <= 768);
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  if (!isMobile && !isTimerOpen) return null;
-
   // Local state for UI updates (does not spam DB)
   const [localTimeLeft, setLocalTimeLeft] = useState(0);
 

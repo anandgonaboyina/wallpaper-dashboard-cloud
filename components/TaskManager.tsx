@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { Plus, Play, Trash2, CheckCircle, Circle, Clock } from 'lucide-react';
 import { fetchQuote } from '@/utils/quoteEngine';
@@ -15,16 +15,7 @@ export default function TaskManager() {
 
     const { tasks, addTask, toggleTask, deleteTask, triggerTimer, isTaskManagerOpen, showQuotePopup, editTaskDuration, updateTaskTitle } = useDashboardStore();
 
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        setIsMobile(window.innerWidth <= 768);
-        const handleResize = () => setIsMobile(window.innerWidth <= 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    if (!isMobile && !isTaskManagerOpen) return null;
+    if (!isTaskManagerOpen) return null;
 
     const handleToggleTask = async (id: string) => {
         const task = tasks.find(t => t.id === id);
