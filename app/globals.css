@@ -96,32 +96,16 @@ body {
   animation: shimmer-sweep 3s infinite linear;
 }
 
-  /* Timetable Modal popup (Always Full Screen Modal) */
-  #timetable-modal {
-    position: fixed !important;
-    top: 0 !important;
+/* Force landscape via CSS rotation on portrait mobile devices */
+@media screen and (orientation: portrait) and (max-width: 1000px) {
+  body {
+    transform: rotate(-90deg) !important;
+    transform-origin: left top !important;
+    width: 100vh !important;
+    height: 100vw !important;
+    overflow-x: hidden !important;
+    position: absolute !important;
+    top: 100% !important;
     left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: none !important;
-    max-height: none !important;
-    transform: none !important;
-    z-index: 9999 !important;
-    margin: 0 !important;
-    overflow: auto !important;
-    bottom: auto !important;
-    background: rgba(0,0,0,0.85) !important;
-    border-radius: 0 !important;
-    backdrop-filter: blur(15px) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 20px !important;
   }
-
-  /* Force Landscape Overlay */
-  @media screen and (orientation: portrait) and (max-width: 1000px) {
-    .portrait-lock-overlay {
-      display: flex !important;
-    }
-  }
+}

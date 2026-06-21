@@ -19,10 +19,9 @@ import DraggableWidget from "@/components/DraggableWidget";
 import SettingsModal from "@/components/SettingsModal";
 import RightToolbar from "@/components/RightToolbar";
 import DeadlineAlerts from "@/components/DeadlineAlerts";
-
+import StartupUpdateChecker from "@/components/StartupUpdateChecker";
 import FriendRequestPopup from "@/components/FriendRequestPopup";
 import GlobalBroadcastPopup from "@/components/GlobalBroadcastPopup";
-import VideoBackground from "@/components/VideoBackground";
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, CalendarDays, Settings } from "lucide-react";
 import { useDashboardStore, hasUnsavedChanges } from "@/store/dashboardStore";
@@ -38,9 +37,6 @@ export default function Dashboard() {
   const [isCountdownsExpanded, setIsCountdownsExpanded] = useState(false);
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
   const setIsTimetableOpen = useDashboardStore((state) => state.setIsTimetableOpen);
-  
-  const isClockOpen = useDashboardStore((state) => state.isClockOpen);
-  const isTimerOpen = useDashboardStore((state) => state.isTimerOpen);
 
   const showHealth = useDashboardStore((state) => state.showHealth);
   const showQuote = useDashboardStore((state) => state.showQuote);
@@ -125,27 +121,12 @@ export default function Dashboard() {
 
 
 
-  const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     // Cloud Dashboard Auth Check
     const token = localStorage.getItem('dashboard_sync_token');
     if (!token || token === 'null') {
       window.location.href = '/';
     }
-
-    setIsMobile(window.innerWidth <= 768);
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-
-    // Try to lock orientation to landscape automatically
-    if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(() => {
-        // Silently fail if browser doesn't allow locking without user interaction
-      });
-    }
-
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   if (!_hasHydrated) {
@@ -159,18 +140,6 @@ export default function Dashboard() {
 
   return (
     <main className="relative overflow-hidden w-full flex-1">
-      {/* Portrait Lock Overlay */}
-      <div className="portrait-lock-overlay hidden fixed inset-0 z-[10000] bg-black flex-col items-center justify-center text-center p-8">
-        <div className="w-20 h-20 border-4 border-white/20 rounded-3xl flex items-center justify-center mb-6 animate-[spin_2s_ease-in-out_infinite]">
-          <div className="w-16 h-8 border-2 border-white rounded-xl" />
-        </div>
-        <h1 className="text-3xl font-black text-white tracking-widest uppercase mb-4">Rotate Device</h1>
-        <p className="text-white/60 text-lg max-w-md leading-relaxed">
-          The Productive Dashboard requires <b>Landscape Mode</b>. Please rotate your phone horizontally to continue.
-        </p>
-      </div>
-
-      <VideoBackground />
       {(!isHidden || !hideConfig.deadlineAlerts) && showDeadlineAlerts && <DeadlineAlerts />}
       {!isPanicHidden && (
         <>
@@ -234,13 +203,13 @@ export default function Dashboard() {
 
           {/* Top Right: Mini Calendar */}
           {(!isHidden || !hideConfig.calendar) && showCalendar && (
-            <div id="widget-calendar" className="absolute top-4 right-4 z-50">
+            <div className="absolute top-4 right-4 z-50">
               <MiniCalendar />
             </div>
           )}
 
           {/* BigClock */}
-          {(!isHidden || !hideConfig.clock) && showClock && isClockOpen && (
+          {(!isHidden || !hideConfig.clock) && showClock && (
           <div className={`absolute z-[999] pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
             isTimetableOpen 
               ? 'top-1/2 left-20 -translate-y-1/2 translate-x-0' 
@@ -255,16 +224,26 @@ export default function Dashboard() {
           )}
 
           {/* Bottom Center (Above Dock): Timetable */}
-          {(!isHidden || !hideConfig.timetable) && showTimetable && isTimetableOpen && (
-          <div id="timetable-modal" className="absolute bottom-40 left-1/2 -translate-x-1/2 z-[50] flex flex-col items-center">
+          {(!isHidden || !hideConfig.timetable) && showTimetable && (
+          <div className="absolute bottom-40 left-1/2 -translate-x-1/2 z-[50] flex flex-col items-center">
             {/* The Expanded Timetable */}
-            <div className={`flex flex-col items-center gap-2 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] opacity-100 translate-y-0 scale-100 pointer-events-auto`}>
+            <div className={`flex flex-col items-center gap-2 absolute bottom-0 origin-bottom transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isTimetableOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-12 scale-90 pointer-events-none'}`}>
               <Timetable />
               <button
                 onClick={() => setIsTimetableOpen(false)}
                 className="bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-2 py-2 text-white/60 hover:text-white hover:bg-black/60 transition-colors flex items-center gap-2 shadow-xl"
               >
                 <ChevronDown size={16} />
+              </button>
+            </div>
+
+            {/* The Closed Button */}
+            <div className={`absolute bottom-0 origin-bottom transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${!isTimetableOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto delay-300' : 'opacity-0 translate-y-8 scale-50 pointer-events-none'}`}>
+              <button
+                onClick={() => setIsTimetableOpen(true)}
+                className="bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-2 py-2 text-white/80 hover:text-white hover:bg-black/40 transition-colors flex items-center gap-2 shadow-xl hover:scale-105"
+              >
+                <CalendarDays size={18} className="text-purple-400" />
               </button>
             </div>
           </div>
@@ -291,7 +270,7 @@ export default function Dashboard() {
               {(!isHidden || !hideConfig.tasks) && showTasks && <TaskManager />}
               <div className="flex flex-row items-start gap-3 pointer-events-none">
                 {(!isHidden || !hideConfig.stopwatch) && showStopwatch && <Stopwatch />}
-                {(!isHidden || !hideConfig.timer) && showTimer && isTimerOpen && <Timer />}
+                {(!isHidden || !hideConfig.timer) && showTimer && <Timer />}
               </div>
             </div>
             
@@ -306,6 +285,8 @@ export default function Dashboard() {
       {/* Settings Modal */}
       <SettingsModal />
 
+      {/* Auto Update Checker (Runs silently on boot) */}
+      <StartupUpdateChecker />
 
       {/* Global Friend Request Notification */}
       <FriendRequestPopup />

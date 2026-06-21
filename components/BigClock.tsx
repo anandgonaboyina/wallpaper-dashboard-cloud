@@ -65,7 +65,7 @@ export default function BigClock() {
   return (
     <div className={`flex flex-col w-fit h-fit justify-center pointer-events-none transition-all duration-700 items-center select-none`}>
       {showClock && (
-        <div id="mobile-big-clock" className="flex flex-col items-center justify-center transition-all duration-700">
+        <>
           <div
             onClick={toggle24HourClock}
             className={`${isTimetableOpen ? 'text-[5rem]' : 'text-[12rem]'} tabular-nums font-bold leading-none tracking-tighter pointer-events-auto cursor-pointer transition-all duration-700 text-transparent bg-clip-text bg-gradient-to-b from-white/90 via-white/50 to-white/10 [-webkit-text-stroke:1.5px_rgba(255,255,255,0.5)] drop-shadow-[0_30px_40px_rgba(0,0,0,0.8)] drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:from-white hover:to-white/40`}
@@ -77,13 +77,12 @@ export default function BigClock() {
             <span className="tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white/90 to-white/30 [-webkit-text-stroke:1px_rgba(255,255,255,0.4)] drop-shadow-[0_15px_20px_rgba(0,0,0,0.7)]">{seconds}</span>
             {!is24HourClock && <span className="text-white/40 ml-2 [-webkit-text-stroke:0px]">{ampm}</span>}
           </div>
-        </div>
+        </>
       )}
 
       {/* Today's Focus History */}
       {showTodayWork && (
         <div
-          id="mobile-today-work"
           onClick={toggleHide}
           title="Toggle Hidden Mode (Ctrl+H)"
           className={`flex items-center gap-2 text-white/60 font-medium tracking-wide bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${isTimetableOpen ? 'text-sm mt-0 scale-75 origin-top' : 'text-lg mt-1'}`}
