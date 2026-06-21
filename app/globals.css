@@ -96,8 +96,8 @@ body {
   animation: shimmer-sweep 3s infinite linear;
 }
 
-/* Force landscape via CSS rotation on portrait mobile devices */
-@media screen and (orientation: portrait) and (max-width: 1000px) {
+/* Force landscape via CSS rotation on portrait devices */
+@media screen and (orientation: portrait) {
   body {
     transform: rotate(-90deg) !important;
     transform-origin: left top !important;

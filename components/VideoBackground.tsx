@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDashboardStore } from "@/store/dashboardStore";
 
 export default function VideoBackground() {
@@ -11,7 +11,6 @@ export default function VideoBackground() {
   const [backgrounds, setBackgrounds] = useState<{ type: string, src: string, filename?: string }[]>([
     { type: 'image', src: '/wallpapers/naruto.webp', filename: 'naruto.webp' } // Fallback initial state
   ]);
-  const [isMobileSize, setIsMobileSize] = useState(false);
   const isVideoMuted = useDashboardStore((state) => state.isVideoMuted);
   const setIsVideoMuted = useDashboardStore((state) => state.setIsVideoMuted);
   const isVideoPlaying = useDashboardStore((state) => state.isVideoPlaying);
@@ -34,11 +33,7 @@ export default function VideoBackground() {
         .then(data => {
           if (data.backgrounds && data.backgrounds.length > 0) {
             // Filter out hidden wallpapers using the reactive store value
-            // Also explicitly exclude kakashi_portrait.jpg from desktop rotation!
-            const visibleBackgrounds = data.backgrounds.filter((bg: any) => 
-              !hiddenWallpapers.includes(bg.filename) && 
-              bg.filename !== 'kakashi_portrait.jpg'
-            );
+            const visibleBackgrounds = data.backgrounds.filter((bg: any) => !hiddenWallpapers.includes(bg.filename));
             
             // If all are hidden, fallback to naruto.webp
             if (visibleBackgrounds.length === 0) {
@@ -57,13 +52,6 @@ export default function VideoBackground() {
     window.addEventListener('wallpapers-updated', fetchWallpapers);
     return () => window.removeEventListener('wallpapers-updated', fetchWallpapers);
   }, [hiddenWallpapers]);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobileSize(window.innerWidth <= 768);
-    handleResize(); // Check initially
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Slideshow Logic
   useEffect(() => {
@@ -92,11 +80,6 @@ export default function VideoBackground() {
     if (fallbackImage) {
       currentBg = fallbackImage;
     }
-  }
-
-  // Force mobile wallpaper
-  if (isMobileSize) {
-    currentBg = { type: 'image', src: '/wallpapers/kakashi_portrait.jpg', filename: 'kakashi_portrait.jpg' };
   }
 
   useEffect(() => {
