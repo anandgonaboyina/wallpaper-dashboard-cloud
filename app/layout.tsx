@@ -18,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  width: 600,
-  initialScale: 0.5, // Force fully scaled down on load
-  maximumScale: 5,   // Allow heavy zooming
-  userScalable: true,
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

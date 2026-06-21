@@ -138,7 +138,17 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="relative overflow-hidden w-full flex-1">
+    <div className="fixed inset-0 w-[100vw] h-[100vh] flex items-center justify-center overflow-hidden bg-black">
+      <div 
+        id="ui-scale-wrapper"
+        className="relative origin-center" 
+        style={{ 
+          width: '1280px', 
+          height: '720px', 
+          transform: 'scale(min(calc(100vw / 1280), calc(100vh / 720)))' 
+        }}
+      >
+        <main className="relative overflow-hidden w-full h-full">
       <VideoBackground />
       {(!isHidden || !hideConfig.deadlineAlerts) && showDeadlineAlerts && <DeadlineAlerts />}
       {!isPanicHidden && (
@@ -277,6 +287,8 @@ export default function Dashboard() {
       {/* Global Developer Broadcast Notification */}
       <GlobalBroadcastPopup />
 
-    </main>
+        </main>
+      </div>
+    </div>
   );
 }

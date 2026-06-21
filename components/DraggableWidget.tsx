@@ -46,8 +46,12 @@ export default function DraggableWidget({ id, children }: { id: string, children
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
     
-    const dx = e.clientX - startPos.current.x;
-    const dy = e.clientY - startPos.current.y;
+    // Calculate the scale of the UI wrapper to ensure smooth dragging even when scaled
+    const wrapper = document.getElementById('ui-scale-wrapper');
+    const scale = wrapper ? wrapper.getBoundingClientRect().width / 1280 : 1;
+    
+    const dx = (e.clientX - startPos.current.x) / scale;
+    const dy = (e.clientY - startPos.current.y) / scale;
     
     setPosition({
       x: startOffset.current.x + dx,
