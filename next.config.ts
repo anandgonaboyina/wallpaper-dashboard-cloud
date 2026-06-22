@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: false, // Explicitly enable service worker caching even in dev
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  // Disabling automatic register so our custom client component handles it
+  register: false,
+});
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['172.21.114.230'],
   async headers() {
     return [
       {
@@ -16,4 +28,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
