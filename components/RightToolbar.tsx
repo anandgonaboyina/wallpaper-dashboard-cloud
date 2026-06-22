@@ -1,21 +1,22 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock, Timer as TimerIcon, Calendar } from 'lucide-react';
+import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock, Timer as TimerIcon, Calendar, EyeOff } from 'lucide-react';
 import DraggableWidget from './DraggableWidget';
 
 export default function RightToolbar() {
   const isHidden = useDashboardStore((state) => state.isHidden);
-  
+
   const isPlansOpen = useDashboardStore((state) => state.isPlansOpen);
   const togglePlans = useDashboardStore((state) => state.togglePlans);
-  
+
   const isTaskManagerOpen = useDashboardStore((state) => state.isTaskManagerOpen);
   const toggleTaskManager = useDashboardStore((state) => state.toggleTaskManager);
-  
+
   const isStatsOpen = useDashboardStore((state) => state.isStatsOpen);
   const toggleStats = useDashboardStore((state) => state.toggleStats);
-  
+
   const isStopwatchOpen = useDashboardStore((state) => state.isStopwatchOpen);
   const toggleStopwatch = useDashboardStore((state) => state.toggleStopwatch);
   const showStopwatch = useDashboardStore((state) => state.showStopwatch);
@@ -27,26 +28,64 @@ export default function RightToolbar() {
   const isCalendarOpen = useDashboardStore((state) => state.isCalendarOpen);
   const toggleCalendar = useDashboardStore((state) => state.toggleCalendar);
   const showCalendar = useDashboardStore((state) => state.showCalendar);
-  
+
   const isNotesOpen = useDashboardStore((state) => state.isNotesOpen);
   const toggleNotes = useDashboardStore((state) => state.toggleNotes);
-  
+
   const toggleSettings = useDashboardStore((state) => state.toggleSettings);
   const showSettingsBtn = useDashboardStore((state) => state.showSettingsBtn);
-  const hideConfig = useDashboardStore((state) => state.hideConfig);
+  const baseHideConfig = useDashboardStore((state) => state.hideConfig);
+  const mobileHideConfig = useDashboardStore((state) => state.mobileHideConfig);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const hideConfig = isMobile ? mobileHideConfig : baseHideConfig;
+
   const showPlans = useDashboardStore((state) => state.showPlans);
   const showTasks = useDashboardStore((state) => state.showTasks);
   const showStats = useDashboardStore((state) => state.showStats);
   const showNotes = useDashboardStore((state) => state.showNotes);
+  const enablePanicButton = useDashboardStore((state) => state.enablePanicButton);
+  const panicButtonMode = useDashboardStore((state) => state.panicButtonMode);
+  const togglePanicHide = useDashboardStore((state) => state.togglePanicHide);
+  const toggleHide = useDashboardStore((state) => state.toggleHide);
+
+  const handlePanic = () => {
+    if (panicButtonMode === 'hide') {
+      toggleHide();
+    } else {
+      // Use deep links to open apps instantly without network loading
+      const urls = [
+        'tg://resolve?domain=telegram',
+        'flipkart://'
+      ];
+      window.location.href = urls[Math.floor(Math.random() * urls.length)];
+    }
+  };
 
   return (
     <DraggableWidget id="toolbar">
       <div className="flex flex-col gap-2 md:gap-3 pointer-events-auto">
+        {/* Panic Button - Mobile Only */}
+        <button
+          onClick={handlePanic}
+          className={`md:hidden p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-red-500/30 bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 shadow-xl shadow-red-500/10 transition-all backdrop-blur-xl ${isHidden ? 'opacity-0' : 'opacity-100'}`}
+          title={panicButtonMode === 'redirect' ? "Panic! Launch App" : "Panic! Hide Interface"}
+        >
+          <EyeOff size={20} className="sm:w-6 sm:h-6" />
+        </button>
+
         {/* Plans Toggle Button */}
-        {(!isHidden || !hideConfig.plans) && showPlans && (
+        {showPlans && (
           <button
             onClick={togglePlans}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isPlansOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isPlansOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.plans ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Roadmap & Plans"
           >
             <Map size={20} className="sm:w-6 sm:h-6" />
@@ -54,10 +93,10 @@ export default function RightToolbar() {
         )}
 
         {/* Calendar Toggle Button */}
-        {(!isHidden || !hideConfig.calendar) && showCalendar && (
+        {showCalendar && (
           <button
             onClick={toggleCalendar}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isCalendarOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isCalendarOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.calendar ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Calendar"
           >
             <Calendar size={20} className="sm:w-6 sm:h-6" />
@@ -65,10 +104,10 @@ export default function RightToolbar() {
         )}
 
         {/* Task Manager Toggle Button */}
-        {(!isHidden || !hideConfig.tasks) && showTasks && (
+        {showTasks && (
           <button
             onClick={toggleTaskManager}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTaskManagerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTaskManagerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.tasks ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Toggle Tasks"
           >
             <ListTodo size={20} className="sm:w-6 sm:h-6" />
@@ -76,10 +115,10 @@ export default function RightToolbar() {
         )}
 
         {/* Stats Toggle Button */}
-        {(!isHidden || !hideConfig.stats) && showStats && (
+        {showStats && (
           <button
             onClick={toggleStats}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStatsOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStatsOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.stats ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Focus History"
           >
             <BarChart2 size={20} className="sm:w-6 sm:h-6" />
@@ -87,10 +126,10 @@ export default function RightToolbar() {
         )}
 
         {/* Stopwatch Toggle Button */}
-        {(!isHidden || !hideConfig.stopwatch) && showStopwatch && (
+        {showStopwatch && (
           <button
             onClick={toggleStopwatch}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStopwatchOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStopwatchOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.stopwatch ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Stopwatch"
           >
             <Clock size={20} className="sm:w-6 sm:h-6" />
@@ -98,10 +137,10 @@ export default function RightToolbar() {
         )}
 
         {/* Timer Toggle Button */}
-        {(!isHidden || !hideConfig.timer) && showTimer && (
+        {showTimer && (
           <button
             onClick={toggleTimer}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTimerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTimerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.timer ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Session Timer"
           >
             <TimerIcon size={20} className="sm:w-6 sm:h-6" />
@@ -109,10 +148,10 @@ export default function RightToolbar() {
         )}
 
         {/* Notes Toggle Button */}
-        {(!isHidden || !hideConfig.notes) && showNotes && (
+        {showNotes && (
           <button
             onClick={toggleNotes}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isNotesOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isNotesOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.notes ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Quick Notes"
           >
             <StickyNote size={20} className="sm:w-6 sm:h-6" />
@@ -120,10 +159,10 @@ export default function RightToolbar() {
         )}
 
         {/* Settings Toggle Button */}
-        {(!isHidden || !hideConfig.settingsBtn) && showSettingsBtn && (
+        {showSettingsBtn && (
           <button
             onClick={toggleSettings}
-            className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl"
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl ${isHidden && hideConfig.settingsBtn ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Settings"
           >
             <Settings size={20} className="sm:w-6 sm:h-6" />

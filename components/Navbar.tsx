@@ -65,9 +65,9 @@ export default function Dock({ onOpenNotes }: DockProps) {
             {/* WhatsApp */}
             <button
                 onClick={() => {
-                    const isAndroid = /Android/i.test(navigator.userAgent);
-                    if (isAndroid) {
-                        window.location.href = 'intent://#Intent;package=com.whatsapp;scheme=whatsapp;end';
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        window.location.href = 'whatsapp://send';
                     } else {
                         window.open('whatsapp://', '_blank');
                     }
