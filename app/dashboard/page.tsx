@@ -83,6 +83,7 @@ export default function Dashboard() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.altKey && e.key.toLowerCase() === 'f4') return; // NEVER block Alt+F4
 
       let fKey = focusShortcutKey;
       if (!fKey.includes('+') && fKey.length === 1) fKey = 'ctrl+' + fKey;

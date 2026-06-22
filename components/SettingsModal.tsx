@@ -19,7 +19,7 @@ export default function SettingsModal() {
 
   // ----- DESKTOP SITE OVERRIDE LOGIC -----
   useEffect(() => {
-    if (!isSettingsOpen) return;
+    if (!isSettingsOpen || window.innerWidth > 768) return;
 
     const viewportMeta = document.querySelector('meta[name="viewport"]');
     let originalContent = '';
@@ -43,6 +43,7 @@ export default function SettingsModal() {
     e.preventDefault();
     const key = e.key.toLowerCase();
     if (key === 'control' || key === 'shift' || key === 'alt' || key === 'meta') return;
+    if (e.altKey && key === 'f4') return; // NEVER capture Alt+F4
     if (key === 'escape') {
       e.currentTarget.blur();
       return;
