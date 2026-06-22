@@ -30,9 +30,11 @@ export async function GET(request: Request) {
       try {
         if (storage.data && typeof storage.data === 'string') {
           const parsed = JSON.parse(storage.data);
-          notes = parsed.notes || [];
-        } else if (storage.data && storage.data.notes) {
-          notes = storage.data.notes;
+          notes = parsed.state?.notes || parsed.notes || [];
+        } else if (storage.notes) {
+          notes = storage.notes;
+        } else if (storage.data) {
+          notes = storage.data.state?.notes || storage.data.notes || [];
         }
       } catch (e) {
         console.error('Error parsing notes:', e);

@@ -62,21 +62,30 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { alias } = body;
+    const { alias, profilePicture } = body;
 
     if (alias !== undefined && typeof alias !== 'string') {
       return NextResponse.json({ error: 'Invalid alias format' }, { status: 400 });
+    }
+    if (profilePicture !== undefined && typeof profilePicture !== 'string') {
+      return NextResponse.json({ error: 'Invalid profile picture format' }, { status: 400 });
     }
 
     const client = await clientPromise;
     const db = client.db();
 
-    await db.collection('User').updateOne(
-      { _id: new ObjectId(decoded.userId) },
-      { $set: { alias: alias ? alias.trim() : "" } }
-    );
+    const updateFields: any = {};
+    if (alias !== undefined) updateFields.alias = alias ? alias.trim() : "";
+    if (profilePicture !== undefined) updateFields.profilePicture = profilePicture.trim();
 
-    return NextResponse.json({ success: true, alias });
+    if (Object.keys(updateFields).length > 0) {
+      await db.collection('User').updateOne(
+        { _id: new ObjectId(decoded.userId) },
+        { $set: updateFields }
+      );
+    }
+
+    return NextResponse.json({ success: true, ...updateFields });
   } catch (error) {
     console.error('Failed to update user profile:', error);
     return NextResponse.json({ error: 'Failed to update user profile' }, { status: 500 });

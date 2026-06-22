@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDashboardStore, setAuthTransition } from '@/store/dashboardStore';
-import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw } from 'lucide-react';
+import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 interface ConnectTabProps {
@@ -51,11 +51,14 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
   const [aliasPassword, setAliasPassword] = useState('');
   const [aliasUnlockLoading, setAliasUnlockLoading] = useState(false);
   const [aliasUnlockError, setAliasUnlockError] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
+  const [profilePictureLoading, setProfilePictureLoading] = useState(false);
   
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [leaderboardFilter, setLeaderboardFilter] = useState<'today' | 'week' | 'month'>('today');
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState('');
+  const [expandedLeaderboardUserId, setExpandedLeaderboardUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('dashboard_sync_token');
@@ -101,9 +104,28 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
       if (res.ok && data.users) {
         const storedUsername = localStorage.getItem('dashboard_username');
         const me = data.users.find((u: any) => u.username === storedUsername);
-        if (me && me.alias) setAlias(me.alias);
+        if (me) {
+          if (me.alias) setAlias(me.alias);
+          if (me.profilePicture) setProfilePicture(me.profilePicture);
+        }
       }
     } catch (err) {}
+  };
+
+  const updateProfilePicture = async (url: string) => {
+    setProfilePictureLoading(true);
+    try {
+      const token = localStorage.getItem('dashboard_sync_token');
+      const res = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ profilePicture: url })
+      });
+      if (res.ok) {
+        setProfilePicture(url);
+      }
+    } catch (err) {}
+    setProfilePictureLoading(false);
   };
 
   const fetchLeaderboard = async () => {
@@ -568,14 +590,55 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
       <div className="flex flex-col gap-2">
         {activeTab === 'profile' && (
           <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-4xl font-bold mb-4 shadow-lg border-4 border-white/10">
-              {username.charAt(0).toUpperCase()}
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-4xl font-bold mb-4 shadow-lg border-4 border-white/10 overflow-hidden shrink-0">
+              {profilePicture ? (
+                <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                username.charAt(0).toUpperCase()
+              )}
             </div>
             <h3 className="text-3xl font-bold mb-2">{username}</h3>
             <p className="text-green-400 font-medium flex items-center gap-2 mb-6">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
               Cloud Sync Active
             </p>
+
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl w-full mb-4 text-left shadow-lg">
+              <label className="text-sm font-semibold text-white/70 mb-3 flex items-center gap-2">
+                <UserCircle size={16} className="text-blue-400" /> Profile Picture URL
+              </label>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://example.com/avatar.png"
+                    value={profilePicture}
+                    onChange={e => setProfilePicture(e.target.value)}
+                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={() => updateProfilePicture(profilePicture)}
+                    disabled={profilePictureLoading}
+                    className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium text-sm"
+                  >
+                    {profilePictureLoading ? 'Saving...' : 'Update'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to remove your profile picture?')) {
+                        updateProfilePicture('');
+                      }
+                    }}
+                    disabled={profilePictureLoading || !profilePicture}
+                    className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <div className="bg-white/5 border border-white/10 p-4 rounded-xl w-full mb-6 text-left shadow-lg">
               <label className="text-sm font-semibold text-white/70 mb-3 flex items-center gap-2">
@@ -697,8 +760,8 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
                   {friends.map(f => (
                     <div key={f.id} className="flex items-center justify-between bg-black/30 border border-white/10 p-3 sm:p-4 rounded-xl hover:bg-black/40 transition-colors group">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center font-bold text-lg shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/40 transition-shadow shrink-0">
-                          {f.user.username.charAt(0).toUpperCase()}
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center font-bold text-lg shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/40 transition-shadow shrink-0 overflow-hidden border border-white/10">
+                          {f.user.profilePicture ? <img src={f.user.profilePicture} alt="" className="w-full h-full object-cover" /> : f.user.username.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex flex-col">
                           <span className="font-bold text-lg tracking-wide">{f.user.username}</span>
@@ -758,7 +821,12 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
                 <div className="flex flex-col gap-2">
                   {searchResults.map(u => (
                     <div key={u.id} className="flex items-center justify-between bg-black/40 p-3 rounded-lg">
-                      <span className="font-medium">{u.username}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden border border-white/10">
+                          {u.profilePicture ? <img src={u.profilePicture} alt="" className="w-full h-full object-cover" /> : u.username.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-medium">{u.username}</span>
+                      </div>
                       <button onClick={() => sendFriendRequest(u.id)} className="text-sm bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 px-3 py-1.5 rounded-lg transition-colors border border-blue-500/30">
                         Add Friend
                       </button>
@@ -781,8 +849,8 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
                     {pendingRequests.map(r => (
                       <div key={r.id} className="flex items-center justify-between bg-black/40 border border-white/10 p-3 rounded-xl">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold">
-                            {r.user.username.charAt(0).toUpperCase()}
+                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold shrink-0 overflow-hidden border border-white/10">
+                            {r.user.profilePicture ? <img src={r.user.profilePicture} alt="" className="w-full h-full object-cover" /> : r.user.username.charAt(0).toUpperCase()}
                           </div>
                           <span className="font-medium">{r.user.username}</span>
                         </div>
@@ -963,26 +1031,58 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
                     const rankColor = isTop3 ? rankColors[index] : 'bg-white/5 text-white/50 border-white/10';
 
                     return (
-                      <div key={user.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${user.isMe ? 'bg-blue-500/10 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] scale-[1.02]' : 'bg-black/40 border-white/5 hover:bg-black/60 hover:border-white/10'}`}>
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border ${rankColor}`}>
-                            {index + 1}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className={`font-bold text-lg tracking-wide ${user.isMe ? 'text-blue-400' : 'text-white/90'}`}>
-                              {user.displayName}
-                            </span>
-                            <div className="flex gap-2 mt-1 flex-wrap">
-                              {user.badges?.today > 0 && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-md border border-yellow-500/20 font-bold tracking-wider">🏆 {user.badges.today} Daily</span>}
-                              {user.badges?.week > 0 && <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-md border border-purple-500/20 font-bold tracking-wider">🌟 {user.badges.week} Weekly</span>}
-                              {user.badges?.month > 0 && <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20 font-bold tracking-wider">👑 {user.badges.month} Monthly</span>}
+                      <div key={user.id} className={`flex flex-col gap-2 p-4 rounded-2xl border transition-all ${user.isMe ? 'bg-blue-500/10 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] scale-[1.02]' : 'bg-black/40 border-white/5 hover:bg-black/60 hover:border-white/10'}`}>
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-base sm:text-lg border shrink-0 ${rankColor}`}>
+                              {index + 1}
+                            </div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold text-sm sm:text-base shrink-0 overflow-hidden border border-white/10">
+                              {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : user.displayName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className={`font-bold text-base sm:text-lg tracking-wide truncate ${user.isMe ? 'text-blue-400' : 'text-white/90'}`}>
+                                {user.displayName}
+                              </span>
+                              <div className="flex gap-1.5 mt-1 flex-wrap">
+                                {user.badges?.today > 0 && <span className="text-[9px] sm:text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded-md border border-yellow-500/20 font-bold tracking-wider">🏆 {user.badges.today} Daily</span>}
+                                {user.badges?.week > 0 && <span className="text-[9px] sm:text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-md border border-purple-500/20 font-bold tracking-wider">🌟 {user.badges.week} Weekly</span>}
+                                {user.badges?.month > 0 && <span className="text-[9px] sm:text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-md border border-emerald-500/20 font-bold tracking-wider">👑 {user.badges.month} Monthly</span>}
+                              </div>
                             </div>
                           </div>
+                          <div className="text-right flex items-center gap-2 sm:gap-4 shrink-0">
+                            <div className="flex flex-col items-end justify-center">
+                              <span className="font-mono font-bold text-lg sm:text-xl md:text-2xl tracking-tighter text-white/90">{Math.floor(val / 60)}<span className="text-xs sm:text-sm text-white/40 mr-0.5 sm:mr-1">h</span>{val % 60}<span className="text-xs sm:text-sm text-white/40">m</span></span>
+                              <span className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-widest font-semibold">Focused</span>
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => setExpandedLeaderboardUserId(expandedLeaderboardUserId === user.id ? null : user.id)}
+                              className="p-1 sm:p-2 hover:bg-white/10 rounded-full transition-colors border border-transparent hover:border-white/20 text-white/50 hover:text-white shrink-0"
+                            >
+                              {expandedLeaderboardUserId === user.id ? <ChevronUp size={18} className="sm:w-5 sm:h-5" /> : <ChevronDown size={18} className="sm:w-5 sm:h-5" />}
+                            </button>
+                          </div>
                         </div>
-                        <div className="text-right flex flex-col items-end justify-center">
-                          <span className="font-mono font-bold text-xl md:text-2xl tracking-tighter text-white/90">{Math.floor(val / 60)}<span className="text-sm text-white/40 mr-1">h</span>{val % 60}<span className="text-sm text-white/40">m</span></span>
-                          <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Focused</span>
-                        </div>
+
+                        {/* Expanded Time Stats */}
+                        {expandedLeaderboardUserId === user.id && (
+                          <div className="w-full mt-2 pt-3 border-t border-white/10 grid grid-cols-3 gap-3 text-center animate-fade-in">
+                            <div className="flex flex-col bg-black/20 p-2 rounded-lg border border-white/5">
+                              <span className="text-[10px] text-white/50 uppercase tracking-widest mb-1">Today</span>
+                              <span className="font-mono text-sm md:text-base font-bold text-yellow-300">{Math.floor(user.todayFocused / 60)}h {user.todayFocused % 60}m</span>
+                            </div>
+                            <div className="flex flex-col bg-black/20 p-2 rounded-lg border border-white/5">
+                              <span className="text-[10px] text-white/50 uppercase tracking-widest mb-1">Week</span>
+                              <span className="font-mono text-sm md:text-base font-bold text-purple-300">{Math.floor(user.last7DaysFocused / 60)}h {user.last7DaysFocused % 60}m</span>
+                            </div>
+                            <div className="flex flex-col bg-black/20 p-2 rounded-lg border border-white/5">
+                              <span className="text-[10px] text-white/50 uppercase tracking-widest mb-1">Month</span>
+                              <span className="font-mono text-sm md:text-base font-bold text-emerald-300">{Math.floor(user.last30DaysFocused / 60)}h {user.last30DaysFocused % 60}m</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   });

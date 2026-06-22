@@ -4,10 +4,18 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const { username, resetCode, newPassword } = await request.json();
+    const { username, resetCode, newPassword, confirmPassword } = await request.json();
 
-    if (!username || !resetCode || !newPassword) {
-      return NextResponse.json({ error: 'Username, reset code, and new password are required' }, { status: 400 });
+    if (!username || !resetCode || !newPassword || !confirmPassword) {
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+    }
+
+    if (newPassword.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters long' }, { status: 400 });
     }
 
     const client = await clientPromise;

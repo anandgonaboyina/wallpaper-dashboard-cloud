@@ -149,6 +149,20 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
     document.execCommand(cmd, false, val);
   };
 
+  const downloadSingleNote = (note: any) => {
+    const jsonString = JSON.stringify(note, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeTitle = (note.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    a.download = `note-${safeTitle}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto">
       <div className="absolute inset-0" onClick={toggleNotes} />
@@ -195,18 +209,30 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                   className={`group flex items-center justify-between p-2 md:p-3 rounded-xl cursor-pointer transition-all ${activeNoteId === note.id ? 'bg-white/20 text-white shadow-md' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
                 >
                   <span className="font-medium truncate pr-2 text-sm md:text-base">{note.title || 'Untitled Note'}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`Are you sure you want to delete the note "${note.title || 'Untitled Note'}"?`)) {
-                        deleteNote(note.id);
-                      }
-                    }}
-                    className={`p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400 transition-all shrink-0 ${notes.length === 1 ? 'hidden' : ''}`}
-                    title="Delete Note"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0 transition-all">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadSingleNote(note);
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-blue-500/20 hover:text-blue-400 transition-all"
+                      title="Download Note"
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Are you sure you want to delete the note "${note.title || 'Untitled Note'}"?`)) {
+                          deleteNote(note.id);
+                        }
+                      }}
+                      className={`p-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-all ${notes.length === 1 ? 'hidden' : ''}`}
+                      title="Delete Note"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </ScrollableWithArrows>

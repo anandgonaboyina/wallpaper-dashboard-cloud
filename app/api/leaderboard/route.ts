@@ -102,7 +102,8 @@ export async function GET(request: Request) {
         todayFocused,
         last7DaysFocused,
         last30DaysFocused,
-        badges: u.badges || { today: 0, week: 0, month: 0 }
+        badges: u.badges || { today: 0, week: 0, month: 0 },
+        profilePicture: u.profilePicture || null
       };
     });
 

@@ -69,9 +69,9 @@ export default function Dock({ onOpenNotes }: DockProps) {
                     if (isMobile) {
                         const isAndroid = /Android/i.test(navigator.userAgent);
                         if (isAndroid) {
-                            window.location.href = 'intent://send?text=#Intent;package=com.whatsapp;scheme=whatsapp;end';
+                            window.location.href = 'whatsapp://send?text=%20';
                         } else {
-                            window.location.href = 'whatsapp://send?text=';
+                            window.location.href = 'whatsapp://app';
                         }
                     } else {
                         window.open('whatsapp://', '_blank');

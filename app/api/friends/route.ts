@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
     const users = await db.collection('User').find({
       _id: { $in: Array.from(allUserIds).map(id => new ObjectId(id)) }
-    }).project({ _id: 1, username: 1, lastLogin: 1 }).toArray();
+    }).project({ _id: 1, username: 1, lastLogin: 1, profilePicture: 1 }).toArray();
 
     const storages = await db.collection('DashboardStorage').find({
       userId: { $in: Array.from(allUserIds) }
@@ -54,6 +54,7 @@ export async function GET(request: Request) {
       return [idStr, { 
         id: idStr, 
         username: u.username,
+        profilePicture: u.profilePicture || null,
         lastActive
       }];
     }));

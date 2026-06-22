@@ -7,10 +7,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
 export async function POST(request: Request) {
   try {
-    const { username, email, password, otp } = await request.json();
+    const { username, email, password, confirmPassword, otp } = await request.json();
 
-    if (!username || !email || !password || !otp) {
-      return NextResponse.json({ error: 'Username, email, password, and OTP are required' }, { status: 400 });
+    if (!username || !email || !password || !confirmPassword || !otp) {
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+    }
+
+    if (password !== confirmPassword) {
+      return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 });
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters long' }, { status: 400 });
     }
 
     const client = await clientPromise;

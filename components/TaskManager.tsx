@@ -183,7 +183,11 @@ export default function TaskManager() {
                                                 <Play size={14} className="fill-current" />
                                             </button>
                                             <button
-                                                onClick={() => deleteTask(task.id)}
+                                                onClick={() => {
+                                                    if (window.confirm('Are you sure you want to delete this task?')) {
+                                                        deleteTask(task.id);
+                                                    }
+                                                }}
                                                 className="p-1.5 text-white/40 hover:text-red-400 hover:bg-red-400/20 rounded-lg transition-colors"
                                             >
                                                 <Trash2 size={14} />
