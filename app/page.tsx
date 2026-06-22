@@ -155,9 +155,7 @@ export default function CloudLogin() {
     } catch (err) {
       setError('Failed to connect to server');
     } finally {
-      if (!isRegisterMode || error) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
