@@ -27,10 +27,10 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
 
   // Friends state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ id: string, username: string }[]>([]);
-  const [friends, setFriends] = useState<{ id: string, user: { id: string, username: string, lastActive?: string } }[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string } }[]>([]);
-  const [sentRequests, setSentRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string } }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string, username: string, profilePicture?: string }[]>([]);
+  const [friends, setFriends] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
+  const [sentRequests, setSentRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
 
   // Broadcasts state
   const [broadcasts, setBroadcasts] = useState<{ id: string, title: string, content: string, type: string, createdAt: string }[]>([]);
@@ -95,6 +95,12 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
   }, [activeTab, isLoggedIn]);
 
   const fetchProfile = async () => {
+    // Load cached first for immediate offline availability
+    const cachedAlias = localStorage.getItem('dashboard_alias');
+    const cachedPic = localStorage.getItem('dashboard_profile_picture');
+    if (cachedAlias) setAlias(cachedAlias);
+    if (cachedPic) setProfilePicture(cachedPic);
+
     try {
       const token = localStorage.getItem('dashboard_sync_token');
       const res = await fetch('/api/users', {
@@ -105,8 +111,17 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
         const storedUsername = localStorage.getItem('dashboard_username');
         const me = data.users.find((u: any) => u.username === storedUsername);
         if (me) {
-          if (me.alias) setAlias(me.alias);
-          if (me.profilePicture) setProfilePicture(me.profilePicture);
+          if (me.alias) {
+            setAlias(me.alias);
+            localStorage.setItem('dashboard_alias', me.alias);
+          }
+          if (me.profilePicture) {
+            setProfilePicture(me.profilePicture);
+            localStorage.setItem('dashboard_profile_picture', me.profilePicture);
+          } else {
+            localStorage.removeItem('dashboard_profile_picture');
+            setProfilePicture('');
+          }
         }
       }
     } catch (err) {}
@@ -123,6 +138,11 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
       });
       if (res.ok) {
         setProfilePicture(url);
+        if (url) {
+          localStorage.setItem('dashboard_profile_picture', url);
+        } else {
+          localStorage.removeItem('dashboard_profile_picture');
+        }
       }
     } catch (err) {}
     setProfilePictureLoading(false);
@@ -598,10 +618,15 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
               )}
             </div>
             <h3 className="text-3xl font-bold mb-2">{username}</h3>
-            <p className="text-green-400 font-medium flex items-center gap-2 mb-6">
+            <p className="text-green-400 font-medium flex items-center gap-2 mb-2">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
               Cloud Sync Active
             </p>
+
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-xs text-center p-3 rounded-lg mb-6 shadow-sm">
+              <span className="font-bold flex items-center justify-center gap-1.5 mb-1"><ShieldAlert size={14} /> Attention</span>
+              Accounts and all associated data are <strong className="text-red-400">permanently deleted</strong> if there is no login activity for 90 days to free up space. Please export your notes regularly!
+            </div>
 
             <div className="bg-white/5 border border-white/10 p-4 rounded-xl w-full mb-4 text-left shadow-lg">
               <label className="text-sm font-semibold text-white/70 mb-3 flex items-center gap-2">

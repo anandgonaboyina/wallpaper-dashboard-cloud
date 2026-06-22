@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
+import { deleteInactiveUsers } from '@/lib/cleanup';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
@@ -21,6 +22,9 @@ export async function GET(request: Request) {
 
     const client = await clientPromise;
     const db = client.db();
+
+    // Fire and forget cleanup
+    deleteInactiveUsers().catch(console.error);
 
     // 1. Fetch all users
     const users = await db.collection('User').find({}, {
