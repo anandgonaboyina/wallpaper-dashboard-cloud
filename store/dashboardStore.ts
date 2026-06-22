@@ -58,6 +58,17 @@ interface DashboardState {
   setIsVideoMuted: (muted: boolean) => void;
   isVideoPlaying: boolean;
   setIsVideoPlaying: (playing: boolean) => void;
+
+  customDesktopWallpapers: string[];
+  setCustomDesktopWallpapers: (urls: string[]) => void;
+  activeDesktopCustomIndex: number | null;
+  setActiveDesktopCustomIndex: (index: number | null) => void;
+
+  customMobileWallpapers: string[];
+  setCustomMobileWallpapers: (urls: string[]) => void;
+  activeMobileCustomIndex: number | null;
+  setActiveMobileCustomIndex: (index: number | null) => void;
+
   history: Record<string, number>;
   tasks: Task[];
   isHidden: boolean;
@@ -82,9 +93,9 @@ interface DashboardState {
   isClockOpen: boolean;
   toggleClock: () => void;
   isSettingsOpen: boolean;
-  settingsActiveTab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update';
+  settingsActiveTab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper';
   toggleSettings: () => void;
-  setSettingsActiveTab: (tab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update') => void;
+  setSettingsActiveTab: (tab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper') => void;
   timerTrigger: { mins: number; ts: number; taskId?: string; taskTitle?: string } | null;
   triggerTimer: (mins: number, taskId?: string, taskTitle?: string) => void;
 
@@ -107,8 +118,12 @@ interface DashboardState {
   alarmVolume: number;
   enableAlarmSound: boolean;
   enableAlarmVibration: boolean;
+  enablePanicButton: boolean;
+  panicButtonMode: 'redirect' | 'hide';
   setEnableAlarmSound: (enabled: boolean) => void;
   setEnableAlarmVibration: (enabled: boolean) => void;
+  setEnablePanicButton: (enabled: boolean) => void;
+  setPanicButtonMode: (mode: 'redirect' | 'hide') => void;
   setTimerEndAt: (time: number | null) => void;
   setTimerPausedLeft: (time: number | null) => void;
   setTimerInitialMins: (mins: number | null) => void;
@@ -206,6 +221,8 @@ interface DashboardState {
   lockedWidgets: string[];
   toggleWidgetLock: (widgetId: string) => void;
   resetAllOffsets: (bgSrc: string) => void;
+  widgetZIndices: Record<string, number>;
+  bringToFront: (widgetId: string) => void;
 
   currentBgSrc: string | null;
   setCurrentBgSrc: (src: string | null) => void;
@@ -216,6 +233,8 @@ interface DashboardState {
   // Slideshow
   isSlideshowEnabled: boolean;
   setIsSlideshowEnabled: (enabled: boolean) => void;
+  isMobileCountdownsVisible: boolean;
+  setIsMobileCountdownsVisible: (visible: boolean) => void;
   slideshowIntervalMins: number;
   setSlideshowIntervalMins: (mins: number) => void;
 
@@ -248,6 +267,10 @@ interface DashboardState {
   hideConfig: Record<string, boolean>;
   setHideConfig: (key: string, value: boolean) => void;
   setHideAll: (hide: boolean) => void;
+  
+  mobileHideConfig: Record<string, boolean>;
+  setMobileHideConfig: (key: string, value: boolean) => void;
+  setMobileHideAll: (hide: boolean) => void;
   
   isPanicHidden: boolean;
   togglePanicHide: () => void;
@@ -532,6 +555,16 @@ export const useDashboardStore = create<DashboardState>()(
       isVideoPlaying: true,
       setIsVideoPlaying: (playing) => set({ isVideoPlaying: playing }),
 
+      customDesktopWallpapers: [],
+      setCustomDesktopWallpapers: (urls) => set({ customDesktopWallpapers: urls }),
+      activeDesktopCustomIndex: null,
+      setActiveDesktopCustomIndex: (index) => set({ activeDesktopCustomIndex: index }),
+
+      customMobileWallpapers: [],
+      setCustomMobileWallpapers: (urls) => set({ customMobileWallpapers: urls }),
+      activeMobileCustomIndex: null,
+      setActiveMobileCustomIndex: (index) => set({ activeMobileCustomIndex: index }),
+
       addMins: (dateKey, mins) =>
         set((state) => ({
           history: {
@@ -576,26 +609,70 @@ export const useDashboardStore = create<DashboardState>()(
 
       toggleHide: () => set((state) => ({ isHidden: !state.isHidden })),
 
-      isTaskManagerOpen: false,
-      toggleTaskManager: () => set((state) => ({ isTaskManagerOpen: !state.isTaskManagerOpen })),
+  isTaskManagerOpen: false,
+      toggleTaskManager: () => set((state) => {
+        const next = !state.isTaskManagerOpen;
+        let extra = {};
+        if (next) {
+          const currentZ = state.widgetZIndices || {};
+          const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+          extra = { widgetZIndices: { ...currentZ, tasks: maxZ + 1 } };
+        }
+        return { isTaskManagerOpen: next, ...extra };
+      }),
       isStatsOpen: false,
       toggleStats: () => set((state) => ({ isStatsOpen: !state.isStatsOpen })),
       isTimerOpen: false,
-      toggleTimer: () => set((state) => ({ isTimerOpen: !state.isTimerOpen })),
+      toggleTimer: () => set((state) => {
+        const next = !state.isTimerOpen;
+        let extra = {};
+        if (next) {
+          const currentZ = state.widgetZIndices || {};
+          const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+          extra = { widgetZIndices: { ...currentZ, timer: maxZ + 1 } };
+        }
+        return { isTimerOpen: next, ...extra };
+      }),
       isCalendarOpen: true,
-      toggleCalendar: () => set((state) => ({ isCalendarOpen: !state.isCalendarOpen })),
+      toggleCalendar: () => set((state) => {
+        const next = !state.isCalendarOpen;
+        let extra = {};
+        if (next) {
+          const currentZ = state.widgetZIndices || {};
+          const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+          extra = { widgetZIndices: { ...currentZ, calendar: maxZ + 1 } };
+        }
+        return { isCalendarOpen: next, ...extra };
+      }),
       isClockOpen: true,
-      toggleClock: () => set((state) => ({ isClockOpen: !state.isClockOpen })),
+      toggleClock: () => set((state) => {
+        const next = !state.isClockOpen;
+        let extra = {};
+        if (next) {
+          const currentZ = state.widgetZIndices || {};
+          const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+          extra = { widgetZIndices: { ...currentZ, clock: maxZ + 1 } };
+        }
+        return { isClockOpen: next, ...extra };
+      }),
       isSettingsOpen: false,
       settingsActiveTab: 'preferences',
       toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
       setSettingsActiveTab: (tab) => set({ settingsActiveTab: tab }),
       timerTrigger: null,
-      triggerTimer: (mins, taskId, taskTitle) => set((state) => ({ 
-        timerTrigger: { mins, ts: Date.now(), taskId, taskTitle },
-        showTimer: true,
-        hideConfig: { ...state.hideConfig, timer: false }
-      })),
+      triggerTimer: (mins, taskId, taskTitle) => set((state) => {
+        const currentZ = state.widgetZIndices || {};
+        const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+        return { 
+          timerTrigger: { mins, ts: Date.now(), taskId, taskTitle },
+          showTimer: true,
+          isTimerOpen: true,
+          isHidden: false, // Break out of focus mode if they explicitly start a task timer
+          hideConfig: { ...state.hideConfig, timer: false },
+          mobileHideConfig: { ...state.mobileHideConfig, timer: false },
+          widgetZIndices: { ...currentZ, timer: maxZ + 1 }
+        };
+      }),
 
       activeTaskId: null,
       activeTaskTitle: null,
@@ -618,7 +695,7 @@ export const useDashboardStore = create<DashboardState>()(
       timerLastUpdated: 0,
       isAlarmPlaying: false,
       alarmSound: '/ringtones/alarm.mp3',
-      alarmVolume: 100,
+      alarmVolume: 0.5,
       setTimerEndAt: (time) => set({ timerEndAt: time, timerLastUpdated: Date.now() }),
       setTimerPausedLeft: (time) => set({ timerPausedLeft: time, timerLastUpdated: Date.now() }),
       setTimerInitialMins: (mins) => set({ timerInitialMins: mins, timerLastUpdated: Date.now() }),
@@ -630,8 +707,12 @@ export const useDashboardStore = create<DashboardState>()(
       setAlarmVolume: (vol) => set({ alarmVolume: vol }),
       enableAlarmSound: true,
       enableAlarmVibration: true,
-      setEnableAlarmSound: (enabled) => set({ enableAlarmSound: enabled }),
-      setEnableAlarmVibration: (enabled) => set({ enableAlarmVibration: enabled }),
+      enablePanicButton: true,
+      panicButtonMode: 'redirect',
+      setEnableAlarmSound: (val) => set({ enableAlarmSound: val }),
+      setEnableAlarmVibration: (val) => set({ enableAlarmVibration: val }),
+      setEnablePanicButton: (val) => set({ enablePanicButton: val }),
+      setPanicButtonMode: (val) => set({ panicButtonMode: val }),
 
       currentQuote: null,
       isQuotePopupOpen: false,
@@ -681,7 +762,16 @@ export const useDashboardStore = create<DashboardState>()(
       // Stopwatch Defaults
       isStopwatchOpen: false,
       stopwatchSessions: [],
-      toggleStopwatch: () => set((state) => ({ isStopwatchOpen: !state.isStopwatchOpen })),
+      toggleStopwatch: () => set((state) => {
+        const next = !state.isStopwatchOpen;
+        let extra = {};
+        if (next) {
+          const currentZ = state.widgetZIndices || {};
+          const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+          extra = { widgetZIndices: { ...currentZ, stopwatch: maxZ + 1 } };
+        }
+        return { isStopwatchOpen: next, ...extra };
+      }),
       addStopwatchSession: (title, secs, addToStats) => set((state) => {
         const mins = Math.floor(secs / 60);
         
@@ -771,7 +861,7 @@ export const useDashboardStore = create<DashboardState>()(
       setDeadlineAlertDays: (days) => set({ deadlineAlertDays: Math.max(0, days) }),
       dismissedDeadlineAlerts: [],
       dismissDeadlineAlert: (id) => set((state) => ({
-        dismissedDeadlineAlerts: Array.from(new Set([...state.dismissedDeadlineAlerts, id]))
+        dismissedDeadlineAlerts: Array.from(new Set([...(state.dismissedDeadlineAlerts || []), id]))
       })),
 
       // Timetable
@@ -861,7 +951,15 @@ export const useDashboardStore = create<DashboardState>()(
       useTimetableRange: true,
       toggleTimetableRange: () => set((state) => ({ useTimetableRange: !state.useTimetableRange })),
       isTimetableOpen: false,
-      setIsTimetableOpen: (isOpen) => set({ isTimetableOpen: isOpen }),
+      setIsTimetableOpen: (isOpen) => set((state) => {
+        let extra = {};
+        if (isOpen) {
+          const currentZ = state.widgetZIndices || {};
+          const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
+          extra = { widgetZIndices: { ...currentZ, timetable: maxZ + 1 } };
+        }
+        return { isTimetableOpen: isOpen, ...extra };
+      }),
 
       // Health Rings
       healthData: {},
@@ -945,6 +1043,21 @@ export const useDashboardStore = create<DashboardState>()(
           ? state.lockedWidgets.filter(id => id !== widgetId)
           : [...state.lockedWidgets, widgetId]
       })),
+      widgetZIndices: {},
+      bringToFront: (widgetId) => set((state) => {
+        const currentZIndices = state.widgetZIndices || {};
+        const values = Object.values(currentZIndices);
+        const maxZ = values.length > 0 ? Math.max(...values) : 50;
+        if (currentZIndices[widgetId] === maxZ && maxZ > 50) {
+          return state;
+        }
+        return {
+          widgetZIndices: {
+            ...currentZIndices,
+            [widgetId]: maxZ + 1
+          }
+        };
+      }),
       resetAllOffsets: (bgSrc) => set((state) => {
         const newClockOffsets = { ...state.clockOffsets };
         delete newClockOffsets[bgSrc];
@@ -967,6 +1080,8 @@ export const useDashboardStore = create<DashboardState>()(
 
       isSlideshowEnabled: false,
       setIsSlideshowEnabled: (enabled) => set({ isSlideshowEnabled: enabled }),
+      isMobileCountdownsVisible: false,
+      setIsMobileCountdownsVisible: (visible) => set({ isMobileCountdownsVisible: visible }),
       slideshowIntervalMins: 10,
       setSlideshowIntervalMins: (mins) => set({ slideshowIntervalMins: mins }),
 
@@ -993,33 +1108,33 @@ export const useDashboardStore = create<DashboardState>()(
       showStopwatch: true,
       toggleVisibility: (key) => set((state) => ({ [key]: !state[key] })),
 
-      hideConfig: {
-        health: false,
-        quote: false,
-        timer: false,
-        countdowns: false,
-        videoControls: false,
-        clock: false,
-        tasks: false,
-        calendar: false,
-        todayWork: false,
-        stats: false,
-        plans: false,
-        notes: false,
-        timetable: false,
-        dock: false,
-        deadlineAlerts: false,
-        bgSwitcher: false,
-        settingsBtn: false
+      hideConfig: {},
+      setHideConfig: (key, value) => {
+        set((state) => ({ hideConfig: { ...state.hideConfig, [key]: value } }));
       },
-      setHideConfig: (key, value) => set((state) => ({
-        hideConfig: { ...state.hideConfig, [key]: value }
-      })),
-      setHideAll: (hide) => set((state) => {
-        const newHideConfig = { ...state.hideConfig };
-        Object.keys(newHideConfig).forEach(k => { newHideConfig[k] = hide; });
-        return { hideConfig: newHideConfig };
-      }),
+      setHideAll: (hide) => {
+        if (hide) {
+          set({ hideConfig: { 
+            quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+          }});
+        } else {
+          set({ hideConfig: {} });
+        }
+      },
+
+      mobileHideConfig: {},
+      setMobileHideConfig: (key, value) => {
+        set((state) => ({ mobileHideConfig: { ...state.mobileHideConfig, [key]: value } }));
+      },
+      setMobileHideAll: (hide) => {
+        if (hide) {
+          set({ mobileHideConfig: { 
+            quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+          }});
+        } else {
+          set({ mobileHideConfig: {} });
+        }
+      },
 
       isPanicHidden: false,
       togglePanicHide: () => set((state) => ({ isPanicHidden: !state.isPanicHidden })),
@@ -1121,7 +1236,8 @@ export const useDashboardStore = create<DashboardState>()(
         Object.entries(state).filter(([key]) => ![
           'isQuotePopupOpen', 'isTaskManagerOpen', 'isStatsOpen', 'timerTrigger', 
           'isNotesOpen', 'isPlansOpen', 'isTimetableOpen', 'isHealthModalOpen', 'healthData',
-          'isVideoMuted', 'isVideoPlaying', 'isSettingsOpen', 'isStopwatchOpen', '_hasHydrated'
+          'isVideoMuted', 'isVideoPlaying', 'isSettingsOpen', 'isStopwatchOpen', '_hasHydrated',
+          'widgetZIndices'
         ].includes(key))
       ),
       merge: (persistedState: any, currentState: DashboardState) => {
@@ -1152,6 +1268,19 @@ export const useDashboardStore = create<DashboardState>()(
         // Deep merge nested configurations to prevent schema drift from old backups
         if (persistedState.hideConfig && currentState.hideConfig) {
           persistedState.hideConfig = { ...currentState.hideConfig, ...persistedState.hideConfig };
+        }
+
+        // Auto-cleanup deadlines that are more than 7 days in the past
+        if (persistedState.deadlines && Array.isArray(persistedState.deadlines)) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          persistedState.deadlines = persistedState.deadlines.filter((d: any) => {
+             const dDate = new Date(d.date);
+             dDate.setHours(0, 0, 0, 0);
+             const diffTime = today.getTime() - dDate.getTime();
+             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+             return diffDays <= 7; // Keep if it is in the future, today, or up to 7 days past
+          });
         }
 
         return { ...currentState, ...persistedState };
