@@ -4,11 +4,19 @@ import { useState, useRef, useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 
 export default function DraggableWidget({ id, children }: { id: string, children: React.ReactNode }) {
-  const { currentBgSrc, widgetOffsets, updateWidgetOffset, lockedWidgets } = useDashboardStore();
+  const { currentBgSrc, widgetOffsets, updateWidgetOffset, lockedWidgets, widgetZIndices, bringToFront } = useDashboardStore();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Sync with store when background changes
   useEffect(() => {
@@ -19,8 +27,11 @@ export default function DraggableWidget({ id, children }: { id: string, children
     }
   }, [currentBgSrc, widgetOffsets, id]);
 
+  const isLocked = lockedWidgets.includes(id) || (isMobile && id === 'countdowns');
+
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (lockedWidgets.includes(id)) return;
+    bringToFront(id);
+    if (isLocked) return;
     
     // Only allow dragging on the wrapper itself, not on interactive children
     const target = e.target as HTMLElement;
@@ -74,12 +85,13 @@ export default function DraggableWidget({ id, children }: { id: string, children
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        cursor: lockedWidgets.includes(id) ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+        transform: `translate(${isMobile && id === 'countdowns' ? 0 : position.x}px, ${isMobile && id === 'countdowns' ? 0 : position.y}px)`,
+        zIndex: widgetZIndices?.[id] || 50,
+        cursor: isLocked ? 'default' : (isDragging ? 'grabbing' : 'grab'),
         touchAction: 'none',
         userSelect: isDragging ? 'none' : 'auto'
       }}
-      className={`w-fit h-fit pointer-events-auto outline-none focus:outline-none transition-transform duration-75 ${lockedWidgets.includes(id) ? '' : 'hover:outline hover:outline-1 hover:outline-white/10 rounded-3xl'}`}
+      className={`w-fit h-fit pointer-events-auto outline-none focus:outline-none transition-transform duration-75 ${isLocked ? '' : 'hover:outline hover:outline-1 hover:outline-white/10 rounded-3xl'}`}
     >
       {children}
     </div>

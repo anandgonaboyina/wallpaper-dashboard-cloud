@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 
 export default function DraggableClock({ children }: { children: React.ReactNode }) {
-  const { currentBgSrc, clockOffsets, updateClockOffset, resetClockOffset, lockedWidgets, isTimetableOpen } = useDashboardStore();
+  const { currentBgSrc, clockOffsets, updateClockOffset, resetClockOffset, lockedWidgets, isTimetableOpen, widgetZIndices, bringToFront } = useDashboardStore();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
@@ -30,6 +30,7 @@ export default function DraggableClock({ children }: { children: React.ReactNode
   }, [currentBgSrc, clockOffsets]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    bringToFront('clock');
     if (lockedWidgets.includes('clock') || isMobile) return;
 
     // Only allow dragging on the wrapper itself, not on interactive children (buttons, toggles)
@@ -81,6 +82,7 @@ export default function DraggableClock({ children }: { children: React.ReactNode
       className={`relative inline-block w-fit h-fit p-8 pointer-events-auto outline-none focus:outline-none transition-transform ${!isDragging ? 'duration-300' : 'duration-0'} ${(lockedWidgets.includes('clock') || isMobile) ? '' : 'cursor-move'} group`}
       style={{ 
         transform: (isTimetableOpen || isMobile) ? 'none' : `translate(${position.x}px, ${position.y}px)`,
+        zIndex: widgetZIndices?.['clock'] || 50,
         touchAction: 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none'

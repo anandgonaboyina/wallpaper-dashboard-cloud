@@ -31,11 +31,24 @@ import { fetchQuote } from "@/utils/quoteEngine";
 export default function Dashboard() {
   const showQuotePopup = useDashboardStore((state) => state.showQuotePopup);
   const isHidden = useDashboardStore((state) => state.isHidden);
-  const hideConfig = useDashboardStore((state) => state.hideConfig);
+  const baseHideConfig = useDashboardStore((state) => state.hideConfig);
+  const mobileHideConfig = useDashboardStore((state) => state.mobileHideConfig);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const hideConfig = isMobile ? mobileHideConfig : baseHideConfig;
+
   const toggleHide = useDashboardStore((state) => state.toggleHide);
   const currentBgType = useDashboardStore((state) => state.currentBgType);
   const countdowns = useDashboardStore((state) => state.countdowns);
   const [isCountdownsExpanded, setIsCountdownsExpanded] = useState(false);
+  const isMobileCountdownsVisible = useDashboardStore((state) => state.isMobileCountdownsVisible);
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
   const setIsTimetableOpen = useDashboardStore((state) => state.setIsTimetableOpen);
   const isCalendarOpen = useDashboardStore((state) => state.isCalendarOpen);
@@ -46,6 +59,7 @@ export default function Dashboard() {
   const showStopwatch = useDashboardStore((state) => state.showStopwatch);
   const showCountdowns = useDashboardStore((state) => state.showCountdowns);
   const showClock = useDashboardStore((state) => state.showClock);
+  const showTodayWork = useDashboardStore((state) => state.showTodayWork);
   const showTasks = useDashboardStore((state) => state.showTasks);
   const showCalendar = useDashboardStore((state) => state.showCalendar);
   const showStats = useDashboardStore((state) => state.showStats);
@@ -58,6 +72,8 @@ export default function Dashboard() {
   const rightWidgetsOffset = useDashboardStore((state) => state.rightWidgetsOffset);
   const toggleSettings = useDashboardStore((state) => state.toggleSettings);
   const _hasHydrated = useDashboardStore((state) => state._hasHydrated);
+  const widgetZIndices = useDashboardStore((state) => state.widgetZIndices) || {};
+  const bringToFront = useDashboardStore((state) => state.bringToFront);
 
   const isPanicHidden = useDashboardStore((state) => state.isPanicHidden);
   const togglePanicHide = useDashboardStore((state) => state.togglePanicHide);
@@ -129,6 +145,12 @@ export default function Dashboard() {
     );
   }
 
+  const tasksZ = widgetZIndices.tasks || 50;
+  const stopwatchZ = widgetZIndices.stopwatch || 50;
+  const timerZ = widgetZIndices.timer || 50;
+  const toolbarZ = widgetZIndices.toolbar || 50;
+  const bottomRightZ = Math.max(tasksZ, stopwatchZ, timerZ, toolbarZ);
+
   return (
     <main className="relative overflow-hidden w-full flex-1">
       <VideoBackground />
@@ -152,9 +174,12 @@ export default function Dashboard() {
 
           {/* Top Leftish: Target Countdowns */}
           {(!isHidden || !hideConfig.countdowns) && showCountdowns && (
-            <div className="absolute top-48 left-2 md:top-32 md:left-auto md:right-[320px] z-50 scale-[0.8] sm:scale-85 md:scale-100 origin-top-left md:origin-top">
+            <div
+              style={{ zIndex: widgetZIndices.countdowns || 50 }}
+              className={`absolute top-[120px] left-1/2 -translate-x-1/2 md:top-32 md:left-auto md:right-[320px] md:translate-x-0 scale-[0.85] md:scale-100 origin-top pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isMobile && !isMobileCountdownsVisible ? '-translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'}`}
+            >
               <DraggableWidget id="countdowns">
-                <div className="flex flex-col gap-4 items-center">
+                <div className="flex flex-col gap-1 items-center">
                   {countdowns.length > 0 && (
                     <Countdown key={countdowns[0].id} id={countdowns[0].id} />
                   )}
@@ -170,7 +195,7 @@ export default function Dashboard() {
                       e.stopPropagation();
                       setIsCountdownsExpanded(!isCountdownsExpanded);
                     }}
-                    className="flex items-center justify-center p-2 text-white/40 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-all border border-white/10"
+                    className="flex items-center justify-center p-1 text-white/40 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-all border border-white/10"
                     title={isCountdownsExpanded ? "Hide extra targets" : "Show all targets"}
                   >
                     {isCountdownsExpanded ? <ChevronUp size={22} /> : <ChevronDown size={22} />}
@@ -182,19 +207,24 @@ export default function Dashboard() {
 
           {/* Top Right: Mini Calendar */}
           {(!isHidden || !hideConfig.calendar) && showCalendar && isCalendarOpen && (
-            <div className="absolute top-48 right-2 md:top-4 md:right-4 z-50 scale-[0.8] sm:scale-85 md:scale-100 origin-top-right">
+            <div
+              style={{ zIndex: widgetZIndices.calendar || 50 }}
+              className="absolute top-48 right-2 md:top-4 md:right-4 scale-[0.8] sm:scale-85 md:scale-100 origin-top-right pointer-events-none"
+            >
               <MiniCalendar />
             </div>
           )}
 
           {/* BigClock */}
-          {(!isHidden || !hideConfig.clock) && showClock && (
-            <div className={`absolute z-[999] pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isTimetableOpen
+          {(!isHidden || !hideConfig.clock) && (showClock || showTodayWork) && (
+            <div
+              style={{ zIndex: widgetZIndices.clock || 50 }}
+              className={`absolute pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isTimetableOpen
                 ? 'top-20 left-1/2 -translate-x-1/2 md:top-1/2 md:left-20 md:-translate-y-1/2 md:translate-x-0 scale-[0.7] md:scale-100 origin-top md:origin-center'
                 : currentBgType === 'image'
                   ? 'top-20 left-1/2 -translate-x-1/2 translate-y-0 scale-[0.7] md:scale-100 md:top-40 origin-top'
                   : 'top-20 left-1/2 -translate-x-1/2 md:top-40 md:left-10 md:translate-x-0 translate-y-0 scale-[0.7] md:scale-100 origin-top md:origin-top-left'
-              }`}>
+                }`}>
               <DraggableClock>
                 <BigClock />
               </DraggableClock>
@@ -203,9 +233,15 @@ export default function Dashboard() {
 
           {/* Bottom Center (Above Dock): Timetable */}
           {(!isHidden || !hideConfig.timetable) && showTimetable && (
-            <div className="absolute bottom-24 left-[10px] right-[10px] w-[calc(100vw-20px)] md:bottom-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-auto z-[50] flex flex-col items-center scale-[0.9] md:scale-100 origin-bottom">
+            <div
+              style={{ zIndex: widgetZIndices.timetable || 50 }}
+              className="absolute bottom-24 left-[10px] right-[10px] w-[calc(100vw-20px)] md:bottom-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-auto flex flex-col items-center scale-[0.9] md:scale-100 origin-bottom pointer-events-none"
+            >
               {/* The Expanded Timetable */}
-              <div className={`flex flex-col items-center gap-2 absolute bottom-0 origin-bottom transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] w-full md:w-auto ${isTimetableOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-12 scale-90 pointer-events-none'}`}>
+              <div
+                onPointerDown={() => bringToFront('timetable')}
+                className={`flex flex-col items-center gap-2 absolute bottom-0 origin-bottom transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] w-full md:w-auto ${isTimetableOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-12 scale-90 pointer-events-none'}`}
+              >
                 <Timetable />
                 <button
                   onClick={() => setIsTimetableOpen(false)}
@@ -216,7 +252,10 @@ export default function Dashboard() {
               </div>
 
               {/* The Closed Button */}
-              <div className={`absolute bottom-0 origin-bottom transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${!isTimetableOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto delay-300' : 'opacity-0 translate-y-8 scale-50 pointer-events-none'}`}>
+              <div
+                onPointerDown={() => bringToFront('timetable')}
+                className={`absolute bottom-0 origin-bottom transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${!isTimetableOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto delay-300' : 'opacity-0 translate-y-8 scale-50 pointer-events-none'}`}
+              >
                 <button
                   onClick={() => setIsTimetableOpen(true)}
                   className="bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-3 py-3 text-white/80 hover:text-white hover:bg-black/40 transition-colors flex items-center gap-2 shadow-xl hover:scale-105"
@@ -242,7 +281,10 @@ export default function Dashboard() {
           )}
 
           {/* Bottom Right Container */}
-          <div className="absolute right-1 sm:right-2 md:right-2 z-50 flex items-end transition-all duration-300 pointer-events-none scale-[0.75] sm:scale-85 md:scale-100 origin-bottom-right" style={{ bottom: `${rightWidgetsOffset}px` }}>
+          <div
+            style={{ bottom: `${rightWidgetsOffset}px`, zIndex: bottomRightZ }}
+            className="absolute right-1 sm:right-2 md:right-2 flex items-end transition-all duration-300 pointer-events-none scale-[0.75] sm:scale-85 md:scale-100 origin-bottom-right"
+          >
             {/* TaskManager & Timer Group */}
             <div className="flex flex-col items-end gap-2 pointer-events-none mr-1 md:mr-[10px]">
               {(!isHidden || !hideConfig.tasks) && showTasks && <TaskManager />}
