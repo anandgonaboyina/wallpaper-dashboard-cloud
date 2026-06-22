@@ -1,21 +1,17 @@
-import fallbackQuotes from './quotes.json';
-
 export interface Quote {
   text: string;
   author: string;
 }
 
 let recentIndices: number[] = [];
-let dbFetchAttempted = false;
 
 export async function fetchQuote(): Promise<Quote> {
-  // Sync quotes from DB to local storage ONLY ONCE per reload
-  if (!dbFetchAttempted) {
-    dbFetchAttempted = true;
+  // Always attempt to fetch fresh quotes if online (this is only called every ~30 mins)
+  if (typeof navigator !== 'undefined' && navigator.onLine) {
     try {
       const res = await fetch('/api/quotes', { 
         cache: 'no-store',
-        signal: AbortSignal.timeout(3000) 
+        signal: AbortSignal.timeout(5000) 
       });
       
       if (res.ok) {
@@ -30,11 +26,11 @@ export async function fetchQuote(): Promise<Quote> {
         }
       }
     } catch (err) {
-      console.warn('Quote sync failed, will rely on local cache or fallback JSON');
+      console.warn('Quote sync failed, relying on local cache');
     }
   }
 
-  // Retrieve quotes from localStorage cache, fallback to robust JSON
+  // Retrieve quotes from localStorage cache
   let sourceArray: Quote[] = [];
   try {
     const cached = localStorage.getItem('dashboard_cached_quotes');
@@ -42,11 +38,15 @@ export async function fetchQuote(): Promise<Quote> {
       sourceArray = JSON.parse(cached);
     }
   } catch (e) {
-    console.warn('Cache corrupted, using fallback');
+    console.warn('Quote cache corrupted');
   }
 
   if (!sourceArray || sourceArray.length === 0) {
-    sourceArray = fallbackQuotes as Quote[];
+    // Ultimate fallback if DB fails and cache is empty
+    return {
+      text: "The future depends on what you do today.",
+      author: "Mahatma Gandhi"
+    };
   }
 
   // Pick a random quote avoiding immediate repeats
