@@ -5,32 +5,37 @@ import { Play, Pause, Square, History, Trash2, ChevronLeft, Check } from 'lucide
 import DraggableWidget from './DraggableWidget';
 
 export default function Stopwatch() {
-  const { isStopwatchOpen, addStopwatchSession, stopwatchSessions, deleteStopwatchSession, clearStopwatchSessions } = useDashboardStore();
+  const { isStopwatchOpen, addStopwatchSession, stopwatchSessions, deleteStopwatchSession, clearStopwatchSessions, stopwatchStartTime, setStopwatchStartTime } = useDashboardStore();
   
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedSecs, setElapsedSecs] = useState(0);
   const [taskTitle, setTaskTitle] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
-  const [startTime, setStartTime] = useState<number | null>(null);
   const [addToStats, setAddToStats] = useState(true);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning && startTime) {
+    if (isRunning && stopwatchStartTime) {
       interval = setInterval(() => {
-        setElapsedSecs(Math.floor((Date.now() - startTime) / 1000));
+        setElapsedSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
       }, 250); 
     }
     return () => clearInterval(interval);
-  }, [isRunning, startTime]);
+  }, [isRunning, stopwatchStartTime]);
 
   if (!isStopwatchOpen) return null;
 
   const handleStart = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!isRunning) {
-      setStartTime(Date.now() - elapsedSecs * 1000);
+      setStopwatchStartTime(Date.now() - elapsedSecs * 1000);
       setIsRunning(true);
+      
+      if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+         if (isStopwatchOpen) {
+            useDashboardStore.getState().toggleStopwatch();
+         }
+      }
     }
   };
 
@@ -48,7 +53,7 @@ export default function Stopwatch() {
     }
     setIsRunning(false);
     setElapsedSecs(0);
-    setStartTime(null);
+    setStopwatchStartTime(null);
     setTaskTitle('');
   };
 

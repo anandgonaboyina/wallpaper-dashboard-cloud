@@ -16,7 +16,15 @@ export default function BigClock() {
   const toggle24HourClock = useDashboardStore((state) => state.toggle24HourClock);
   const showClock = useDashboardStore((state) => state.showClock);
   const showTodayWork = useDashboardStore((state) => state.showTodayWork);
+  
+  const timerEndAt = useDashboardStore((state) => state.timerEndAt);
+  const timerPausedLeft = useDashboardStore((state) => state.timerPausedLeft);
+  const stopwatchStartTime = useDashboardStore((state) => state.stopwatchStartTime);
+  
   const [isMobile, setIsMobile] = useState(false);
+  
+  const [activeTimerSecs, setActiveTimerSecs] = useState<number | null>(null);
+  const [activeStopwatchSecs, setActiveStopwatchSecs] = useState<number | null>(null);
 
   // Detect mobile viewport size
   useEffect(() => {
@@ -65,13 +73,40 @@ export default function BigClock() {
     // Initial set
     setTime(new Date());
 
-    // Update every second
+    // Update every second for the clock, and faster for active pills
     const interval = setInterval(() => {
       setTime(new Date());
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, []);
+    const activeInterval = setInterval(() => {
+       if (timerEndAt) {
+          setActiveTimerSecs(Math.max(0, Math.floor((timerEndAt - Date.now()) / 1000)));
+       } else if (timerPausedLeft !== null) {
+          setActiveTimerSecs(timerPausedLeft);
+       } else {
+          setActiveTimerSecs(null);
+       }
+       
+       if (stopwatchStartTime) {
+          setActiveStopwatchSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
+       } else {
+          setActiveStopwatchSecs(null);
+       }
+    }, 250);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(activeInterval);
+    };
+  }, [timerEndAt, timerPausedLeft, stopwatchStartTime]);
+
+  const formatPillTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   // Avoid hydration mismatch by not rendering until mounted
   if (!time) {
@@ -127,28 +162,60 @@ export default function BigClock() {
 
       {/* Today's Focus History */}
       {showTodayWork && (() => {
-        const pill = (
+        const desktopPill = (
           <div
             onClick={toggleHide}
             title="Toggle Hidden Mode (Ctrl+H)"
             className={`flex items-center gap-1.5 md:gap-2 text-white/60 font-medium tracking-wide bg-black/60 backdrop-blur-xl md:px-4 md:py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${
-              isMobile 
-                ? 'fixed top-0 left-1/2 -translate-x-1/2 z-[99999] text-[11px] px-6 pb-3 pt-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] rounded-b-3xl rounded-t-none bg-black text-white border-t-0 w-[60vw] max-w-[200px] justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0'
-                : ((isTimetableOpen && !isMobile) ? 'text-base md:text-sm mt-2 md:mt-0 scale-90 md:scale-75 origin-top px-5 py-3' : 'text-xl md:text-lg mt-4 md:mt-1 px-5 py-3')
+              isTimetableOpen ? 'text-sm mt-0 scale-75 origin-top px-5 py-3' : 'text-lg mt-1 px-5 py-3'
             }`}
           >
-            <Flame className="text-orange-400 w-3.5 h-3.5 md:w-5 md:h-5 shrink-0" />
+            <Flame className="text-orange-400 w-5 h-5 shrink-0" />
             <div className="flex items-center whitespace-nowrap">
               <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
-              <span className="text-white/30 mx-1.5 md:mx-2">|</span>
+              <span className="text-white/30 mx-2">|</span>
               <span className="text-white/80">{timeLeftText}</span>
             </div>
           </div>
         );
 
+        const mobilePills = (
+          <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-[90vw] pointer-events-none">
+            <div className="flex items-start justify-center relative w-full">
+              <div
+                onClick={toggleHide}
+                className="flex items-center gap-1.5 text-[11px] px-6 pb-3 pt-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] rounded-b-3xl rounded-t-none bg-black text-white border border-t-0 border-white/10 cursor-pointer pointer-events-auto max-w-[200px] justify-center"
+              >
+                <Flame className="text-orange-400 w-3.5 h-3.5 shrink-0" />
+                <div className="flex items-center whitespace-nowrap">
+                  <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
+                  <span className="text-white/30 mx-1.5">|</span>
+                  <span className="text-white/80">{timeLeftText}</span>
+                </div>
+              </div>
+
+              {/* ACTIVE TIMER/STOPWATCH PILL FOR MOBILE */}
+              {(activeTimerSecs !== null || activeStopwatchSecs !== null) && (
+                <div
+                  onClick={() => {
+                     if (activeTimerSecs !== null) {
+                        useDashboardStore.getState().toggleTimer();
+                     } else if (activeStopwatchSecs !== null) {
+                        useDashboardStore.getState().toggleStopwatch();
+                     }
+                  }}
+                  className="absolute left-[calc(50%+85px)] ml-2 flex items-center justify-center text-[12px] font-bold tracking-widest bg-blue-500/20 border border-t-0 border-blue-500/30 text-blue-200 backdrop-blur-xl px-4 pb-2.5 pt-1.5 rounded-b-2xl shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform"
+                >
+                   {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
         return isMobile && typeof document !== 'undefined' 
-          ? createPortal(pill, document.body) 
-          : pill;
+          ? createPortal(mobilePills, document.body) 
+          : desktopPill;
       })()}
     </div>
   );

@@ -204,6 +204,13 @@ export default function Timer() {
     setTimerEndAt(Date.now() + seconds * 1000);
     setTimerLastSavedChunks(0);
     stopAlarm();
+
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+       const state = useDashboardStore.getState();
+       if (state.isTimerOpen) {
+          state.toggleTimer();
+       }
+    }
   };
 
   const togglePause = () => {

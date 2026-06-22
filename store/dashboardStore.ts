@@ -158,6 +158,8 @@ interface DashboardState {
   addStopwatchSession: (title: string, secs: number, addToStats: boolean) => void;
   deleteStopwatchSession: (id: string) => void;
   clearStopwatchSessions: () => void;
+  stopwatchStartTime: number | null;
+  setStopwatchStartTime: (time: number | null) => void;
 
   // Plans/Roadmap State
   plans: Plan[];
@@ -805,6 +807,8 @@ export const useDashboardStore = create<DashboardState>()(
         stopwatchSessions: (state.stopwatchSessions || []).filter(s => s.id !== id)
       })),
       clearStopwatchSessions: () => set({ stopwatchSessions: [] }),
+      stopwatchStartTime: null,
+      setStopwatchStartTime: (time) => set({ stopwatchStartTime: time }),
 
       // Plans State
       plans: [],
