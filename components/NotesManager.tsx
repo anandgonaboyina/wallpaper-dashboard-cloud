@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Plus, X, StickyNote, Trash2, Undo, Redo, Bold, Italic, Underline, List } from 'lucide-react';
+import { Plus, X, StickyNote, Trash2, Undo, Redo, Bold, Italic, Underline, List, Download } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 function EditorBlock({ date, initialHtml, onChange }: { date: string; initialHtml: string; onChange: (html: string) => void }) {
@@ -67,6 +67,36 @@ export default function NotesManager() {
 
   useEffect(() => setMounted(true), []);
 
+  // ----- DESKTOP SITE OVERRIDE LOGIC -----
+  useEffect(() => {
+    if (!isNotesOpen) return;
+
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    let originalContent = '';
+
+    // Temporarily force desktop viewport on mobile, causing it to scale out
+    if (viewportMeta) {
+      originalContent = viewportMeta.getAttribute('content') || '';
+      viewportMeta.setAttribute('content', 'width=1024');
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=1024';
+      document.head.appendChild(meta);
+    }
+
+    return () => {
+      // Revert exactly to original layout when closed
+      if (viewportMeta && originalContent) {
+        viewportMeta.setAttribute('content', originalContent);
+      } else {
+        const addedMeta = document.querySelector('meta[name="viewport"]');
+        if (addedMeta && !originalContent) addedMeta.remove();
+      }
+    };
+  }, [isNotesOpen]);
+  // ---------------------------------------
+
   if (!mounted || !isNotesOpen) return null;
 
   return (
@@ -131,13 +161,29 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
             <h2 className="text-base md:text-lg font-medium text-white tracking-wide flex items-center gap-2">
               <StickyNote size={18} className="text-yellow-400" /> Notes
             </h2>
-            <button
-              onClick={addNote}
-              className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="New Note"
-            >
-              <Plus size={20} />
-            </button>
+            <div className="flex gap-1">
+              <button
+                onClick={() => {
+                  const token = localStorage.getItem('dashboard_sync_token') || localStorage.getItem('dashboard_token');
+                  if (token) {
+                    window.location.href = `/api/export/notes?token=${token}`;
+                  } else {
+                    alert('Please log in first.');
+                  }
+                }}
+                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+                title="Export Notes to JSON"
+              >
+                <Download size={20} />
+              </button>
+              <button
+                onClick={addNote}
+                className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+                title="New Note"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
           </div>
 
           <div className="relative flex-1 overflow-hidden flex flex-col">
@@ -156,7 +202,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                         deleteNote(note.id);
                       }
                     }}
-                    className={`p-1.5 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400 transition-all shrink-0 ${notes.length === 1 ? 'hidden' : ''}`}
+                    className={`p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400 transition-all shrink-0 ${notes.length === 1 ? 'hidden' : ''}`}
                     title="Delete Note"
                   >
                     <Trash2 size={16} />

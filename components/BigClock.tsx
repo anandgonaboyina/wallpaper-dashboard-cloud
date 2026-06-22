@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { Flame } from 'lucide-react';
 import { getLocalDateString } from '@/utils/date';
@@ -25,6 +26,40 @@ export default function BigClock() {
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
   }, []);
+
+  // Global swipe detector for the top notch
+  useEffect(() => {
+    if (!isMobile) return;
+    let startY = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      // Only track if swipe starts within the top 80px (where the notch is)
+      if (e.touches[0].clientY > 80) return;
+      startY = e.touches[0].clientY;
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (startY === 0) return; // Ignore if it didn't start at the top
+      
+      const endY = e.changedTouches[0].clientY;
+      const diffY = endY - startY;
+      
+      if (diffY > 30) {
+        useDashboardStore.getState().setIsMobileCountdownsVisible(true); // Swiped down -> show
+      } else if (diffY < -30) {
+        useDashboardStore.getState().setIsMobileCountdownsVisible(false); // Swiped up -> hide
+      }
+      
+      startY = 0; // Reset
+    };
+    
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     // Initial set
@@ -74,7 +109,7 @@ export default function BigClock() {
 
   return (
     <div className={`flex flex-col w-fit h-fit justify-center pointer-events-none transition-all duration-700 items-center select-none`}>
-      {showClock && (
+      {showClock && !isMobile && (
         <>
           <div
             onClick={toggle24HourClock}
@@ -91,20 +126,30 @@ export default function BigClock() {
       )}
 
       {/* Today's Focus History */}
-      {showTodayWork && (
-        <div
-          onClick={toggleHide}
-          title="Toggle Hidden Mode (Ctrl+H)"
-          className={`flex items-center gap-2 md:gap-2 text-white/60 font-medium tracking-wide bg-black/40 backdrop-blur-md px-5 py-3 md:px-4 md:py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${(isTimetableOpen && !isMobile) ? 'text-base md:text-sm mt-2 md:mt-0 scale-90 md:scale-75 origin-top' : 'text-xl md:text-lg mt-4 md:mt-1'}`}
-        >
-          <Flame className="text-orange-400 w-6 h-6 md:w-5 md:h-5" />
-          <pre>
-            <span>Today: <span className="text-white/90 font-bold">{focusText}</span></span>
-            <span className="text-white/30 mx-1">|</span>
-            <span className="text-white/80">{timeLeftText}</span>
-          </pre>
-        </div>
-      )}
+      {showTodayWork && (() => {
+        const pill = (
+          <div
+            onClick={toggleHide}
+            title="Toggle Hidden Mode (Ctrl+H)"
+            className={`flex items-center gap-1.5 md:gap-2 text-white/60 font-medium tracking-wide bg-black/60 backdrop-blur-xl md:px-4 md:py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${
+              isMobile 
+                ? 'fixed top-0 left-1/2 -translate-x-1/2 z-[99999] text-[11px] px-6 pb-3 pt-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] rounded-b-3xl rounded-t-none bg-black text-white border-t-0 w-[60vw] max-w-[200px] justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0'
+                : ((isTimetableOpen && !isMobile) ? 'text-base md:text-sm mt-2 md:mt-0 scale-90 md:scale-75 origin-top px-5 py-3' : 'text-xl md:text-lg mt-4 md:mt-1 px-5 py-3')
+            }`}
+          >
+            <Flame className="text-orange-400 w-3.5 h-3.5 md:w-5 md:h-5 shrink-0" />
+            <div className="flex items-center whitespace-nowrap">
+              <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
+              <span className="text-white/30 mx-1.5 md:mx-2">|</span>
+              <span className="text-white/80">{timeLeftText}</span>
+            </div>
+          </div>
+        );
+
+        return isMobile && typeof document !== 'undefined' 
+          ? createPortal(pill, document.body) 
+          : pill;
+      })()}
     </div>
   );
 }

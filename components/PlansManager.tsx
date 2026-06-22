@@ -18,6 +18,36 @@ export default function PlansManager() {
 
   useEffect(() => setMounted(true), []);
 
+  // ----- DESKTOP SITE OVERRIDE LOGIC -----
+  useEffect(() => {
+    if (!isPlansOpen) return;
+
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    let originalContent = '';
+
+    // Temporarily force desktop viewport on mobile, causing it to scale out
+    if (viewportMeta) {
+      originalContent = viewportMeta.getAttribute('content') || '';
+      viewportMeta.setAttribute('content', 'width=1024');
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=1024';
+      document.head.appendChild(meta);
+    }
+
+    return () => {
+      // Revert exactly to original layout when closed
+      if (viewportMeta && originalContent) {
+        viewportMeta.setAttribute('content', originalContent);
+      } else {
+        const addedMeta = document.querySelector('meta[name="viewport"]');
+        if (addedMeta && !originalContent) addedMeta.remove();
+      }
+    };
+  }, [isPlansOpen]);
+  // ---------------------------------------
+
   if (!mounted || !isPlansOpen) return null;
 
   return <PlansEditor />;
@@ -454,7 +484,7 @@ function DetailView({ plan, onAddSub, onToggleSub, onDeleteSub, onDeletePlan }: 
                   </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); onDeleteSub(st.id); }}
-                    className="opacity-100 md:opacity-0 group-hover:opacity-100 p-1.5 md:p-2 text-white/30 hover:text-red-400 hover:bg-white/10 rounded-lg md:rounded-xl transition-all shrink-0"
+                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 md:p-2 text-white/30 hover:text-red-400 hover:bg-white/10 rounded-lg md:rounded-xl transition-all shrink-0"
                   >
                     <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
                   </button>

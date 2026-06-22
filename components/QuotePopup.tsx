@@ -1,11 +1,19 @@
 'use client';
+import { useEffect } from 'react';
 import { X, Quote as QuoteIcon } from 'lucide-react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { fetchQuote } from '@/utils/quoteEngine';
 import DraggableWidget from './DraggableWidget';
 
 export default function QuotePopup() {
-  const { currentQuote, isQuotePopupOpen, hideQuotePopup, showQuotePopup } = useDashboardStore();
+  const { currentQuote, isQuotePopupOpen, hideQuotePopup, showQuotePopup, currentBgSrc, updateWidgetOffset } = useDashboardStore();
+
+  // Force clear any saved offsets for the quote so it snaps perfectly under the notch
+  useEffect(() => {
+    if (currentBgSrc) {
+      updateWidgetOffset(currentBgSrc, 'quote', 0, 0);
+    }
+  }, [currentBgSrc, updateWidgetOffset]);
 
   const handleNextQuote = async () => {
     if (window.getSelection()?.toString().trim().length) {
@@ -18,7 +26,7 @@ export default function QuotePopup() {
   if (!isQuotePopupOpen || !currentQuote) return null;
 
   return (
-    <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[1] w-full pointer-events-none px-2 animate-in slide-in-from-top-10 fade-in duration-500 flex justify-center">
+    <div className="fixed top-8 md:top-8 left-1/2 -translate-x-1/2 z-[1] w-full pointer-events-none px-2 animate-in slide-in-from-top-10 fade-in duration-500 flex justify-center">
       <DraggableWidget id="quote">
         <div className="relative py-3 px-4 text-white overflow-hidden group text-center drop-shadow-2xl bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl w-[90vw] md:w-fit max-w-[90vw] md:max-w-[50vw] mx-auto mb-4 md:mb-0">
           <div

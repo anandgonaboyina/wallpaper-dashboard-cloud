@@ -18,6 +18,36 @@ export default function StatsModal() {
     }
   }, [isStatsOpen]);
 
+  // ----- DESKTOP SITE OVERRIDE LOGIC -----
+  useEffect(() => {
+    if (!isStatsOpen) return;
+
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    let originalContent = '';
+
+    // Temporarily force desktop viewport on mobile, causing it to scale out
+    if (viewportMeta) {
+      originalContent = viewportMeta.getAttribute('content') || '';
+      viewportMeta.setAttribute('content', 'width=1024');
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=1024';
+      document.head.appendChild(meta);
+    }
+
+    return () => {
+      // Revert exactly to original layout when closed
+      if (viewportMeta && originalContent) {
+        viewportMeta.setAttribute('content', originalContent);
+      } else {
+        const addedMeta = document.querySelector('meta[name="viewport"]');
+        if (addedMeta && !originalContent) addedMeta.remove();
+      }
+    };
+  }, [isStatsOpen]);
+  // ---------------------------------------
+
   if (!isStatsOpen) return null;
 
   // Sort dates descending (newest first)

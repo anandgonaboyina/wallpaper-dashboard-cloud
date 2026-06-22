@@ -82,7 +82,7 @@ export default function MiniCalendar() {
                       }
                     }}
                     style={{ marginRight: '5px' }}
-                    className="text-red-400/80 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                    className="text-red-400/80 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 p-1.5 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all shrink-0"
                   >
                     <Trash size={14} />
                   </button>
@@ -156,7 +156,7 @@ export default function MiniCalendar() {
                     }
                   }}
                   style={{ marginRight: '5px' }}
-                  className="text-red-400/80 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 p-1.5 rounded-md transition-all shrink-0 opacity-0 group-hover:opacity-100"
+                  className="text-red-400/80 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 p-1.5 rounded-md transition-all shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 >
                   <Trash size={14} />
                 </button>

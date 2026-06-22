@@ -102,7 +102,7 @@ export default function Timetable() {
   const TIMES = (isWeekendMode ? weekendTimes : weekdayTimes) || defaultTimes;
 
   return (
-    <div suppressHydrationWarning className="bg-black/50 backdrop-blur-3xl border border-white/10 rounded-3xl p-1.5 shadow-2xl w-full max-w-[100vw] md:w-fit pointer-events-auto transition-all duration-500 overflow-hidden md:overflow-visible">
+    <div suppressHydrationWarning className="bg-black/50 backdrop-blur-3xl border border-white/10 rounded-3xl p-1.5 shadow-2xl w-full max-w-[100vw] md:w-fit transition-all duration-500 overflow-hidden md:overflow-visible">
       <div className="flex items-center justify-between text-white/80 mb-2 pb-1.5 border-b border-white/10 mt-1 px-2 min-w-0 md:min-w-[300px]">
         <button
           onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
