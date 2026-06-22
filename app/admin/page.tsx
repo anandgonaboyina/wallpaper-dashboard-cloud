@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Bug, Trash2, CheckCircle, RefreshCw, Radio, LogOut, Quote as QuoteIcon, Upload, Users } from 'lucide-react';
+import { Shield, Bug, Trash2, CheckCircle, RefreshCw, Radio, LogOut, Quote as QuoteIcon, Upload, Users, Trophy, Award, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
@@ -10,7 +10,12 @@ export default function AdminDashboard() {
   const [quotes, setQuotes] = useState<any[]>([]);
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'feedback' | 'broadcasts' | 'users' | 'quotes' | 'roadmap'>('feedback');
+  const [activeTab, setActiveTab] = useState<'feedback' | 'broadcasts' | 'users' | 'quotes' | 'roadmap' | 'leaderboard'>('feedback');
+
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [leaderboardFilter, setLeaderboardFilter] = useState<'today' | 'week' | 'month'>('today');
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardSearch, setLeaderboardSearch] = useState('');
 
   // Broadcast state
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -41,8 +46,23 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchFeedback(), fetchBroadcasts(), fetchUsers(), fetchQuotes(), fetchRoadmap()]);
+    await Promise.all([fetchFeedback(), fetchBroadcasts(), fetchUsers(), fetchQuotes(), fetchRoadmap(), fetchLeaderboard()]);
     setIsLoading(false);
+  };
+
+  const fetchLeaderboard = async () => {
+    setLeaderboardLoading(true);
+    try {
+      const res = await fetch('/api/leaderboard', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('dashboard_token')}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.leaderboard) {
+        setLeaderboardData(data.leaderboard);
+      }
+    } catch (err) {} finally {
+      setLeaderboardLoading(false);
+    }
   };
 
   const fetchFeedback = async () => {
@@ -152,31 +172,6 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const handleResetPassword = async (userId: string, username: string) => {
-    const newPassword = window.prompt(`Enter new password for ${username}:`);
-    if (!newPassword) return;
-
-    try {
-      const res = await fetch('/api/admin/users/reset-password', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('dashboard_token')}`
-        },
-        body: JSON.stringify({ userId, newPassword })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(`Password for ${username} has been reset successfully!`);
-      } else {
-        alert(data.error || 'Failed to reset password');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Failed to reset password due to network error.');
     }
   };
 
@@ -384,7 +379,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-4 md:p-8 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-4 md:p-8 font-sans selection:bg-blue-500/30 overflow-x-hidden select-text">
       <div className="max-w-6xl mx-auto flex flex-col gap-4 md:gap-8">
         
         {/* Header */}
@@ -444,6 +439,12 @@ export default function AdminDashboard() {
           >
             <CheckCircle size={18} /> <span className="hidden sm:inline">Feature Pipeline</span><span className="sm:hidden">Roadmap</span>
           </button>
+          <button 
+            onClick={() => setActiveTab('leaderboard')}
+            className={`flex items-center justify-center md:justify-start gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${activeTab === 'leaderboard' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/5'}`}
+          >
+            <Trophy size={18} /> <span className="hidden sm:inline">Leaderboards</span><span className="sm:hidden">Ranks</span>
+          </button>
         </div>
 
         <div className="w-full">
@@ -495,6 +496,7 @@ export default function AdminDashboard() {
                     </div>
                     
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
                       <button 
                         onClick={() => deleteFeedback(item._id)}
                         className="p-1.5 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-colors"
@@ -688,6 +690,106 @@ export default function AdminDashboard() {
           </div>
           )}
 
+          {/* Leaderboards */}
+          {activeTab === 'leaderboard' && (
+          <div className="flex flex-col gap-6 w-full lg:max-w-4xl mx-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Trophy className="text-yellow-400" size={20} /> Leaderboards & Badges
+              </h2>
+              <button 
+                onClick={fetchLeaderboard}
+                className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/10"
+              >
+                <RefreshCw size={16} className={leaderboardLoading ? "animate-spin text-blue-400" : "text-white/60"} />
+              </button>
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-black/40 p-4 rounded-xl border border-white/10">
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setLeaderboardFilter('today')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${leaderboardFilter === 'today' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-white/40 bg-white/5 hover:text-white/70'}`}
+                >
+                  Today
+                </button>
+                <button 
+                  onClick={() => setLeaderboardFilter('week')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${leaderboardFilter === 'week' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-white/40 bg-white/5 hover:text-white/70'}`}
+                >
+                  Last 7 Days
+                </button>
+                <button 
+                  onClick={() => setLeaderboardFilter('month')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${leaderboardFilter === 'month' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-white/40 bg-white/5 hover:text-white/70'}`}
+                >
+                  Last 30 Days
+                </button>
+              </div>
+              <div className="relative w-full md:w-64">
+                <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/30" />
+                <input 
+                  type="text" 
+                  placeholder="Search user..." 
+                  value={leaderboardSearch}
+                  onChange={(e) => setLeaderboardSearch(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+            </div>
+
+            {leaderboardLoading && leaderboardData.length === 0 ? (
+              <p className="text-white/40 italic py-10 text-center">Loading leaderboard...</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {(() => {
+                  const sortedData = [...leaderboardData].sort((a, b) => {
+                    const valA = leaderboardFilter === 'today' ? a.todayFocused : leaderboardFilter === 'week' ? a.last7DaysFocused : a.last30DaysFocused;
+                    const valB = leaderboardFilter === 'today' ? b.todayFocused : leaderboardFilter === 'week' ? b.last7DaysFocused : b.last30DaysFocused;
+                    return valB - valA;
+                  });
+                  const filteredData = sortedData.filter(u => u.displayName.toLowerCase().includes(leaderboardSearch.toLowerCase()));
+                  
+                  if (filteredData.length === 0) {
+                    return <p className="text-white/40 italic text-center py-10">No users found.</p>;
+                  }
+
+                  return filteredData.map((user, index) => {
+                    const val = leaderboardFilter === 'today' ? user.todayFocused : leaderboardFilter === 'week' ? user.last7DaysFocused : user.last30DaysFocused;
+
+                    const rankColors = ['bg-yellow-500/20 text-yellow-400 border-yellow-500/30', 'bg-gray-300/20 text-gray-300 border-gray-300/30', 'bg-amber-700/20 text-amber-500 border-amber-700/30'];
+                    const rankColor = index < 3 && val > 0 ? rankColors[index] : 'bg-white/5 text-white/50 border-white/10';
+
+                    return (
+                      <div key={user.id} className="flex items-center justify-between p-4 rounded-xl border bg-black/30 border-white/5 hover:bg-black/50 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border ${rankColor}`}>
+                            {index + 1}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-white/90">
+                              {user.displayName} <span className="text-white/30 text-xs font-mono ml-2">ID: {user.id}</span>
+                            </span>
+                            <div className="flex gap-2 mt-1">
+                              {user.badges?.today > 0 && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20">🏆 {user.badges.today} Daily</span>}
+                              {user.badges?.week > 0 && <span className="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/20">🌟 {user.badges.week} Weekly</span>}
+                              {user.badges?.month > 0 && <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">👑 {user.badges.month} Monthly</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex flex-col">
+                          <span className="font-mono font-bold text-lg">{Math.floor(val / 60)}h {val % 60}m</span>
+                          <span className="text-[10px] text-white/40 uppercase tracking-widest">Focused</span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
+          </div>
+          )}
+
         </div>
 
         {/* Users Section */}
@@ -725,9 +827,20 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                 </div>
+                
+                <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
                   <span className="px-3 py-1.5 text-xs font-mono bg-white/5 text-white/50 border border-white/10 rounded-lg">
                     ID: {user._id}
                   </span>
+                </div>
+
+                {user.deletionScheduledAt && (
+                  <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs">
+                    <strong>Pending Auto-Deletion:</strong> Scheduled for {new Date(new Date(user.deletionScheduledAt).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                    <br/>
+                    Reason: {user.deletionReason}
+                  </div>
+                )}
               </div>
             ))}
           </div>
