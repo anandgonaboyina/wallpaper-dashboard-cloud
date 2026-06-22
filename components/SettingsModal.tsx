@@ -40,17 +40,17 @@ export default function SettingsModal() {
   // ---------------------------------------
 
   const handleShortcutCapture = (e: React.KeyboardEvent<HTMLInputElement>, setter: (val: string) => void) => {
-    e.preventDefault();
     const key = e.key.toLowerCase();
+    if (e.altKey && (key === 'f4' || e.code === 'F4' || e.keyCode === 115)) return; // NEVER capture Alt+F4
+    e.preventDefault();
     if (key === 'control' || key === 'shift' || key === 'alt' || key === 'meta') return;
-    if (e.altKey && key === 'f4') return; // NEVER capture Alt+F4
     if (key === 'escape') {
       e.currentTarget.blur();
       return;
     }
     const parts = [];
     if (e.ctrlKey) parts.push('ctrl');
-    if (e.altKey) parts.push('alt');
+    // Alt removed from custom combinations to prevent Alt+F4 and Windows OS conflicts
     if (e.shiftKey) parts.push('shift');
     parts.push(key === ' ' ? 'space' : key);
     setter(parts.join('+'));
@@ -896,17 +896,17 @@ export default function SettingsModal() {
                       </button>
                     </div>
 
-                    {/* Enable Vibration Toggle (Mobile Only) */}
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 md:hidden">
+                    {/* Enable Vibration Toggle */}
+                    <div className="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-xl bg-white/5">
                       <div className="flex flex-col">
-                        <span className="text-xs font-medium text-white/80">Enable Device Vibration</span>
-                        <p className="text-[10px] text-white/40">Vibrate your device when the timer finishes</p>
+                        <span className="text-xs md:text-sm font-medium text-white/80">Enable Device Vibration</span>
+                        <p className="text-[10px] md:text-xs text-white/40">Vibrate your device when the timer finishes</p>
                       </div>
                       <button
                         onClick={() => setEnableAlarmVibration(!enableAlarmVibration)}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${enableAlarmVibration ? 'bg-blue-500' : 'bg-white/20'}`}
+                        className={`relative inline-flex h-5 w-9 md:h-6 md:w-11 items-center rounded-full transition-colors shrink-0 ${enableAlarmVibration ? 'bg-blue-500' : 'bg-white/20'}`}
                       >
-                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${enableAlarmVibration ? 'translate-x-5' : 'translate-x-1'}`} />
+                        <span className={`inline-block h-3.5 w-3.5 md:h-4 md:w-4 transform rounded-full bg-white transition-transform ${enableAlarmVibration ? 'translate-x-5 md:translate-x-6' : 'translate-x-1'}`} />
                       </button>
                     </div>
 

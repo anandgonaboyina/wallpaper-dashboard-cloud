@@ -14,14 +14,22 @@ export default function VideoBackground() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setIsMobile(window.innerWidth <= 768);
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const checkMobile = () => {
+      if (typeof navigator !== 'undefined') {
+        const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (uaMobile) return true;
+      }
+      return window.innerWidth <= 768;
+    };
+
+    setIsMobile(checkMobile());
+    const handleResize = () => setIsMobile(checkMobile());
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Determine active source
-  let bgSrc = "/wallpapers/naruto.webp"; // Default fallback
+  let bgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp"; // Default fallback
   
   if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
     bgSrc = customMobileWallpapers[activeMobileCustomIndex];
@@ -41,14 +49,14 @@ export default function VideoBackground() {
           muted
           loop
           playsInline
-          className={`fixed inset-0 w-full h-full object-cover -z-20 transition-opacity duration-1000 ${isPanicHidden ? 'opacity-0' : 'opacity-100'}`}
+          className="fixed inset-0 w-full h-full object-cover -z-20 transition-opacity duration-1000 opacity-100"
         />
       ) : (
         <img
           key={bgSrc}
           src={bgSrc}
           alt="Wallpaper"
-          className={`fixed inset-0 w-full h-full object-cover -z-20 transition-opacity duration-1000 ${isPanicHidden ? 'opacity-0' : 'opacity-100'}`}
+          className="fixed inset-0 w-full h-full object-cover -z-20 transition-opacity duration-1000 opacity-100"
         />
       )}
     </>

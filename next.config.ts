@@ -3,7 +3,7 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: false, // Explicitly enable service worker caching even in dev
+  disable: process.env.NODE_ENV === 'development', // Disable in dev to prevent infinite compile loops
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,

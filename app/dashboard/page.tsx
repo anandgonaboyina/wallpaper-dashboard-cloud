@@ -83,7 +83,7 @@ export default function Dashboard() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.altKey && e.key.toLowerCase() === 'f4') return; // NEVER block Alt+F4
+      if (e.altKey && (e.key?.toLowerCase() === 'f4' || e.code === 'F4' || e.keyCode === 115)) return; // NEVER block Alt+F4
 
       let fKey = focusShortcutKey;
       if (!fKey.includes('+') && fKey.length === 1) fKey = 'ctrl+' + fKey;
@@ -94,9 +94,9 @@ export default function Dashboard() {
         const parts = shortcut.split('+');
         const key = parts.pop();
         const ctrl = parts.includes('ctrl');
-        const alt = parts.includes('alt');
+        const alt = false; // Alt removed from custom combinations to prevent Alt+F4 and Windows OS conflicts
         const shift = parts.includes('shift');
-        return ev.ctrlKey === ctrl && ev.altKey === alt && ev.shiftKey === shift && ev.key.toLowerCase() === key;
+        return ev.ctrlKey === ctrl && ev.altKey === alt && ev.shiftKey === shift && ev.key?.toLowerCase() === key;
       };
 
       if (checkShortcut(e, fKey)) {
