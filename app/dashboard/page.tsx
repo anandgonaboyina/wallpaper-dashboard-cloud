@@ -138,9 +138,52 @@ export default function Dashboard() {
 
   if (!_hasHydrated) {
     return (
-      <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center text-white/50 font-mono">
-        <div className="w-8 h-8 border-4 border-white/10 border-t-blue-500 rounded-full animate-spin mb-4" />
-        <div className="text-sm tracking-widest uppercase">Connecting to Database...</div>
+      <div className="fixed inset-0 bg-[#050505] z-[9999] flex flex-col items-center justify-center text-white font-sans overflow-hidden">
+        {/* Background ambient glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-blue-500/10 rounded-full blur-[80px] md:blur-[120px]" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center justify-center p-8 text-center max-w-lg w-full h-full justify-evenly animate-in fade-in duration-1000">
+          
+          <div className="flex flex-col items-center">
+            {/* Profile Picture */}
+            <div className="relative w-24 h-24 md:w-32 md:h-32 mb-6 rounded-full overflow-hidden ring-4 ring-white/5 shadow-2xl shadow-blue-500/20">
+              <img 
+                src="/branding/author.jpeg" 
+                alt="Creator Profile" 
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = '/icon-192x192.png' }}
+              />
+            </div>
+
+            {/* Title & Version */}
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent">
+              Productive Dashboard
+            </h1>
+            <div className="text-[10px] md:text-xs font-mono text-blue-400 mb-8 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+              Cloud Sync Enabled
+            </div>
+
+            {/* Why we made it */}
+            <p className="text-sm md:text-base text-white/50 leading-relaxed max-w-md mx-auto">
+              "Built to eliminate distractions and create a single, unified workspace. 
+              Everything you need to stay deeply focused, plan your day, and track your goals—now available anywhere."
+            </p>
+          </div>
+
+          {/* Loading Spinner & Status */}
+          <div className="flex flex-col items-center mt-8">
+            <div className="relative flex items-center justify-center mb-5">
+              <div className="w-12 h-12 border-4 border-white/5 border-t-blue-500 rounded-full animate-spin" />
+              <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-b-purple-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+            </div>
+            <div className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-white/40 animate-pulse">
+              Authenticating & Syncing Data...
+            </div>
+          </div>
+
+        </div>
       </div>
     );
   }

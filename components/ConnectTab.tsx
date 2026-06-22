@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDashboardStore } from '@/store/dashboardStore';
+import { useDashboardStore, setAuthTransition } from '@/store/dashboardStore';
 import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
@@ -240,6 +240,7 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
     }
 
     try {
+      setAuthTransition(true); // Stop any saves from old session!
       const bodyPayload = authMode === 'register'
         ? { username: authUsername, email: authEmail, password: authPassword }
         : { username: authUsername, password: authPassword };
@@ -274,6 +275,7 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
   };
 
   const handleLogout = async () => {
+    setAuthTransition(true); // Stop any saves from old session!
     localStorage.removeItem('dashboard_sync_token');
     localStorage.removeItem('dashboard_token');
     localStorage.removeItem('dashboard_username');

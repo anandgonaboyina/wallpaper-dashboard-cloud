@@ -327,9 +327,11 @@ let pendingValue: string | null = null;
 let lastSavedValue: string | null = null;
 let isSaving = false;
 export let isSyncingFromCloud = false;
+export let isAuthTransition = false;
+export const setAuthTransition = (val: boolean) => { isAuthTransition = val; };
 
 const performSave = async () => {
-  if (!pendingValue || isSyncingFromCloud) {
+  if (!pendingValue || isSyncingFromCloud || isAuthTransition) {
     saveTimeout = null;
     return;
   }
@@ -440,6 +442,10 @@ const fileStorage = createJSONStorage(() => ({
     const token = getSyncToken();
     
     while (retries < 15 && token) {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.warn("Device is offline. Bypassing cloud sync and loading local data instantly.");
+        break;
+      }
       try {
         const res = await fetch('/api/store', { 
           headers: { 'Authorization': `Bearer ${token}` },
@@ -501,7 +507,7 @@ const fileStorage = createJSONStorage(() => ({
     return localData;
   },
   setItem: async (_name: string, value: string): Promise<void> => {
-    if (typeof window === 'undefined' || isSyncingFromCloud) return;
+    if (typeof window === 'undefined' || isSyncingFromCloud || isAuthTransition) return;
     if (value === lastSavedValue) return; // Prevent overwriting DB with unchanged hydration state
     
     // ALWAYS save locally first so offline restarts have immediate latest data!

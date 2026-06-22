@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Shield, Bug, Trash2, CheckCircle, RefreshCw, Radio, LogOut, Quote as QuoteIcon, Upload, Users, Trophy, Award, Search } from 'lucide-react';
+import { setAuthTransition } from '@/store/dashboardStore';
 
 export default function AdminDashboard() {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
@@ -395,6 +396,7 @@ export default function AdminDashboard() {
           </div>
           <button 
             onClick={() => {
+              setAuthTransition(true);
               localStorage.removeItem('dashboard_token');
               localStorage.removeItem('dashboard_sync_token');
               localStorage.removeItem('dashboard_role');
