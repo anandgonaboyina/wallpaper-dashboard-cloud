@@ -512,6 +512,7 @@ const fileStorage = createJSONStorage(() => ({
     
     // ALWAYS save locally first so offline restarts have immediate latest data!
     localStorage.setItem('dashboard-storage', value);
+    setSyncLastModified(Date.now()); // Mark local as newest immediately!
 
     pendingValue = value;
     hasUnsavedChanges = true;
