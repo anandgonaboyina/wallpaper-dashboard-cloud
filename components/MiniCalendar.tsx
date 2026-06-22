@@ -122,29 +122,38 @@ export default function MiniCalendar() {
               <div key={d.id} className="flex gap-2 items-center bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 focus-within:border-blue-500/30 transition-all group shadow-sm">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_red] py-1 shrink-0" />
                 {editingDeadlineId === d.id || !d.text.trim() ? (
-                  <input
-                    type="text"
+                  <textarea
                     value={d.text}
-                    onChange={e => updateDeadline(d.id, e.target.value)}
+                    onChange={e => {
+                      updateDeadline(d.id, e.target.value);
+                      if (editingDeadlineId !== d.id) setEditingDeadlineId(d.id);
+                    }}
                     onBlur={() => { 
                       if (!d.text.trim()) deleteDeadline(d.id); 
                       setEditingDeadlineId(null);
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
                         if (!d.text.trim()) deleteDeadline(d.id);
                         setEditingDeadlineId(null);
                       }
                     }}
-                    className="flex-1 bg-transparent outline-none text-white/90 text-sm h-8 leading-tight placeholder:text-white/30 border-b border-white/20 transition-colors"
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = `${target.scrollHeight}px`;
+                    }}
+                    className="flex-1 bg-transparent outline-none text-white/90 text-sm min-h-[32px] leading-tight placeholder:text-white/30 border-b border-white/20 transition-colors resize-none overflow-hidden py-1.5"
                     placeholder="Enter deadline here..."
                     autoFocus
+                    rows={1}
                   />
                 ) : (
                   <div 
                     onDoubleClick={() => setEditingDeadlineId(d.id)}
                     title="Double click to edit"
-                    className="flex-1 text-white/90 text-sm leading-tight cursor-grab truncate py-1.5"
+                    className="flex-1 text-white/90 text-sm leading-tight cursor-text whitespace-pre-wrap break-words py-1.5"
                   >
                     {d.text}
                   </div>
