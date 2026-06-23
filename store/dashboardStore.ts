@@ -198,7 +198,7 @@ interface DashboardState {
   weekdayTimes: string[];
   weekendTimes: string[];
   updateTimetableTime: (isWeekend: boolean, index: number, newTime: string) => void;
-  addTimetableRow: (isWeekend: boolean) => void;
+  addTimetableRow: (isWeekend: boolean, prepend?: boolean) => void;
   deleteTimetableRow: (isWeekend: boolean, index: number) => void;
   useTimetableRange: boolean;
   toggleTimetableRange: () => void;
@@ -925,25 +925,32 @@ export const useDashboardStore = create<DashboardState>()(
           ? { weekendTimes: newTimes, timetableGrid: newGrid }
           : { weekdayTimes: newTimes, timetableGrid: newGrid };
       }),
-      addTimetableRow: (isWeekend) => set((state) => {
+      addTimetableRow: (isWeekend, prepend = false) => set((state) => {
         const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
         const fallbackArray = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
         const timesList = targetArray || fallbackArray;
-        
+
         let newTime = "06:00 PM";
-        if (timesList.length > 0) {
-          const lastTime = timesList[timesList.length - 1];
-          const match = lastTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
-          if (match) {
-            let h = parseInt(match[1]);
-            const ampm = h === 11 ? (match[3].toUpperCase() === "AM" ? "PM" : "AM") : match[3].toUpperCase();
-            h = h === 12 ? 1 : h + 1;
-            newTime = `${h.toString().padStart(2, '0')}:${match[2]} ${ampm}`;
+        if (prepend) {
+          // For top row: derive a time 60 mins before the first slot (placeholder; actual time driven by startTime in component)
+          newTime = timesList.length > 0 ? timesList[0] : "08:00 AM";
+          const newTimes = [newTime, ...timesList];
+          return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
+        } else {
+          // For bottom row: append after the last slot
+          if (timesList.length > 0) {
+            const lastTime = timesList[timesList.length - 1];
+            const match = lastTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+            if (match) {
+              let h = parseInt(match[1]);
+              const ampm = h === 11 ? (match[3].toUpperCase() === "AM" ? "PM" : "AM") : match[3].toUpperCase();
+              h = h === 12 ? 1 : h + 1;
+              newTime = `${h.toString().padStart(2, '0')}:${match[2]} ${ampm}`;
+            }
           }
+          const newTimes = [...timesList, newTime];
+          return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
         }
-        
-        const newTimes = [...timesList, newTime];
-        return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
       }),
       deleteTimetableRow: (isWeekend, index) => set((state) => {
         const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;

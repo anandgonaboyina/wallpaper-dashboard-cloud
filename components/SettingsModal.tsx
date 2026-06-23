@@ -450,14 +450,14 @@ export default function SettingsModal() {
               onPointerUp={handlePointerUpOrLeave}
               onPointerLeave={handlePointerUpOrLeave}
               onPointerCancel={handlePointerUpOrLeave}
-              className="flex-1 overflow-y-auto overflow-x-hidden p-2  pb-8 md:p-6 md:pb-16 md:pt-12 arrow-scrollbar"
+              className="flex-1 overflow-y-auto overflow-x-hidden p-2 pt-4 pb-8 md:p-6 md:pb-16 md:pt-12 arrow-scrollbar"
               onWheel={(e) => { e.stopPropagation(); e.currentTarget.scrollTop += e.deltaY; }}
             >
 
               {settingsActiveTab === 'connect' && (
-                <div className="max-w-full overflow-x-hidden [&_*]:max-w-full">
-                  <ConnectTab friendStats={friendStats} setFriendStats={setFriendStats} />
-                </div>
+                // <div className="max-w-full overflow-x-hidden [&_*]:max-w-full">
+                <ConnectTab friendStats={friendStats} setFriendStats={setFriendStats} />
+                // </div>
               )}
 
               {settingsActiveTab === 'preferences' && (

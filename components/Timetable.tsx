@@ -1,11 +1,34 @@
 "use client";
 
 import { useDashboardStore } from "@/store/dashboardStore";
-import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock } from "lucide-react";
+import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock, ArrowUp, ArrowDown, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const WEEKENDS = ["Sat", "Sun"];
+
+// Utility to format minutes into h:mm AM/PM
+const formatTime = (totalMins: number) => {
+  let h = Math.floor(totalMins / 60) % 24;
+  const m = totalMins % 60;
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+};
+
+// Utility to parse h:mm AM/PM to minutes from midnight
+const parseMins = (tStr: string) => {
+  if (!tStr) return 0;
+  const m = tStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return 0;
+  let h = parseInt(m[1]);
+  const min = parseInt(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (h === 12 && ampm === "AM") h = 0;
+  if (h !== 12 && ampm === "PM") h += 12;
+  return h * 60 + min;
+};
 
 export default function Timetable() {
   const { timetableGrid, updateTimetableCell, weekdayTimes, weekendTimes, updateTimetableTime, addTimetableRow, deleteTimetableRow, useTimetableRange, toggleTimetableRange } = useDashboardStore();
@@ -16,66 +39,83 @@ export default function Timetable() {
   const [focusedCell, setFocusedCell] = useState<{ day: string, time: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [globalEditingIndex, setGlobalEditingIndex] = useState<number | null>(null);
+
+  // Day Start Times
+  const [weekdayStartTime, setWeekdayStartTime] = useState(540); // 9:00 AM default
+  const [weekendStartTime, setWeekendStartTime] = useState(540);
+  const [isEditingStartTime, setIsEditingStartTime] = useState(false);
 
   useEffect(() => {
-    const day = new Date().getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+    if (typeof window !== 'undefined') {
+      const storedWdStart = localStorage.getItem('timetable_start_weekday');
+      const storedWeStart = localStorage.getItem('timetable_start_weekend');
+      if (storedWdStart) setWeekdayStartTime(parseInt(storedWdStart));
+      if (storedWeStart) setWeekendStartTime(parseInt(storedWeStart));
+    }
+    const day = new Date().getDay();
     setCurrentDayIndex(day);
     if (day === 0 || day === 6) setViewMode("weekends");
     else setViewMode("weekdays");
   }, []);
 
-  const [activeTimeIndex, setActiveTimeIndex] = useState(-1);
+  const handleSetStartTime = (mins: number) => {
+    if (viewMode === "weekdays") {
+      setWeekdayStartTime(mins);
+      localStorage.setItem('timetable_start_weekday', mins.toString());
+    } else {
+      setWeekendStartTime(mins);
+      localStorage.setItem('timetable_start_weekend', mins.toString());
+    }
+    setIsEditingStartTime(false);
+  };
 
+  const isWeekendMode = viewMode === "weekends";
+  const activeDays = isWeekendMode ? WEEKENDS : WEEKDAYS;
+  const rawTimes = isWeekendMode ? weekendTimes : weekdayTimes;
+
+  // Map old string times to durations (60 mins default) to safely migrate
+  const durations = rawTimes.length > 0 ? rawTimes.map((t: any) => {
+    if (typeof t === 'number') return t;
+    return 60;
+  }) : [60, 60, 60, 60, 60, 60, 60, 60, 60];
+
+  // Calculate actual absolute TIMES based on Start Time + cumulative Durations
+  const startTime = isWeekendMode ? weekendStartTime : weekdayStartTime;
+
+  let currentAccumulatedMins = startTime;
+  const generatedTimes: { startStr: string, endStr: string, startMins: number, endMins: number, duration: number }[] = [];
+
+  for (let i = 0; i < durations.length; i++) {
+    const dur = durations[i];
+    const startStr = formatTime(currentAccumulatedMins);
+    const endStr = formatTime(currentAccumulatedMins + dur);
+    generatedTimes.push({
+      startStr, endStr, startMins: currentAccumulatedMins, endMins: currentAccumulatedMins + dur, duration: dur
+    });
+    currentAccumulatedMins += dur;
+  }
+
+  // Active Time Detection
+  const [activeTimeIndex, setActiveTimeIndex] = useState(-1);
   useEffect(() => {
     const checkActiveTime = () => {
       const now = new Date();
       const nowMins = now.getHours() * 60 + now.getMinutes();
 
-      const parseMins = (tStr: string) => {
-        const m = tStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-        if (!m) return 0;
-        let h = parseInt(m[1]);
-        const min = parseInt(m[2]);
-        const ampm = m[3].toUpperCase();
-        if (h === 12 && ampm === "AM") h = 0;
-        if (h !== 12 && ampm === "PM") h += 12;
-        return h * 60 + min;
-      };
-
-      const timesToUse = viewMode === "weekdays" ? weekdayTimes : weekendTimes;
-      const TIMES = timesToUse.length ? timesToUse : ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
-
       let activeIdx = -1;
-      for (let i = 0; i < TIMES.length; i++) {
-        const blockStart = TIMES[i];
-        let blockEnd = "";
-        if (i + 1 < TIMES.length) {
-          blockEnd = TIMES[i + 1];
+      for (let i = 0; i < generatedTimes.length; i++) {
+        const block = generatedTimes[i];
+        let isActive = false;
+        if (block.endMins < block.startMins) {
+          // Crosses midnight
+          isActive = nowMins >= block.startMins || nowMins < block.endMins;
         } else {
-          const match = TIMES[TIMES.length - 1].match(/(\d+):(\d+)\s*(AM|PM)/i);
-          if (match) {
-            let h = parseInt(match[1]);
-            let a = match[3].toUpperCase();
-            if (h === 11) a = a === "AM" ? "PM" : "AM";
-            h = h === 12 ? 1 : h + 1;
-            blockEnd = `${h.toString().padStart(2, '0')}:${match[2]} ${a}`;
-          }
+          isActive = nowMins >= block.startMins && nowMins < block.endMins;
         }
-
-        if (blockStart && blockEnd) {
-          const startMins = parseMins(blockStart);
-          const endMins = parseMins(blockEnd);
-
-          let isActive = false;
-          if (endMins < startMins) {
-            isActive = nowMins >= startMins || nowMins < endMins;
-          } else {
-            isActive = nowMins >= startMins && nowMins < endMins;
-          }
-          if (isActive) {
-            activeIdx = i;
-            break;
-          }
+        if (isActive) {
+          activeIdx = i;
+          break;
         }
       }
       setActiveTimeIndex(activeIdx);
@@ -84,7 +124,7 @@ export default function Timetable() {
     checkActiveTime();
     const interval = setInterval(checkActiveTime, 60000);
     return () => clearInterval(interval);
-  }, [viewMode, weekdayTimes, weekendTimes]);
+  }, [generatedTimes]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -96,13 +136,39 @@ export default function Timetable() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const activeDays = viewMode === "weekdays" ? WEEKDAYS : WEEKENDS;
-  const isWeekendMode = viewMode === "weekends";
-  const defaultTimes = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
-  const TIMES = (isWeekendMode ? weekendTimes : weekdayTimes) || defaultTimes;
+  const handleUpdateDuration = (idx: number, newDur: number) => {
+    updateTimetableTime(isWeekendMode, idx, newDur as any);
+  };
+
+  // --- SMART ROW MANAGEMENT ---
+  const handleAddTopRow = () => {
+    const newStart = startTime - 60;
+    if (newStart < 0) {
+      alert("Cannot start before midnight!");
+      return;
+    }
+    handleSetStartTime(newStart); // Shift start time backward by 1hr
+    addTimetableRow(isWeekendMode, true);
+    setShowSettings(false);
+  };
+
+  const handleDeleteTopRow = () => {
+    if (confirm("Delete the top row?")) {
+      const durationToRemove = generatedTimes[0]?.duration || 60;
+      const newStart = startTime + durationToRemove;
+      handleSetStartTime(newStart); // Shift start time forward
+      deleteTimetableRow(isWeekendMode, 0);
+      setShowSettings(false);
+    }
+  };
 
   return (
-    <div suppressHydrationWarning className="bg-black/50 backdrop-blur-3xl border border-white/10 rounded-3xl p-1.5 shadow-2xl w-full max-w-[100vw] md:w-fit transition-all duration-500 overflow-hidden md:overflow-visible">
+    <div suppressHydrationWarning className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-1.5 shadow-2xl w-full max-w-[100vw] md:w-fit overflow-hidden md:overflow-visible">
+      {/* Start Time Modal Overlay */}
+      {isEditingStartTime && (
+        <StartTimeEditor currentMins={startTime} onSave={handleSetStartTime} onCancel={() => setIsEditingStartTime(false)} />
+      )}
+
       <div className="flex items-center justify-between text-white/80 mb-2 pb-1.5 border-b border-white/10 mt-1 px-2 min-w-0 md:min-w-[300px]">
         <button
           onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
@@ -120,17 +186,27 @@ export default function Timetable() {
           <button onClick={() => setShowSettings(!showSettings)} className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors ml-1 shrink-0">
             <Settings size={14} />
           </button>
+
           {showSettings && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col min-w-[130px]">
-              <button onClick={() => { addTimetableRow(isWeekendMode); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center gap-2 transition-colors">
-                <Plus size={14} /> Add Row
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col min-w-[200px]">
+              <div className="px-3 py-1.5 text-[10px] text-white/40 uppercase tracking-wider font-bold border-b border-white/5">Row Management</div>
+              <button onClick={handleAddTopRow} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center justify-between transition-colors w-full text-left border-b border-white/5">
+                <span className="flex items-center gap-2"><ArrowUp size={14} /> Add Top Row</span>
               </button>
-              <button onClick={() => { toggleTimetableRange(); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center gap-2 transition-colors border-b border-white/5">
-                <Clock size={14} /> Format: {useTimetableRange ? "Range" : "Start"}
+              <button onClick={() => { addTimetableRow(isWeekendMode); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center gap-2 transition-colors border-b border-white/5 w-full text-left">
+                <ArrowDown size={14} /> Add Bottom Row
               </button>
-              <button onClick={() => { if (confirm("Delete the last row?")) deleteTimetableRow(isWeekendMode, TIMES.length - 1); setShowSettings(false); }} className="px-3 py-2 hover:bg-red-500/20 text-xs text-red-400 flex items-center gap-2 transition-colors">
-                <Trash size={14} /> Delete Row
+              <button onClick={handleDeleteTopRow} className="px-3 py-2 hover:bg-red-500/20 text-xs text-red-400 flex items-center gap-2 transition-colors w-full text-left">
+                <Trash size={14} /> Delete Top Row
               </button>
+              <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className="px-3 py-2 hover:bg-red-500/20 text-xs text-red-400 flex items-center gap-2 transition-colors w-full text-left border-b border-white/5">
+                <Trash size={14} /> Delete Bottom Row
+              </button>
+
+              {/* <div className="px-3 py-1.5 text-[10px] text-white/40 uppercase tracking-wider font-bold border-b border-white/5 mt-1">Display Options</div>
+              <button onClick={() => { toggleTimetableRange(); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center gap-2 transition-colors border-b border-white/5 w-full text-left">
+                <Clock size={14} /> Format: {useTimetableRange ? "Range" : "Start Time"}
+              </button> */}
             </div>
           )}
         </div>
@@ -143,19 +219,36 @@ export default function Timetable() {
           <ChevronRight size={20} />
         </button>
       </div>
-
+      {/* Compact Start Time Trigger */}
+      <div className="mb-1 mx-auto flex justify-center">
+        <button
+          onClick={() => setIsEditingStartTime(true)}
+          className="text-[9px] md:text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-bold shadow-sm"
+        >
+          <Clock size={10} /> Day Starts: {formatTime(startTime)}
+        </button>
+      </div>
       <div className="overflow-x-auto custom-scrollbar pb-1 px-1 w-full">
         <div
           className={`grid gap-1 md:gap-1.5 ${viewMode === "weekdays" ? "min-w-[500px] md:min-w-[750px] grid-cols-[75px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)]" : "min-w-[280px] md:min-w-[400px] grid-cols-[75px_repeat(2,1fr)] md:grid-cols-[120px_repeat(2,1fr)]"}`}
         >
           {/* Time Column */}
-          <div className="sticky left-0 rounded-xl z-30 backdrop-blur-md bg-black/80 flex flex-col">
+          <div className="sticky left-0 rounded-xl z-30 bg-[#0a0a0a] flex flex-col">
             <div className="text-center font-bold text-white/40 uppercase tracking-widest text-[9px] md:text-[10px] py-1 mb-1">Time</div>
-            {TIMES.map((time, index) => {
-              const nextTime = index < TIMES.length - 1 ? TIMES[index + 1] : undefined;
+
+
+            {generatedTimes.map((block, index) => {
               return (
-                <div key={index} className="mb-[2px]">
-                  <TimeCell time={time} nextTime={nextTime} index={index} isWeekend={isWeekendMode} onUpdate={updateTimetableTime} isActive={activeTimeIndex === index} />
+                <div key={index} className="mb-[2px] relative">
+                  <DurationCell
+                    block={block}
+                    index={index}
+                    onUpdate={(newDur) => handleUpdateDuration(index, newDur)}
+                    isActive={activeTimeIndex === index}
+                    isRange={useTimetableRange}
+                    isEditingOverride={globalEditingIndex === index}
+                    setEditingOverride={(state) => setGlobalEditingIndex(state ? index : null)}
+                  />
                 </div>
               )
             })}
@@ -176,29 +269,28 @@ export default function Timetable() {
               "Sun": "text-pink-400 border-pink-400/20 bg-pink-500/5"
             };
 
-            let skipCount = 0;
-
             return (
               <div key={day} className={`flex flex-col rounded-2xl p-0.5 transition-colors ${isToday ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]' : ''}`}>
-                <div className={`text-center font-bold uppercase tracking-widest text-[10px] md:text-xs py-1 rounded-xl border mb-0.5 ${isToday ? 'bg-purple-500/20 text-purple-200 border-purple-500/30' : colorMap[day]}`}>
+                <div className={`text-center font-bold uppercase tracking-widest text-[10px] md:text-xs py-1 rounded-xl border ${isToday ? 'bg-purple-500/20 text-purple-200 border-purple-500/30' : colorMap[day]}`}>
                   {day}
                 </div>
 
-                {TIMES.map((time, index) => {
-                  const subject = timetableGrid?.[day]?.[time] || "";
+                {generatedTimes.map((block, index) => {
+                  const gridKey = block.startStr;
+                  const subject = timetableGrid?.[day]?.[gridKey] || "";
 
-                  const prevTime = index > 0 ? TIMES[index - 1] : null;
-                  const prevSubject = prevTime ? (timetableGrid?.[day]?.[prevTime] || "") : "";
-                  const nextTime = index < TIMES.length - 1 ? TIMES[index + 1] : null;
-                  const nextSubject = nextTime ? (timetableGrid?.[day]?.[nextTime] || "") : "";
+                  const prevKey = index > 0 ? generatedTimes[index - 1].startStr : null;
+                  const prevSubject = prevKey ? (timetableGrid?.[day]?.[prevKey] || "") : "";
+                  const nextKey = index < generatedTimes.length - 1 ? generatedTimes[index + 1].startStr : null;
+                  const nextSubject = nextKey ? (timetableGrid?.[day]?.[nextKey] || "") : "";
 
                   const isContinuation = subject === prevSubject;
                   const isContinuedByNext = subject === nextSubject;
 
                   let spanCount = 1;
                   if (!isContinuation && isContinuedByNext) {
-                    for (let j = index + 1; j < TIMES.length; j++) {
-                      if ((timetableGrid?.[day]?.[TIMES[j]] || "") === subject) {
+                    for (let j = index + 1; j < generatedTimes.length; j++) {
+                      if ((timetableGrid?.[day]?.[generatedTimes[j].startStr] || "") === subject) {
                         spanCount++;
                       } else {
                         break;
@@ -225,21 +317,21 @@ export default function Timetable() {
                   const marginBottom = (!isDayFocused && isContinuedByNext) ? 'mb-0' : 'mb-[2px]';
 
                   const showOverlay = !isContinuation && spanCount > 1 && !isDayFocused;
-                  const overlayHeightPx = spanCount * 40; // Since inner margin is 0 when merged
+                  const overlayHeightPx = spanCount * 40;
 
                   return (
                     <div key={index} className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all z-10 ${borderClass} ${roundedClass} hover:bg-white/10 focus-within:bg-white/10 focus-within:border-purple-500/50 focus-within:z-20 ${bgClass}`}>
 
                       {showOverlay && (
                         <div style={{ height: `${overlayHeightPx}px` }} className="absolute top-0 left-0 w-full pointer-events-none flex items-center justify-center z-30">
-                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : 'text-white font-semibold'} px-1 md:px-2 text-center break-words transition-all duration-500 text-[10px] md:text-xs`}>{subject || "Free"}</span>
+                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : 'text-white font-semibold'} px-1 md:px-2 text-center break-words transition-all duration-200 text-[10px] md:text-xs`}>{subject || "Free"}</span>
                         </div>
                       )}
 
                       <textarea
                         value={subject}
-                        onChange={(e) => updateTimetableCell(day, time, e.target.value)}
-                        onFocus={() => setFocusedCell({ day, time })}
+                        onChange={(e) => updateTimetableCell(day, gridKey, e.target.value)}
+                        onFocus={() => setFocusedCell({ day, time: gridKey })}
                         onBlur={() => setFocusedCell(null)}
                         ref={el => {
                           if (el) {
@@ -266,104 +358,147 @@ export default function Timetable() {
   );
 }
 
-function TimeCell({ time, nextTime, index, isWeekend, onUpdate, isActive }: { time: string, nextTime?: string, index: number, isWeekend: boolean, onUpdate: (isWeekend: boolean, idx: number, val: string) => void, isActive?: boolean }) {
-  const { useTimetableRange } = useDashboardStore();
-  const [isEditing, setIsEditing] = useState(false);
-  const [hStr, setHStr] = useState("12");
-  const [mStr, setMStr] = useState("00");
-  const [ampm, setAmpm] = useState("AM");
+// -------------------------------------------------------------
+// Component for editing Start Time (Modal Overlay)
+// -------------------------------------------------------------
+function StartTimeEditor({ currentMins, onSave, onCancel }: { currentMins: number, onSave: (mins: number) => void, onCancel: () => void }) {
+  const initialH = Math.floor(currentMins / 60) % 24;
+  const initialM = currentMins % 60;
 
-  const getNextHour = (t: string) => {
-    const match = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
-    if (!match) return t;
-    let h = parseInt(match[1]);
-    const m = match[2];
-    let a = match[3].toUpperCase();
-    if (h === 11) a = a === "AM" ? "PM" : "AM";
-    h = h === 12 ? 1 : h + 1;
-    return `${h.toString().padStart(2, '0')}:${m} ${a}`;
-  };
-
-  useEffect(() => {
-    const match = time.match(/(\d+):(\d+)\s*(AM|PM)/i);
-    if (match) {
-      setHStr(match[1].padStart(2, '0'));
-      setMStr(match[2].padStart(2, '0'));
-      setAmpm(match[3].toUpperCase());
-    } else {
-      setHStr("12"); setMStr("00"); setAmpm("AM");
-    }
-  }, [time, isEditing]);
+  const [timeValue, setTimeValue] = useState(
+    `${initialH.toString().padStart(2, '0')}:${initialM.toString().padStart(2, '0')}`
+  );
 
   const save = () => {
-    const finalH = hStr.padStart(2, '0');
-    const finalM = mStr.padStart(2, '0');
-    onUpdate(isWeekend, index, `${finalH}:${finalM} ${ampm}`);
-    setIsEditing(false);
-  };
-
-  const adjust = (type: 'h' | 'm' | 'a', delta: number) => {
-    if (type === 'h') {
-      let h = parseInt(hStr) || 12;
-      h += delta;
-      if (h > 12) h = 1;
-      if (h < 1) h = 12;
-      setHStr(h.toString().padStart(2, '0'));
-    } else if (type === 'm') {
-      let m = parseInt(mStr) || 0;
-      m += delta;
-      if (m > 59) m = 0;
-      if (m < 0) m = 59;
-      setMStr(m.toString().padStart(2, '0'));
-    } else if (type === 'a') {
-      setAmpm(ampm === "AM" ? "PM" : "AM");
+    if (!timeValue) {
+      onCancel();
+      return;
     }
+    const [hStr, mStr] = timeValue.split(':');
+    const h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    onSave(h * 60 + m);
   };
 
   return (
-    <div className={`relative group h-10 flex items-center justify-center rounded-xl border px-0.5 transition-all ${isActive ? 'bg-purple-600/30 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] z-20' : 'bg-black/20 border-white/5'}`}>
-      {isEditing ? (
-        <div className="absolute inset-0 z-50 bg-gray-900 border border-blue-500/50 rounded-xl shadow-2xl flex items-center justify-center px-1 scale-110">
-          <div className="flex items-center gap-0.5 text-white">
+    <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div
+        className="bg-[#0f0f11] border border-blue-500/40 rounded-2xl shadow-2xl p-5 flex flex-col items-center gap-4 w-full max-w-[240px] animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-white font-bold text-sm tracking-wide">Set Day Start Time</h3>
+
+        <input
+          type="time"
+          value={timeValue}
+          onChange={e => setTimeValue(e.target.value)}
+          className="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-white text-lg text-center outline-none focus:border-blue-500 transition-colors cursor-pointer [color-scheme:dark]"
+        />
+
+        <div className="flex w-full gap-2 mt-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); onCancel(); }}
+            className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); save(); }}
+            className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-lg transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// Component for editing Duration
+// -------------------------------------------------------------
+function DurationCell({
+  block,
+  index,
+  onUpdate,
+  isActive,
+  isRange,
+  isEditingOverride,
+  setEditingOverride
+}: {
+  block: { startStr: string, endStr: string, duration: number },
+  index: number,
+  onUpdate: (dur: number) => void,
+  isActive?: boolean,
+  isRange: boolean,
+  isEditingOverride: boolean,
+  setEditingOverride: (s: boolean) => void
+}) {
+  const [durStr, setDurStr] = useState(block.duration.toString());
+
+  useEffect(() => {
+    if (isEditingOverride) {
+      setDurStr(block.duration.toString());
+    }
+  }, [isEditingOverride, block.duration]);
+
+  const save = () => {
+    const d = parseInt(durStr);
+    if (!isNaN(d) && d > 0 && d <= 1440) {
+      onUpdate(d);
+    }
+    setEditingOverride(false);
+  };
+
+  const adjust = (delta: number) => {
+    let d = parseInt(durStr) || 60;
+    d += delta;
+    if (d < 15) d = 15; // Minimum 15 min block
+    setDurStr(d.toString());
+  };
+
+  return (
+    <div className={`relative group h-10 flex items-center justify-center rounded-xl border px-0.5 transition-colors ${isActive ? 'bg-purple-600/30 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] z-20' : 'bg-black/20 border-white/5 hover:border-white/20'}`}>
+      {isEditingOverride ? (
+        <div className="absolute inset-0 z-[60] bg-[#0f0f11] border border-purple-500/50 rounded-xl shadow-2xl flex items-center justify-center px-1 scale-[1.15]">
+          <div className="flex items-center gap-1 text-white">
             <div className="flex flex-col items-center">
-              <button onClick={() => adjust('h', 1)} className="hover:text-white/60 p-0.5"><ChevronUp size={12} /></button>
-              <input
-                value={hStr}
-                onChange={e => setHStr(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && save()}
-                className="w-4 md:w-5 text-center bg-transparent outline-none text-[10px] md:text-xs tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none selection:bg-white/20"
-              />
-              <button onClick={() => adjust('h', -1)} className="hover:text-white/60 p-0.5"><ChevronDown size={12} /></button>
+              <button onClick={() => adjust(15)} className="hover:text-purple-400 p-0.5"><ChevronUp size={12} /></button>
+              <div className="flex items-baseline">
+                <input
+                  value={durStr}
+                  onChange={e => setDurStr(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && save()}
+                  className="w-6 md:w-8 text-center bg-transparent outline-none text-[10px] md:text-xs font-bold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-[8px] text-white/50 -ml-1">m</span>
+              </div>
+              <button onClick={() => adjust(-15)} className="hover:text-purple-400 p-0.5"><ChevronDown size={12} /></button>
             </div>
-            <span className="text-[10px] md:text-xs pb-0.5 opacity-50">:</span>
-            <div className="flex flex-col items-center">
-              <button onClick={() => adjust('m', 1)} className="hover:text-white/60 p-0.5"><ChevronUp size={12} /></button>
-              <input
-                value={mStr}
-                onChange={e => setMStr(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && save()}
-                className="w-4 md:w-5 text-center bg-transparent outline-none text-[10px] md:text-xs tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none selection:bg-white/20"
-              />
-              <button onClick={() => adjust('m', -1)} className="hover:text-white/60 p-0.5"><ChevronDown size={12} /></button>
-            </div>
-            <div className="flex flex-col items-center ml-0.5 text-[9px] md:text-[10px] cursor-pointer select-none hover:text-white/80" onClick={() => adjust('a', 1)}>
-              <span className="font-bold tracking-tighter mt-0.5">{ampm}</span>
-            </div>
-            <button onClick={save} className="ml-1 p-1 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"><Check size={10} className="md:w-3 md:h-3" /></button>
+            <button onClick={save} className="ml-1 p-1 bg-purple-500 hover:bg-purple-600 rounded-md transition-colors"><Check size={10} /></button>
           </div>
         </div>
       ) : (
-        <div onClick={() => setIsEditing(true)} className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 rounded-lg transition-colors leading-none">
-          {useTimetableRange ? (
-            <div className="flex flex-col md:flex-row items-center gap-0.5 text-[9px] md:text-xs tracking-tight font-semibold font-mono select-none">
-              <span className="text-white/80">{time.replace(" AM", "AM").replace(" PM", "PM")}</span>
-              <span className="text-white/30 hidden md:inline">-</span>
-              <span className="text-white/80">{(nextTime || getNextHour(time)).replace(" AM", "AM").replace(" PM", "PM")}</span>
-            </div>
-          ) : (
-            <span className="text-white/80 text-[10px] md:text-sm font-semibold font-mono select-none">{time}</span>
-          )}
-          <Edit2 size={10} className="absolute right-1 md:right-1.5 opacity-0 group-hover:opacity-30 text-white transition-opacity hidden md:block" />
+        <div
+          onClick={() => setEditingOverride(true)}
+          className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 rounded-lg transition-colors leading-none"
+        >
+          {/* {isRange ? ( */}
+          <div className="absolute top-1 flex flex-col md:flex-row items-center justify-center gap-0.1 md:gap-1 text-[9px] md:text-xs tracking-tight font-semibold font-mono select-none w-full px-1">
+            <span className="text-white/80 transition-colors group-hover:text-purple-400">
+              {block.startStr.replace(" AM", "AM").replace(" PM", "PM")}
+            </span>
+            <span className="text-white/30 hidden md:inline">-</span>
+            <span className="text-white/50 transition-colors group-hover:text-purple-400">
+              {block.endStr.replace(" AM", "AM").replace(" PM", "PM")}
+            </span>
+          </div>
+          {/* ) : (
+            <span className="text-white/80 text-[10px] md:text-sm font-semibold font-mono select-none group-hover:text-purple-400 transition-colors">
+              {block.startStr}
+            </span>
+          )} */}
+          <span className="absolute bottom-0.5 text-[8px] text-yellow-300/60 font-bold uppercase ">{block.duration > 60 ? Math.floor(block.duration / 60) + "hr " + block.duration % 60 + "m" : block.duration + "m"}</span>
         </div>
       )}
     </div>
