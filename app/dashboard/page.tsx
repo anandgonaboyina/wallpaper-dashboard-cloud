@@ -146,13 +146,13 @@ export default function Dashboard() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center p-8 text-center max-w-lg w-full h-full justify-evenly animate-in fade-in duration-1000">
-          
+
           <div className="flex flex-col items-center">
             {/* Profile Picture */}
             <div className="relative w-24 h-24 md:w-32 md:h-32 mb-6 rounded-full overflow-hidden ring-4 ring-white/5 shadow-2xl shadow-blue-500/20">
-              <img 
-                src="/branding/author.jpeg" 
-                alt="Creator Profile" 
+              <img
+                src="/branding/author.jpeg"
+                alt="Creator Profile"
                 className="w-full h-full object-cover"
                 onError={(e) => { e.currentTarget.src = '/icon-192x192.png' }}
               />
@@ -168,7 +168,7 @@ export default function Dashboard() {
 
             {/* Why we made it */}
             <p className="text-sm md:text-base text-white/50 leading-relaxed max-w-md mx-auto">
-              "Built to eliminate distractions and create a single, unified workspace. 
+              "Built to eliminate distractions and create a single, unified workspace.
               Everything you need to stay deeply focused, plan your day, and track your goals—now available anywhere."
             </p>
           </div>
@@ -253,7 +253,7 @@ export default function Dashboard() {
           {(!isHidden || !hideConfig.calendar) && showCalendar && isCalendarOpen && (
             <div
               style={{ zIndex: widgetZIndices.calendar || 50 }}
-              className="absolute top-48 right-2 md:top-4 md:right-4 scale-[0.8] sm:scale-85 md:scale-100 origin-top-right pointer-events-none"
+              className="absolute top-48 right-15 md:top-15 md:right-12 scale-[0.8] sm:scale-85 md:scale-100 origin-top-right pointer-events-none"
             >
               <MiniCalendar />
             </div>

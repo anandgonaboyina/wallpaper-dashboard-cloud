@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     // HARDCODED ADMIN CREDENTIALS FOR TESTING
-    if (username === 'admin' && password === 'admin123') {
+    if (username === 'admin' && password === 'admin is anand') {
       const token = jwt.sign({ userId: 'admin_id_test', username: 'admin', role: 'admin' }, JWT_SECRET, {
         expiresIn: '365d',
       });
