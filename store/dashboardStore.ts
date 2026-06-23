@@ -182,7 +182,7 @@ interface DashboardState {
 
   // Deadlines
   deadlines: Deadline[];
-  addDeadline: (date: string, text: string) => void;
+  addDeadline: (date: string, text: string) => string;
   updateDeadline: (id: string, text: string) => void;
   deleteDeadline: (id: string) => void;
   deleteAllDeadlinesForDay: (date: string) => void;
@@ -374,13 +374,13 @@ const performSave = async () => {
         ...parsedCloud.state,
         ...parsedLocal.state, // Local scalar settings win
         
-        // Intelligently merge arrays to prevent data loss
-        tasks: [...(parsedCloud.state.tasks || []), ...(parsedLocal.state.tasks || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
-        countdowns: [...(parsedCloud.state.countdowns || []), ...(parsedLocal.state.countdowns || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
-        deadlines: [...(parsedCloud.state.deadlines || []), ...(parsedLocal.state.deadlines || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
-        notes: [...(parsedCloud.state.notes || []), ...(parsedLocal.state.notes || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
-        stopwatchSessions: [...(parsedCloud.state.stopwatchSessions || []), ...(parsedLocal.state.stopwatchSessions || [])],
-        plans: [...(parsedCloud.state.plans || []), ...(parsedLocal.state.plans || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        // Intelligently merge arrays to prevent data loss, prioritizing local changes
+        tasks: [...(parsedLocal.state.tasks || []), ...(parsedCloud.state.tasks || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        countdowns: [...(parsedLocal.state.countdowns || []), ...(parsedCloud.state.countdowns || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        deadlines: [...(parsedLocal.state.deadlines || []), ...(parsedCloud.state.deadlines || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        notes: [...(parsedLocal.state.notes || []), ...(parsedCloud.state.notes || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        stopwatchSessions: [...(parsedLocal.state.stopwatchSessions || []), ...(parsedCloud.state.stopwatchSessions || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        plans: [...(parsedLocal.state.plans || []), ...(parsedCloud.state.plans || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
       };
       
       const mergedData = { version: 2, state: mergedState };
@@ -514,7 +514,8 @@ const fileStorage = createJSONStorage(() => ({
     
     // ALWAYS save locally first so offline restarts have immediate latest data!
     localStorage.setItem('dashboard-storage', value);
-    setSyncLastModified(Date.now()); // Mark local as newest immediately!
+    const newTime = Math.max(Date.now(), getSyncLastModified() + 1);
+    setSyncLastModified(newTime); // Mark local as newest immediately!
 
     pendingValue = value;
     hasUnsavedChanges = true;
@@ -854,9 +855,13 @@ export const useDashboardStore = create<DashboardState>()(
 
       // Deadlines
       deadlines: [],
-      addDeadline: (date, text) => set((state) => ({
-        deadlines: [...state.deadlines, { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), date, text }]
-      })),
+      addDeadline: (date, text) => {
+        const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+        set((state) => ({
+          deadlines: [...state.deadlines, { id, date, text }]
+        }));
+        return id;
+      },
       updateDeadline: (id, text) => set((state) => ({
         deadlines: state.deadlines.map(d => d.id === id ? { ...d, text } : d)
       })),

@@ -42,7 +42,7 @@ export default function HealthModal() {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={toggleHealthModal}></div>
 
       {/* Modal Box */}
-      <div className="relative bg-black/50 backdrop-blur-3xl border border-white/20 p-5 md:p-8 rounded-3xl w-full max-w-[700px] max-h-full overflow-y-auto custom-scrollbar shadow-2xl text-white">
+      <div className="relative  bg-black/50 backdrop-blur-3xl border border-white/20 p-5 md:p-8 rounded-3xl w-full max-w-[700px] h-[80vh] overflow-y-auto custom-scrollbar shadow-2xl text-white">
         <button
           onClick={toggleHealthModal}
           className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors z-10"
@@ -50,7 +50,7 @@ export default function HealthModal() {
           <X size={20} />
         </button>
 
-        <h2 className="text-xl md:text-2xl font-light mb-5 md:mb-6 tracking-wide flex items-center gap-3 pr-8">
+        <h2 className=" px-2text-xl md:text-2xl font-light mb-5 md:mb-6 tracking-wide flex items-center gap-3 pr-8">
           Health & Habits <span className="text-white/40 text-xs md:text-sm whitespace-nowrap">Past 7 Days</span>
         </h2>
 

@@ -249,7 +249,7 @@ export default function CloudLogin() {
               localStorage.setItem('dashboard_sync_token', data.token);
               localStorage.setItem('dashboard_username', data.username || username);
               localStorage.removeItem('dashboard_role');
-              router.push('/dashboard');
+              window.location.href = '/dashboard';
             }, 1000);
           } else {
             setError(data.error || 'Registration failed');
@@ -279,10 +279,10 @@ export default function CloudLogin() {
           localStorage.setItem('dashboard_username', data.username || username);
           if (data.role === 'admin') {
             localStorage.setItem('dashboard_role', 'admin');
-            router.push('/admin');
+            window.location.href = '/admin';
           } else {
             localStorage.removeItem('dashboard_role');
-            router.push('/dashboard');
+            window.location.href = '/dashboard';
           }
         } else {
           setError(data.error || 'Invalid credentials');
