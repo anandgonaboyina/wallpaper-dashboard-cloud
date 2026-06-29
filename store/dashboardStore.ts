@@ -96,6 +96,8 @@ interface DashboardState {
   settingsActiveTab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper';
   toggleSettings: () => void;
   setSettingsActiveTab: (tab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper') => void;
+  connectInitialTab?: 'profile' | 'friends' | 'broadcasts' | 'leaderboard';
+  setConnectInitialTab: (tab?: 'profile' | 'friends' | 'broadcasts' | 'leaderboard') => void;
   timerTrigger: { mins: number; ts: number; taskId?: string; taskTitle?: string } | null;
   triggerTimer: (mins: number, taskId?: string, taskTitle?: string) => void;
 
@@ -205,6 +207,9 @@ interface DashboardState {
   toggleTimetableRange: () => void;
   isTimetableOpen: boolean;
   setIsTimetableOpen: (isOpen: boolean) => void;
+
+  viewingFriend: { username: string, stats: any } | null;
+  setViewingFriend: (friend: { username: string, stats: any } | null) => void;
 
   // Health Rings
   healthData: Record<string, HealthData>;
@@ -668,8 +673,10 @@ export const useDashboardStore = create<DashboardState>()(
       }),
       isSettingsOpen: false,
       settingsActiveTab: 'preferences',
+      connectInitialTab: undefined,
       toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
       setSettingsActiveTab: (tab) => set({ settingsActiveTab: tab }),
+      setConnectInitialTab: (tab) => set({ connectInitialTab: tab }),
       timerTrigger: null,
       triggerTimer: (mins, taskId, taskTitle) => set((state) => {
         const currentZ = state.widgetZIndices || {};
@@ -1045,6 +1052,9 @@ export const useDashboardStore = create<DashboardState>()(
         }
         return { isTimetableOpen: isOpen, ...extra };
       }),
+
+      viewingFriend: null,
+      setViewingFriend: (friend) => set({ viewingFriend: friend }),
 
       // Health Rings
       healthData: {},

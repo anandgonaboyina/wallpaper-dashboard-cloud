@@ -6,8 +6,11 @@ import { getLocalDateString } from '@/utils/date';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 export default function StatsModal() {
-  const { history, healthData, isStatsOpen, toggleStats } = useDashboardStore();
+  const { history: myHistory, healthData: myHealthData, isStatsOpen, toggleStats, viewingFriend, setViewingFriend, setIsTimetableOpen } = useDashboardStore();
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+
+  const history = viewingFriend ? viewingFriend.stats.history || {} : myHistory;
+  const healthData = viewingFriend ? viewingFriend.stats.healthData || {} : myHealthData;
 
   useEffect(() => {
     // When modal opens, auto-expand the current month
@@ -28,7 +31,7 @@ export default function StatsModal() {
   const dates = Object.keys(history).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   const today = getLocalDateString();
   const todayMins = history[today] || 0;
-  const totalMins = Object.values(history).reduce((acc, curr) => acc + curr, 0);
+  const totalMins = Object.values(history).reduce((acc: number, curr: any) => acc + (curr as number), 0);
 
   // Helper to calculate total mins for last X days
   const calculateHistoryRange = (days: number) => {
@@ -99,14 +102,29 @@ export default function StatsModal() {
         {/* Header */}
         <div className="flex-none p-3 sm:p-5 flex justify-between items-center border-b border-white/10 bg-black/20 relative z-10">
           <h2 className="text-lg sm:text-2xl font-black tracking-tight flex items-center gap-1.5 sm:gap-2 text-white">
-            <Flame className="text-orange-500 w-5 h-5 sm:w-6 sm:h-6" /> Focus History
+            <Flame className="text-orange-500 w-5 h-5 sm:w-6 sm:h-6" /> {viewingFriend ? `${viewingFriend.username}'s Stats` : 'Focus History'}
           </h2>
-          <button
-            onClick={toggleStats}
-            className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/20"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {viewingFriend && (
+              <button
+                onClick={() => setIsTimetableOpen(true)}
+                className="p-1.5 sm:p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg sm:rounded-xl transition-colors border border-blue-500/30 flex items-center gap-1.5"
+                title="View Timetable"
+              >
+                <CalendarDays size={18} />
+                <span className="text-xs font-semibold hidden sm:inline">Timetable</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (viewingFriend) setViewingFriend(null);
+                toggleStats();
+              }}
+              className="p-1.5 sm:p-2 bg-white/5 hover:bg-white/10 rounded-lg sm:rounded-xl transition-colors"
+            >
+              <X size={20} className="sm:w-6 sm:h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -130,7 +148,7 @@ export default function StatsModal() {
                 <div className="p-3 sm:p-4 rounded-xl bg-emerald-500/10 border border-emerald-400/30 flex flex-col items-center justify-center text-center relative overflow-hidden group">
                   <div className="absolute -left-2 -bottom-2 w-12 h-12 bg-emerald-500/20 rounded-full blur-xl group-hover:bg-emerald-500/30 transition-colors" />
                   <Calendar className="mb-1 text-emerald-300 w-5 h-5 sm:w-6 sm:h-6" />
-                  <p className="text-xl sm:text-2xl font-black text-white">{formatMinutes(totalMins)}</p>
+                  <span className="text-xl sm:text-2xl font-black text-white">{formatMinutes(totalMins as number)}</span>
                   <p className="text-[9px] sm:text-[10px] text-emerald-200/70 uppercase tracking-widest mt-1 font-bold">All Time</p>
                 </div>
               </div>
@@ -168,11 +186,11 @@ export default function StatsModal() {
               <button 
                 onClick={() => {
                   toggleStats();
+                  useDashboardStore.getState().setConnectInitialTab('leaderboard');
                   useDashboardStore.getState().setSettingsActiveTab('connect');
                   if (!useDashboardStore.getState().isSettingsOpen) {
                     useDashboardStore.getState().toggleSettings();
                   }
-                  window.dispatchEvent(new CustomEvent('open-leaderboard'));
                 }}
                 className="w-full mt-2 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-white/10 hover:border-white/30 transition-all flex items-center justify-between group shadow-lg"
               >
@@ -288,7 +306,7 @@ export default function StatsModal() {
                                     ) : <div className="flex-1" />}
 
                                     <span className="font-bold text-orange-200 bg-orange-500/20 px-1.5 py-0.5 rounded border border-orange-400/30 text-[10px] sm:text-xs shrink-0">
-                                      {formatMinutes(history[date])}
+                                      {formatMinutes(history[date] as number)}
                                     </span>
                                   </div>
 

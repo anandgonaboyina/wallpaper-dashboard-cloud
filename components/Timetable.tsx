@@ -44,7 +44,22 @@ const parseMins = (tStr: string) => {
 
 
 export default function Timetable() {
-  const { timetableGrid, timetableColors, updateTimetableCell, updateTimetableColor, weekdayTimes, weekendTimes, updateTimetableTime, addTimetableRow, deleteTimetableRow, useTimetableRange, toggleTimetableRange, renameTimetableKeys } = useDashboardStore();
+  const { 
+    timetableGrid: myTimetableGrid, 
+    timetableColors: myTimetableColors, 
+    weekdayTimes: myWeekdayTimes,
+    weekendTimes: myWeekendTimes,
+    updateTimetableCell, updateTimetableColor, 
+    updateTimetableTime, addTimetableRow, deleteTimetableRow, 
+    useTimetableRange, toggleTimetableRange, renameTimetableKeys,
+    viewingFriend, setViewingFriend
+  } = useDashboardStore();
+
+  const timetableGrid = viewingFriend ? (viewingFriend.stats.timetableGrid || {}) : myTimetableGrid;
+  const timetableColors = viewingFriend ? (viewingFriend.stats.timetableColors || {}) : myTimetableColors;
+  const weekdayTimes = viewingFriend ? (viewingFriend.stats.weekdayTimes || ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]) : myWeekdayTimes;
+  const weekendTimes = viewingFriend ? (viewingFriend.stats.weekendTimes || ["10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM"]) : myWeekendTimes;
+
   const [currentDayIndex, setCurrentDayIndex] = useState(() => new Date().getDay());
   const [viewMode, setViewMode] = useState<"weekdays" | "weekends">(
     () => (new Date().getDay() === 0 || new Date().getDay() === 6) ? "weekends" : "weekdays"
@@ -272,9 +287,11 @@ export default function Timetable() {
           <span className="font-bold tracking-widest uppercase text-sm md:text-base text-center truncate">
             {viewMode === "weekdays" ? "Weekly Schedule" : "Weekend Schedule"}
           </span>
-          <button onClick={() => setShowSettings(!showSettings)} className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors ml-1 shrink-0">
-            <Settings size={14} />
-          </button>
+          {!viewingFriend && (
+            <button onClick={() => setShowSettings(!showSettings)} className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors ml-1 shrink-0">
+              <Settings size={14} />
+            </button>
+          )}
 
           {showSettings && (
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col min-w-[200px]">
@@ -291,11 +308,6 @@ export default function Timetable() {
               <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className="px-3 py-2 hover:bg-red-500/20 text-xs text-red-400 flex items-center gap-2 transition-colors w-full text-left border-b border-white/5">
                 <Trash size={14} /> Delete Bottom Row
               </button>
-
-              {/* <div className="px-3 py-1.5 text-[10px] text-white/40 uppercase tracking-wider font-bold border-b border-white/5 mt-1">Display Options</div>
-              <button onClick={() => { toggleTimetableRange(); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center gap-2 transition-colors border-b border-white/5 w-full text-left">
-                <Clock size={14} /> Format: {useTimetableRange ? "Range" : "Start Time"}
-              </button> */}
             </div>
           )}
         </div>
@@ -311,8 +323,8 @@ export default function Timetable() {
       {/* Compact Start Time Trigger */}
       <div className="mb-1 mx-auto flex justify-center">
         <button
-          onClick={() => setIsEditingStartTime(true)}
-          className="text-[9px] md:text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-bold shadow-sm"
+          onClick={() => !viewingFriend && setIsEditingStartTime(true)}
+          className={`text-[9px] md:text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-bold shadow-sm ${viewingFriend ? 'cursor-default' : ''}`}
         >
           <Clock size={10} /> Day Starts: {formatTime(startTime)}
         </button>
@@ -343,7 +355,8 @@ export default function Timetable() {
                     isActive={activeTimeIndex === index}
                     isRange={useTimetableRange}
                     isEditingOverride={globalEditingIndex === index}
-                    setEditingOverride={(state) => setGlobalEditingIndex(state ? index : null)}
+                    setEditingOverride={(state) => !viewingFriend && setGlobalEditingIndex(state ? index : null)}
+                    isReadOnly={!!viewingFriend}
                   />
                 </div>
               )
@@ -422,8 +435,8 @@ export default function Timetable() {
                   return (
                     <div 
                       key={index} 
-                      onDoubleClick={() => setEditingCell({ day, time: gridKey })}
-                      className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all z-10 ${borderClass} ${roundedClass} hover:bg-white/10 ${isEditingThisCell ? 'ring-2 ring-purple-500 z-50' : ''} ${bgClass}`}
+                      onDoubleClick={() => !viewingFriend && setEditingCell({ day, time: gridKey })}
+                      className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all z-10 ${borderClass} ${roundedClass} ${!viewingFriend ? 'hover:bg-white/10' : ''} ${isEditingThisCell ? 'ring-2 ring-purple-500 z-50' : ''} ${bgClass}`}
                     >
                       {showOverlay && !isEditingThisCell && (
                         <div style={{ height: `${overlayHeightPx}px` }} className="absolute top-0 left-0 w-full pointer-events-none flex items-center justify-center z-30">
@@ -435,7 +448,7 @@ export default function Timetable() {
                         <span className={`w-full text-center ${textClassFinal} text-[10px] md:text-xs leading-snug`}>{subject || (!isHiddenText ? "Free" : "")}</span>
                       </div>
 
-                      {!isEditingThisCell && <Edit2 size={10} className={`absolute right-1 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 pointer-events-none ${isHiddenText ? 'text-transparent' : customColor.text} z-20`} />}
+                      {!viewingFriend && !isEditingThisCell && <Edit2 size={10} className={`absolute right-1 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 pointer-events-none ${isHiddenText ? 'text-transparent' : customColor.text} z-20`} />}
                     </div>
                   );
                 })}
@@ -569,7 +582,8 @@ function DurationCell({
   isActive,
   isRange,
   isEditingOverride,
-  setEditingOverride
+  setEditingOverride,
+  isReadOnly
 }: {
   block: { startStr: string, endStr: string, duration: number },
   index: number,
@@ -577,7 +591,8 @@ function DurationCell({
   isActive?: boolean,
   isRange: boolean,
   isEditingOverride: boolean,
-  setEditingOverride: (s: boolean) => void
+  setEditingOverride: (s: boolean) => void,
+  isReadOnly?: boolean
 }) {
   const [durStr, setDurStr] = useState(block.duration.toString());
 

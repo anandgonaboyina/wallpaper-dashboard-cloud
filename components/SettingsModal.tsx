@@ -95,8 +95,6 @@ export default function SettingsModal() {
     }
   };
 
-  const [friendStats, setFriendStats] = useState<{ username: string, stats: any } | null>(null);
-
   const settingsScrollRef = useRef<HTMLDivElement>(null);
   const sidebarScrollRef = useRef<HTMLDivElement>(null);
 
@@ -465,7 +463,7 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'connect' && (
                 // <div className="max-w-full overflow-x-hidden [&_*]:max-w-full">
-                <ConnectTab friendStats={friendStats} setFriendStats={setFriendStats} />
+                <ConnectTab />
                 // </div>
               )}
 
@@ -1454,145 +1452,6 @@ export default function SettingsModal() {
         </div>
       </div>
 
-      {friendStats && (() => {
-        const calculateHistory = (days: number) => {
-          if (!friendStats?.stats?.history) return 0;
-          let total = 0;
-          const today = new Date();
-          for (let i = 0; i < days; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            total += friendStats.stats.history[dateStr] || 0;
-          }
-          return total;
-        };
-
-        const formatMins = (totalMins: number) => {
-          if (totalMins < 60) return `${totalMins}m`;
-          const hrs = Math.floor(totalMins / 60);
-          const mins = totalMins % 60;
-          return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
-        };
-
-        const raw1 = calculateHistory(1);
-        const raw7 = calculateHistory(7);
-        const raw30 = calculateHistory(30);
-
-        const todayMins = formatMins(raw1);
-        const sevenDaysMins = formatMins(raw7);
-        const monthMins = formatMins(raw30);
-
-        const sevenDaysAvg = formatMins(Math.round(raw7 / 7));
-        const monthAvg = formatMins(Math.round(raw30 / 30));
-
-        const allTasks = friendStats.stats?.tasks || [];
-        const timetableGridData = friendStats.stats?.timetableGrid || {};
-        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-        const hasTimetable = weekDays.some(day => Object.values(timetableGridData[day] || {}).some(subj => subj));
-
-        return (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-xl p-3 sm:p-6 animate-in fade-in duration-300 pointer-events-auto">
-            <div className="absolute inset-0 bg-transparent" onClick={() => setFriendStats(null)} />
-            <div className="bg-[#111111]/80 backdrop-blur-md border border-white/10 w-full max-w-4xl h-[80vh] md:h-[80vh] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl relative flex flex-col animate-in zoom-in-95 duration-300">
-              <div className="flex items-center justify-between p-3 md:p-6 border-b border-white/10 bg-white/5 shrink-0">
-                <div>
-                  <h4 className="font-bold text-base md:text-2xl flex items-center gap-2 text-white">
-                    <BarChart2 className="text-blue-400 w-4 h-4 md:w-7 md:h-7" /> {friendStats.username}
-                  </h4>
-                  <div className="flex items-center flex-wrap gap-1.5 md:gap-3 mt-1 text-[8px] md:text-xs font-medium">
-                    {friendStats.stats?.createdAt && (
-                      <span className="bg-white/10 text-white/70 px-1.5 py-0.5 md:px-2.5 md:py-1 rounded">Joined {new Date(friendStats.stats.createdAt).toLocaleDateString()}</span>
-                    )}
-                    {friendStats.stats?.lastLogin && (
-                      <span className="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 md:px-2.5 md:py-1 rounded border border-emerald-500/20">Last Active: {new Date(friendStats.stats.lastLogin).toLocaleDateString()}</span>
-                    )}
-                  </div>
-                </div>
-                <button onClick={() => setFriendStats(null)} className="p-1.5 md:p-2 hover:bg-white/10 rounded-xl transition-colors text-white/50 hover:text-white self-start sm:self-auto">
-                  <X className="w-4 h-4 md:w-6 md:h-6" />
-                </button>
-              </div>
-              <div className="relative flex-1 overflow-hidden flex flex-col w-full">
-                <ScrollableWithArrows className="p-3 md:p-6 flex flex-col gap-4 md:gap-8 overflow-x-hidden w-full [&_*]:max-w-full">
-
-                  {/* Work History */}
-                  <div>
-                    <h5 className="text-[10px] md:text-sm font-bold text-white/50 uppercase tracking-widest mb-1.5 md:mb-3">Work History</h5>
-                    <div className="grid grid-cols-3 gap-1.5 md:gap-4">
-                      <div className="bg-gradient-to-br from-blue-900/40 to-blue-900/10 border border-blue-500/20 rounded-lg p-2 flex flex-col items-center text-center">
-                        <span className="text-sm md:text-4xl font-black text-blue-400 mb-0.5">{todayMins}</span>
-                        <span className="text-[7px] md:text-xs font-bold text-blue-400/50 uppercase tracking-widest">Today</span>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-900/40 to-purple-900/10 border border-purple-500/20 rounded-lg p-2 flex flex-col items-center text-center">
-                        <span className="text-sm md:text-4xl font-black text-purple-400 mb-0.5">{sevenDaysMins}</span>
-                        <span className="text-[7px] md:text-[10px] font-bold text-purple-400/50 uppercase tracking-widest">7 Days</span>
-                      </div>
-                      <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border border-emerald-500/20 rounded-lg p-2 flex flex-col items-center text-center">
-                        <span className="text-sm md:text-4xl font-black text-emerald-400 mb-0.5">{monthMins}</span>
-                        <span className="text-[7px] md:text-[10px] font-bold text-emerald-400/50 uppercase tracking-widest">30 Days</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 min-w-0">
-                    {/* Tasks */}
-                    <div className="min-w-0">
-                      <h5 className="text-[10px] md:text-sm font-bold text-white/50 uppercase tracking-widest mb-1.5 md:mb-3 flex items-center gap-2">
-                        Tasks <span className="bg-white/10 text-white/70 px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px]">{allTasks.length}</span>
-                      </h5>
-                      <div className="bg-black/40 border border-white/5 rounded-lg p-2 md:p-4 flex flex-col gap-1.5">
-                        {allTasks.length === 0 ? (
-                          <p className="text-white/40 text-[9px] md:text-xs italic text-center py-2">No tasks found.</p>
-                        ) : (
-                          allTasks.map((t: any) => (
-                            <div key={t.id} className="flex flex-col gap-1 text-[9px] md:text-sm text-white/80 bg-white/5 p-1.5 md:p-3 rounded border border-white/5 break-words">
-                              <div className="flex items-start justify-between gap-1.5">
-                                <span className={t.completed ? 'line-through text-white/40' : ''}>{t.title || t.text}</span>
-                                {t.completed && <span className="bg-emerald-500/20 text-emerald-400 text-[7px] md:text-[10px] px-1 py-0.5 rounded uppercase font-bold shrink-0">Done</span>}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Timetable Overview */}
-                    <div className="min-w-0">
-                      <h5 className="text-[10px] md:text-sm font-bold text-white/50 uppercase tracking-widest mb-1.5 md:mb-3">Timetable (Weekdays)</h5>
-                      <div className="bg-black/40 border border-white/5 rounded-lg p-2 md:p-4 flex flex-col gap-1.5">
-                        {!hasTimetable ? (
-                          <p className="text-white/40 text-[9px] md:text-xs italic text-center py-2">No timetable set.</p>
-                        ) : (
-                          weekDays.map(day => {
-                            const dayData = timetableGridData[day] || {};
-                            const activeTimes = Object.entries(dayData).filter(([_, subj]) => subj);
-                            if (activeTimes.length === 0) return null;
-                            return (
-                              <div key={day} className="flex flex-col gap-0.5 text-[8px] md:text-xs border-b border-white/5 pb-1 last:border-0 last:pb-0">
-                                <span className="text-blue-400 font-bold">{day}</span>
-                                <div className="flex flex-wrap gap-0.5">
-                                  {activeTimes.map(([time, subject]) => (
-                                    <span key={time} className="bg-white/10 px-1 py-0.5 rounded text-white/80">
-                                      <span className="text-white/40 mr-1">{time}</span>{subject as string}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-center text-white/40 text-[8px] md:text-[10px] italic mt-auto pt-2 border-t border-white/10 shrink-0">Only public statistics are shared.</p>
-                </ScrollableWithArrows>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
       <UserManualModal isOpen={isUserManualOpen} onClose={() => setIsUserManualOpen(false)} />
     </div>
   );

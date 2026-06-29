@@ -5,12 +5,7 @@ import { useDashboardStore, setAuthTransition } from '@/store/dashboardStore';
 import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
-interface ConnectTabProps {
-  friendStats: { username: string, stats: any } | null;
-  setFriendStats: (stats: { username: string, stats: any } | null) => void;
-}
-
-export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabProps) {
+export default function ConnectTab() {
   const { history, tasks, timetableGrid } = useDashboardStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'friends' | 'broadcasts' | 'leaderboard'>('profile');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -391,26 +386,15 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
       });
       const data = await res.json();
       if (res.ok) {
-        setFriendStats({ username: friendUsername, stats: data.stats });
+        useDashboardStore.getState().setViewingFriend({ username: friendUsername, stats: data.stats });
+        useDashboardStore.getState().toggleSettings(); // Close settings to see stats modal
+        if (!useDashboardStore.getState().isStatsOpen) {
+          useDashboardStore.getState().toggleStats();
+        }
       } else {
         alert('Failed to fetch stats: ' + data.error);
       }
     } catch (err) { }
-  };
-
-  const viewMyStats = () => {
-    const state = useDashboardStore.getState();
-    setFriendStats({
-      username: `${username} (Me)`,
-      stats: {
-        history: state.history || {},
-        tasks: state.tasks || [],
-        deadlines: state.deadlines || [],
-        timetableGrid: state.timetableGrid || {},
-        createdAt: localStorage.getItem('dashboard_created_at') || new Date().toISOString(),
-        lastLogin: new Date().toISOString()
-      }
-    });
   };
 
   if (!isLoggedIn) {
@@ -789,7 +773,11 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
             <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
               <h4 className="text-sm font-semibold truncate pr-2">My Friends ({friends.length})</h4>
               <button
-                onClick={viewMyStats}
+                onClick={() => {
+                  useDashboardStore.getState().setViewingFriend(null);
+                  useDashboardStore.getState().toggleSettings();
+                  if (!useDashboardStore.getState().isStatsOpen) useDashboardStore.getState().toggleStats();
+                }}
                 className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 rounded-lg text-xs font-bold transition-colors border border-blue-500/20 flex items-center justify-center gap-1.5 animate-pulse shrink-0"
               >
                 <BarChart2 size={14} /> My Stats
