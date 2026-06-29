@@ -1,38 +1,17 @@
 # Productive Dashboard — User Manual
 
+## 0. Introduction
+
 **What is this app?**
-Productive Dashboard is a personal productivity web app that works on both desktop and mobile (installable as a PWA — Progressive Web App). It combines a focus timer, weekly schedule, task tracking, habit health logs, goals roadmap, notes, leaderboard, and a friends system — all synced to the cloud so your data follows you everywhere.
+Productive Dashboard is a personal productivity web app that works on both desktop and mobile (installable as a PWA — Progressive Web App). It combines a focus timer, stopwatch, weekly timetable, task manager, roadmap planner, rich-text notes, health tracker, leaderboard, friends system, calendar with deadlines, countdown widgets, wallpaper system, and live quotes — all synced to the cloud so your data follows you everywhere.
 
----
-
-## Table of Contents
-
-| # | Section |
-|---|---|
-| 0 | [Installing the App on Your Device](#0-installing-the-app-on-your-device) |
-| 0b | [Using the App Offline](#using-the-app-offline--sync-behaviour) |
-| 1 | [First Launch — Login / Register Screen](#1-first-launch--login--register-screen) |
-| 2 | [The Dashboard Layout](#2-the-dashboard-layout) |
-| 3 | [Account & Cloud Sync (Connect Tab)](#3-account--cloud-sync-connect-tab) |
-| 4 | [Focus Timer](#4-focus-timer) |
-| 5 | [Stats (Focus History)](#5-stats-focus-history) |
-| 6 | [Tasks](#6-tasks) |
-| 7 | [Calendar & Deadlines](#7-calendar--deadlines) |
-| 8 | [Timetable](#8-timetable) |
-| 9 | [Focus Mode & Panic Mode](#9-focus-mode--panic-mode) |
-| 10 | [Friends](#11-friends) |
-| 11 | [Leaderboard](#12-leaderboard) |
-| 12 | [Plans (Pending Works / Roadmap)](#13-plans-pending-works--roadmap) |
-| 13 | [Quick Notes](#14-quick-notes) |
-| 14 | [Health Tracker](#15-health-tracker) |
-| 15 | [Stopwatch](#16-stopwatch) |
-| 16 | [Countdowns](#17-countdowns) |
-| 17 | [Wallpapers](#18-wallpapers) |
-| 18 | [Widget Settings](#19-widget-settings) |
-| 19 | [Sound Settings](#20-sound-settings) |
-| 20 | [Data & Backup](#21-data--backup) |
-| 21 | [Feedback & Bugs](#22-feedback--bugs) |
-| — | [Quick Reference](#quick-reference) |
+### Core Features
+- **Unified Workspace**: Eliminate distractions with a clean, centralized hub.
+- **Smart Timetable**: Take absolute control of your schedule with a precision interactive timetable.
+- **Task Management**: Never miss a deadline with intuitive drag-and-drop to-do lists.
+- **Global Leaderboard**: Turn productivity into a game and climb the global ranks.
+- **Focus Widgets**: Customize your space with sticky notes, weather updates, and goals.
+- **Cloud Sync**: Your data follows you seamlessly across all your devices in real-time.
 
 ---
 
@@ -71,7 +50,7 @@ The app is designed to keep working even when your internet connection drops.
 
 ### What works without internet
 - The **Focus Timer** runs entirely on-device. It will not stop, pause, or lose time if you go offline.
-- **Tasks, Notes, Timetable, Plans, Countdowns** — you can view and edit all of them. Changes are saved locally in your browser instantly.
+- **Tasks, Notes, Timetable, Roadmap, Countdowns** — you can view and edit all of them. Changes are saved locally in your browser instantly.
 - **Health logs, Stats** — readable and writable offline.
 
 ### What requires internet
@@ -84,7 +63,7 @@ Your data is saved to your browser first (instant, always works), and then pushe
 
 - If you edit something while offline, it is stored locally.
 - When internet reconnects, the app automatically detects this and pushes the pending data to the cloud.
-- **You will not lose data** by going offline mid-session. The timer, for example, auto-saves focus minutes every 10 minutes and catches up on reconnect.
+- **You will not lose data** by going offline mid-session.
 
 > **Important:** Data lives in your browser's local storage AND the cloud. If you clear your browser data / use a different browser without logging in, your local copy is gone — but the cloud copy is safe. Logging in on any device restores your data from the cloud.
 
@@ -117,10 +96,12 @@ When you open the app for the first time, you will land on the **Login screen**,
 
 After login, you see the main dashboard — a full-screen wallpaper with floating widgets.
 
-- **Bottom Dock** — quick-launch buttons for Timer, Tasks, Notes, Plans, Stats, Calendar, Timetable, etc.
-- **Right Toolbar** — Health, Stopwatch, and other secondary widgets.
-- **Draggable Widgets** — Clock, Calendar, Timer, Countdowns, Quote. Drag them anywhere.
-- **Settings (⚙️)** — accessed via the dock or toolbar, contains all configuration.
+- **Bottom Dock** — quick-launch buttons for Timer, Tasks, Notes, Roadmap, Stats, Calendar, Timetable, etc.
+- **Right Toolbar** — Health, Stopwatch, Settings and other secondary toggle icons.
+- **Draggable Widgets** — Clock, Calendar, Timer, Countdowns. Drag them anywhere on the screen.
+- **Settings (⚙️)** — accessed via the dock or toolbar; contains all configuration panels.
+
+The loading screen that appears on startup shows your profile picture and intro text while data is syncing. If syncing takes longer than expected, it automatically switches to **Motivator Mode** — showing a random motivational quote and a feature carousel to keep you engaged while the data loads.
 
 ---
 
@@ -132,7 +113,7 @@ Inside the Connect tab there are four sub-tabs: **Profile**, **Friends**, **News
 
 ### Profile Tab
 - Displays your username and a green **Sync Active** badge when cloud sync is working.
-- **Avatar:** Paste any public image URL (e.g. from imgur) → Save.
+- **Avatar:** Paste any public image URL (e.g. from imgur) → Save. The image updates everywhere including the loading screen.
 - **Alias:** Unlock with your password → set a nickname shown on the leaderboard instead of your real username.
 - **Sign Out** and **Delete Account** are both here. Delete requires unlocking first.
 
@@ -165,13 +146,11 @@ If you press **⏹ Reset** mid-session, the app does **not lose your time**. Any
 The timer saves progress **every 10 minutes automatically** as you work — no internet required for the countdown itself. The saving happens in the background.
 
 - If you lose internet mid-session, the timer **keeps running locally** — it does not stop.
-- When internet returns, the next 10-minute checkpoint or the final save (on reset/finish) will sync to the cloud.
+- When internet returns, the next 10-minute checkpoint or the final save will sync to the cloud.
 - You will **never lose a completed or partially-done session** due to a connection drop.
 
-> **Example:** 45-min session. At 10 min → auto-saves 10 min. At 20 min → saves 10 more. Internet drops at 25 min. Timer keeps going. At 30 min → tries to save, queued. Internet returns. At finish → saves remaining 15 min. Total: 45 min logged correctly.
-
 ### Linking Timer to a Task
-From the **Tasks** panel, click the **▶** button next to any task. The timer starts and tracks focus time specifically for that task. The task name appears in a blue label above the timer display.
+From the **Tasks** panel, click the **▶** button next to any task. The timer starts and tracks focus time specifically for that task. The task name appears in a label above the timer display.
 
 ### When the timer finishes
 - Alarm plays (if enabled in Settings → Sound).
@@ -195,27 +174,32 @@ Open via the **📊 Stats** button on the dock/toolbar.
 - Click any month row to expand it → shows individual day entries.
 - Each day entry also shows **Academic / Reading / Vocab** minutes if you logged Health data that day.
 
+You can also click any **friend's 📊 Stats icon** in the Friends tab to view their breakdown in the same panel.
+
 ---
 
 ## 6. Tasks
 
-Open from the dock. Add tasks with a title, optional due date, and time estimate.
+Open from the dock. A focused task list to plan your work session.
 
-- Press **▶** on any task to link it to the Focus Timer.
-- Check off tasks when done.
-- Tasks with deadlines near the alert threshold trigger a banner popup on the dashboard (configure in Settings → Preferences → Deadline Alerts).
+- **Add a task:** Click the **+** button. Fill in title, optional due date, and time estimate.
+- **Start timer for a task:** Press **▶** next to any task — the Focus Timer starts and shows that task's name as context.
+- **Check off tasks:** Tap/click the checkbox on the left to mark as done.
+- **Delete a task:** Click the trash icon next to it.
+
+Tasks with deadlines near the alert threshold trigger a **banner popup on the dashboard** (configure in Settings → Preferences → Deadline Alerts).
 
 ---
 
 ## 7. Calendar & Deadlines
 
-The **Mini Calendar** is a draggable widget on the dashboard.
+The **Mini Calendar** is a draggable widget on the dashboard. Open it from the dock if it is not visible.
 
 ### Adding a Deadline to a Date
 1. Click any **date** on the calendar grid.
 2. The view switches to that day's deadline list.
 3. Click **"+ ADD DEADLINE"** at the bottom.
-4. Type the deadline name/note directly in the new text field → press **Enter** or click away to save.
+4. Type the deadline name/note → press **Enter** or click away to save.
 5. To edit a saved deadline: **double-click** the text.
 6. To delete: click the 🗑️ trash icon next to it.
 
@@ -250,14 +234,12 @@ The time column on the left is **fully automatic** — you never type times manu
 
 > **Example:** Start = 8:00 AM. Row 1 = 60 min → shows `8:00AM – 9:00AM`. Row 2 = 90 min → shows `9:00AM – 10:30AM`. Row 3 = 60 min → shows `10:30AM – 11:30AM`. You only needed to set durations; the times adjust automatically.
 
-**This means:** If you change any row's duration, all rows below it shift their times automatically. The clock column always stays correct.
+**This means:** If you change any row's duration, all rows below it shift their times automatically.
 
 ### Setting the Day Start Time
 Click the small **"Day Starts: 9:00 AM"** button just below the title. A time picker appears → choose your time → Save.
 
 - This is saved separately for **Weekdays** and **Weekends**.
-
-> **What if day starts 1 hour early/late?** Just click the Day Starts button and correct the time. All row times recalculate instantly with no manual editing needed.
 
 ### Changing a slot's duration
 Click any **time cell** in the left column:
@@ -266,17 +248,16 @@ Click any **time cell** in the left column:
 - Press ✓ or Enter to confirm.
 - All subsequent row times update automatically.
 
-> **Example:** Row 1 is 60 min. Click it → change to 90 → confirm. Row 1 now shows `8:00AM – 9:30AM` and Row 2 shifts to start at `9:30AM`.
-
 ### Adding / Removing rows
 Click the **⚙️** settings icon next to the schedule title:
 
 | Option | What it does |
 |---|---|
-| Add Top Row | Adds a new slot before row 1 and shifts day start back by 1 hr |
+| Add Top Row | Adds a new slot before row 1 |
 | Add Bottom Row | Adds a new slot at the end |
-| Delete Top Row | Removes row 1 and moves day start forward |
+| Delete Top Row | Removes row 1 |
 | Delete Bottom Row | Removes the last row |
+| Reset Timetable | Resets to a default weekday + weekend schedule |
 
 ---
 
@@ -307,11 +288,9 @@ On mobile, there is no keyboard. Instead:
 | **Redirect** | The browser immediately navigates to a random/neutral website, making the dashboard completely invisible to anyone looking. To return: press **Back** in the browser — the dashboard reloads and your session is still active. |
 | **Hide UI** | All widgets disappear and the screen goes transparent/blank. Tap the eye icon again to bring everything back. |
 
-> **Summary for mobile:** Tap 👁️ → screen redirects or goes blank. To get back → tap browser Back (redirect mode) or tap the eye area again (hide mode).
-
 ---
 
-## 11. Friends
+## 10. Friends
 
 **Settings → Connect & News → Friends tab** (requires login).
 
@@ -327,141 +306,257 @@ On mobile, there is no keyboard. Instead:
 ### Viewing Friend Stats
 - In your friends list, click the **📊 Stats** icon next to a friend's name.
 - A panel opens showing their focus history — today's time, total time, and daily breakdown by month.
-- Click **"My Stats"** button to view your own stats in the same view.
+- Click **"My Stats"** button to switch back to your own stats in the same view.
+
+### Friend Request Notifications
+When someone sends you a friend request, a **Friend Request popup notification** will appear automatically on your dashboard — so you never miss a request even if Settings is closed.
 
 ### Removing a Friend
 Click the 🗑️ trash icon next to any friend → confirm.
 
 ---
 
-## 12. Leaderboard
+## 11. Leaderboard
 
 **Settings → Connect & News → Ranks tab** (requires login).
 
-- Shows all users ranked by focus time for **Today / This Week / This Month** — toggle at the top.
-- Your own row is highlighted.
+### How the Leaderboard Works
+- The leaderboard tracks your total accumulated focus time via the Timer.
+- It ranks all users by focus time for **Today / This Week / This Month** — toggle at the top.
+- Your own row is highlighted in the list.
 - Your **alias** is shown if you set one; otherwise your username is shown.
 - Use the search bar to find a specific user.
 - Click any user row to expand and see their stats breakdown.
+
+### Badges & Achievements
+As you accumulate focused work hours, you can earn dynamic badges that appear next to your name on the leaderboard. Badges are awarded automatically to the top user who meets the strict minimum requirements:
+- **Daily Badge (🏆)**: Requires a minimum of **6 hours** of focus time in a single day.
+- **Weekly Badge (🌟)**: Requires a minimum of **42 hours** of focus time over the last 7 days.
+- **Monthly Badge (👑)**: Requires a minimum of **180 hours** of focus time over the last 30 days.
+
+*Note: Badges are incrementable! If you win the daily top spot with 6+ hours multiple times, your badge count will increase (e.g., "🏆 2 Day").*
 
 > Set your alias in **Settings → Connect → Profile → Security & Alias** (requires password unlock) to appear anonymously on the leaderboard.
 
 ---
 
-## 13. Plans (Pending Works / Roadmap)
+## 12. Roadmap Manager (Plans)
 
-Open from the dock. Plan long-term goals broken into actionable steps.
+Open from the dock. A powerful, visual roadmap builder for long-term goals and projects.
 
-- **Add Plan:** Title + Category + Duration (plain text like "30 days") + Target End Date.
-- Each plan card shows a **Days Left / Due Today / Overdue** badge and a completion progress bar.
-- Click a plan card → open it → add **Action Items** (sub-topics).
-- Click an action item to check/uncheck it. Progress updates instantly.
-- Filter plans by category using the dropdown in the top-right.
-- To delete a plan: open it → click **"Drop Plan"** at the bottom-left.
+### Structure — Roadmaps and Topics
+- You can have **multiple roadmaps** (e.g. "Semester Goals", "Career Path", "Personal Projects"). Switch between them using the **roadmap name button** at the top of the view.
+- Each roadmap is a **tree of topics** — each topic can have subtopics nested up to 4 levels deep.
+- On **desktop**, topics alternate left and right along a central timeline. On **mobile**, topics stack in a left-aligned list.
+
+### Adding Topics
+1. Click **"Add Main Topic"** at the bottom of the roadmap view to add a root-level topic.
+2. Click the **⋮** menu on any existing topic → **➕ Subtopic** to add a nested child topic (up to 4 levels).
+3. A new topic is created with the name "New Topic" — click it to open the **Edit Topic** modal.
+
+### Editing a Topic
+Click any **leaf topic** (one with no children) directly, or click the **⋮ → Edit** on any topic. Inside the editor:
+- **Title** — the topic name.
+- **Description (Optional)** — additional notes below the title.
+- Click **Save** to confirm.
+
+### Topic Statuses
+Each topic has a status you can cycle through by clicking the **status button** (circle icon on the right of the topic card):
+
+| Icon | Status | Card Border Color |
+|---|---|---|
+| ⚪ | Pending | White/dim |
+| 🔵 | In Progress | Blue glow |
+| ✅ | Completed | Green |
+
+Completed topics show the title with a strikethrough.
+
+### Filtering by Status
+Use the **legend bar** at the top (⚪ Pending / 🔵 In Progress / ✅ Completed) to filter the entire view to show only topics of that status across **all roadmaps** — this is called the **Synthetic View**. Click the active filter again to clear it.
+
+### Roadmap Deadline
+Click the **"Set Deadline"** badge at the top of the roadmap tree to set a target completion date. It shows how many days are left. In the Synthetic (filtered) view, you can also set per-status deadlines.
+
+### Managing Roadmaps
+- **Create a new roadmap:** Click the roadmap name at the top → **"+ Create Roadmap"** in the switcher popup.
+- **Switch roadmaps:** Click the roadmap name at the top → click any roadmap in the list.
+- **Delete a roadmap:** Scroll to the bottom of the roadmap view → click **"Delete Entire Roadmap"** (you must type DELETE to confirm).
+
+### Deleting a Topic
+Click **⋮** on any topic → **✕ Delete** → type "DELETE" to confirm. This also removes all of that topic's subtopics.
 
 ---
 
-## 14. Quick Notes
+## 13. Quick Notes
 
-Open from the dock. A simple scratchpad.
+Open from the dock. A rich-text, multi-note writing space.
 
-- Create multiple notes, each with a title and body text.
-- Notes are cloud-synced automatically.
-- Export any note as a `.txt` file using the download button.
+### Managing Notes
+- **Create a note:** Click the **+** button in the top-right of the Notes sidebar.
+- **Switch notes:** Click any note title in the left sidebar (or top list on mobile).
+- **Rename a note:** Click the note title text at the top of the editor area and type to rename.
+- **Delete a note:** Click the 🗑️ trash icon next to any note in the sidebar (only visible when you have more than one note).
+
+### The Editor
+- Notes are **date-sectioned** — each day you write, a new date heading appears automatically. Your existing entries for previous days are preserved and visible below.
+- The editor supports full **rich text** formatting:
+
+| Button | Action |
+|---|---|
+| H1 | Large heading |
+| H2 | Medium heading |
+| P | Normal paragraph text |
+| **B** | Bold |
+| *I* | Italic |
+| U | Underline |
+| ☰ | Bullet list |
+| ↩ Undo / ↪ Redo | Undo or redo last change |
+
+- The **floating formatting toolbar** appears at the bottom of the editor — scroll it horizontally on small screens.
+- Notes **auto-save** 30 seconds after you stop typing, and immediately when you close the Notes modal.
+
+### Exporting Notes
+- **Export a single note:** Click the ⬇️ download icon next to any note in the sidebar — saves as a `.json` file.
+- **Export all notes:** Click the ⬇️ export icon in the top-right header of the Notes panel — exports all notes at once.
 
 ---
 
-## 15. Health Tracker
+## 14. Health Tracker
 
 Open via the ❤️ icon on the right toolbar.
 
-Log daily metrics:
-- **Academic minutes** — formal study time
-- **Reading minutes** — books, articles
-- **Vocab words** — new English words learned
+Log daily metrics to track habits alongside your focus sessions:
 
-These feed into the monthly breakdown in Stats, shown alongside focus time.
+| Field | What to log |
+|---|---|
+| **Academic minutes** | Formal study / coursework time |
+| **Reading minutes** | Books, articles, research papers |
+| **Vocab words** | New words or concepts learned |
 
----
-
-## 16. Stopwatch
-
-Separate from the Focus Timer. Records raw elapsed time.
-
-- Start, Pause, Lap, Reset.
-- Each session is saved with its timestamp and visible in Stats history.
+These appear in the **Monthly Breakdown in Stats** alongside your Focus Timer data — giving you a full picture of your learning day.
 
 ---
 
-## 17. Countdowns
+## 15. Stopwatch
 
-A widget showing a list of upcoming events with day countdowns.
+Separate from the Focus Timer. Records raw elapsed time for any activity.
 
-- Add an event name + target date.
-- Widget shows "X days left" for each.
-- Events within your **Deadline Alert Days** threshold show a dashboard popup banner.
+- **Start / Pause** — standard start and pause controls.
+- **Lap** — records the current time as a split point while continuing to count.
+- **Reset** — clears the current session.
+- Each completed session is saved with its timestamp and visible in your Stats history.
+
+> Use the Stopwatch for activities where you want to **measure time** without a countdown — e.g. reading sessions, workout durations, or any open-ended work blocks.
 
 ---
 
-## 18. Wallpapers
+## 16. Countdowns
+
+A widget showing a list of upcoming target events with day countdowns.
+
+### Mobile Access
+- On mobile devices, you can quickly access the Countdowns widget by **swiping down on the top pill/notch area** of the screen.
+
+### Features
+- **Add an event:** Click **+** in the Countdowns widget → enter the event name and target date.
+- The widget shows **"X days left"** for each event.
+- Events within your **Deadline Alert Days** threshold (set in Settings → Preferences) trigger a dashboard popup banner automatically.
+- If you have more than one countdown, a **chevron button (▲/▼)** at the bottom of the widget expands or collapses the full list.
+
+---
+
+## 17. Wallpapers
 
 **Settings → Wallpapers**
 
-- Pick from built-in wallpapers (images + animated videos).
-- Upload custom wallpapers via URL (separate sets for **Desktop** and **Mobile**, up to 4 each).
-- Click a wallpaper thumbnail to make it active.
-- **Slideshow mode** — auto-cycles through wallpapers at a set interval (in minutes).
-- **Lock a wallpaper** — slideshow will skip it; it stays permanent until unlocked.
-- **Hide** a wallpaper from the rotation without deleting it.
+### Choosing a Wallpaper
+- Pick from **built-in wallpapers** — a curated set of images and animated video backgrounds.
+- Click a wallpaper thumbnail to make it active immediately.
+
+### Custom Wallpapers via URL
+- Add up to **4 custom wallpapers for Desktop** and **4 for Mobile** by pasting an image URL.
+- The app stores separate wallpaper sets for desktop and mobile — so your phone gets an appropriately sized background.
+
+### Slideshow Mode
+- Toggle **Slideshow** on to have the wallpaper auto-cycle through your active wallpapers.
+- Set the **interval in minutes** — e.g. 30 minutes to switch wallpaper every half hour.
+
+### Locking & Hiding Wallpapers
+| Option | What it does |
+|---|---|
+| **Lock** | Slideshow skips this wallpaper — it stays as the permanent background until unlocked |
+| **Hide** | Removes the wallpaper from slideshow rotation without deleting it |
 
 ---
 
-## 19. Widget Settings
+## 18. Widget Settings & Preferences
 
 **Settings → Preferences**
 
-- **Widget Visibility** — toggle any widget on or off (Timer, Clock, Calendar, Tasks, Notes, Timetable, Health, Stats, etc.)
-- **Widget Drag Locking** — prevent specific widgets from being moved accidentally. Toggle per widget.
-- **Reset Default Positions** — resets all draggable widgets back to their original layout positions.
-- **Right Toolbar Position** — adjust the vertical height offset of the right toolbar.
-- **24-Hour Clock** — toggle between 12h AM/PM and 24h military format.
-- **Deadline Alert Days** — how many days before a deadline the alert popup triggers.
+### Widget Visibility
+Toggle any widget on or off. Hidden widgets do not appear on the dashboard at all.
+
+Available toggles: Timer, Clock (with Today's Work), Calendar, Tasks, Notes, Timetable, Health, Stats, Plans (Roadmap), Stopwatch, Countdowns, Dock, Deadline Alerts, Settings Button.
+
+### Widget Drag Locking
+- When unlocked, all draggable widgets can be repositioned by dragging.
+- Toggle **lock** on any specific widget to prevent it from being moved accidentally. Other widgets remain draggable.
+- **Reset Default Positions** — resets ALL draggable widgets back to their original layout positions.
+
+### Right Toolbar Position
+Adjust the **vertical height offset** of the right-side toolbar (Health, Stopwatch, etc.). Use the slider to move it up or down to avoid overlapping other elements on your layout.
+
+### Display Options
+- **24-Hour Clock** — toggle between 12h AM/PM and 24h military format for the Big Clock.
+- **Deadline Alert Days** — how many days before a deadline the alert popup triggers on the dashboard.
+
+### Focus Mode — Specific Widget Setup
+In the **Focus / Panic Mode** tab, you can individually select which widgets should be hidden when Focus Mode is triggered — so only your most important widgets remain visible during a focused work session.
 
 ---
 
-## 20. Sound Settings
+## 19. Sound Settings
 
 **Settings → Sound Settings**
 
-- **Enable Alarm Sound** — plays audio when timer ends.
-- **Enable Device Vibrate** — vibrates phone when timer ends (mobile only).
-- **Auto Stop Timer** — slider from 5 seconds to 2 minutes. Controls how long the alarm rings before stopping itself.
-- **Select Alarm Sound** — choose from available ringtones.
+| Setting | Description |
+|---|---|
+| **Enable Alarm Sound** | Plays audio when the Focus Timer ends |
+| **Enable Device Vibrate** | Vibrates your phone/tablet when the timer ends (mobile only) |
+| **Auto Stop Timer** | Slider from 5 seconds to 2 minutes — controls how long the alarm rings before stopping itself automatically |
+| **Select Alarm Sound** | Choose from a list of available ringtone options |
 
 ---
 
-## 21. Data & Backup
+## 20. Data & Backup
 
 **Settings → Data & Backup**
 
-- **Export Data** — downloads a full `.json` backup of all your data. Requires being logged in.
+- **Export Data** — downloads a full `.json` backup of all your data (focus logs, tasks, notes, roadmap, health, etc.). Requires being logged in.
 - **Import Data** — upload a `.json` backup file.
   - **Merge:** Combines the backup with your existing data (no data lost from either side).
   - **Overwrite:** Replaces everything with the backup file.
 - **Clear Old Data** — delete focus history entries older than a chosen number of days.
 - **Clear All Data** — wipes all local data (irreversible).
 
+> **Tip:** Export your backup before clearing browser data or switching devices to avoid losing your local copy.
+
 ---
 
-## 22. Feedback & Bugs
+## 21. Feedback & Bugs
 
 **Settings → Feedback & Bugs**
 
-- Submit: **💡 Feature request**, **🐛 Bug report**, or **💬 General feedback**.
-- View your submission status:
-  - *Reviewing* — received, not yet looked at
-  - *Reviewed* — seen by developer
-  - *✓ Roadmap!* — accepted and planned
+Submit feedback directly to the developer from inside the app:
+
+- **💡 Feature request** — suggest a new feature you'd like to see.
+- **🐛 Bug report** — describe something that isn't working correctly.
+- **💬 General feedback** — any other comment or message.
+
+View your submission status:
+- *Reviewing* — received, not yet looked at
+- *Reviewed* — seen by developer
+- *✓ Roadmap!* — accepted and planned for a future update
 
 ---
 
@@ -475,14 +570,27 @@ A widget showing a list of upcoming events with day countdowns.
 | Add a deadline to a date | Click the date on the Calendar widget |
 | Set deadline alert threshold | Settings → Preferences → Deadline Alerts |
 | Plan long-term goals | Plans / Roadmap (dock) |
+| Add a roadmap topic | Roadmap → "Add Main Topic" button |
+| Filter roadmap by status | Click ⚪ / 🔵 / ✅ in the Roadmap legend bar |
+| Switch roadmaps | Click roadmap name at top of Roadmap view |
+| Write and format notes | Notes (dock) — use floating toolbar at bottom |
+| Export a single note | Notes sidebar → ⬇️ icon next to note title |
+| Export all notes | Notes → ⬇️ icon at top of sidebar |
+| Log health data (study/reading/vocab) | ❤️ icon on right toolbar |
+| Time an open-ended activity | Stopwatch (right toolbar) |
+| Add a countdown event | + button in Countdowns widget |
 | Check the leaderboard | Settings → Connect → Ranks tab |
 | Add / accept friends | Settings → Connect → Friends tab |
 | View a friend's stats | Friends tab → 📊 icon next to their name |
 | Backup your data | Settings → Data & Backup → Export |
 | Change wallpaper | Settings → Wallpapers |
+| Enable slideshow wallpapers | Settings → Wallpapers → Slideshow toggle |
 | Hide/show widgets | Settings → Preferences → Widget Visibility |
 | Lock widgets in place | Settings → Preferences → Widget Drag Locking |
+| Reset widget positions | Settings → Preferences → Reset Default Positions |
 | Panic button (mobile) | Tap 👁️ Eye icon on right side of screen |
 | Panic / Focus shortcut (desktop) | Settings → Focus / Panic Mode |
 | Set alias for leaderboard | Settings → Connect → Profile → Security & Alias |
 | Reset password | Login screen → "Forgot Password?" |
+| Submit a bug or feature request | Settings → Feedback & Bugs |
+| Delete your account | Settings → Connect → Profile → (unlock) → Delete Account |

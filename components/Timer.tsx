@@ -165,34 +165,73 @@ export default function Timer() {
     let vibeInterval: NodeJS.Timeout;
     if (isAlarmPlaying && enableAlarmVibration) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([500, 500, 500, 500, 500]);
-        vibeInterval = setInterval(() => {
-          navigator.vibrate([500, 500, 500, 500, 500]);
-        }, 2500);
+        try {
+          if (!navigator.userActivation || navigator.userActivation.hasBeenActive) {
+            navigator.vibrate([500, 500, 500, 500, 500]);
+            vibeInterval = setInterval(() => {
+              try { navigator.vibrate([500, 500, 500, 500, 500]); } catch(e) {}
+            }, 2500);
+          }
+        } catch(e) {}
       }
     } else {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(0);
+        try { navigator.vibrate(0); } catch(e) {}
       }
     }
     return () => {
       if (vibeInterval) clearInterval(vibeInterval);
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(0);
+        try { navigator.vibrate(0); } catch(e) {}
       }
     };
   }, [isAlarmPlaying, enableAlarmVibration]);
 
-  const playAlarm = () => {
+  const playAlarm = async () => {
     setIsAlarmPlaying(true);
     const durationSecs = useDashboardStore.getState().alarmDurationSecs || 60;
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          registration.showNotification('Time is up!', {
+            body: 'Your focus session has ended.',
+            icon: '/icon-192x192.png',
+            vibrate: enableAlarmVibration ? [500, 500, 500, 500, 500] : undefined,
+            silent: !enableAlarmSound,
+            requireInteraction: true,
+            tag: 'timer-alarm'
+          } as any);
+        } else {
+          new Notification('Time is up!', {
+            body: 'Your focus session has ended.',
+            icon: '/icon-192x192.png',
+            vibrate: enableAlarmVibration ? [500, 500, 500, 500, 500] : undefined,
+            silent: !enableAlarmSound,
+            requireInteraction: true,
+            tag: 'timer-alarm'
+          } as any);
+        }
+      } catch (e) {
+        console.error('Notification failed:', e);
+      }
+    }
+
     setTimeout(() => {
       useDashboardStore.getState().setIsAlarmPlaying(false);
     }, durationSecs * 1000);
   };
 
-  const stopAlarm = () => {
+  const stopAlarm = async () => {
     setIsAlarmPlaying(false);
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const notifications = await registration.getNotifications({ tag: 'timer-alarm', includeTriggered: true } as any);
+        notifications.forEach(n => n.close());
+      } catch (e) {}
+    }
   };
 
   const startTimer = (seconds: number, isTask: boolean = false) => {
@@ -205,6 +244,16 @@ export default function Timer() {
     setTimerLastSavedChunks(0);
     stopAlarm();
 
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') scheduleNotification(Date.now() + seconds * 1000);
+        });
+      } else if (Notification.permission === 'granted') {
+        scheduleNotification(Date.now() + seconds * 1000);
+      }
+    }
+
     if (typeof window !== 'undefined' && window.innerWidth <= 768) {
        const state = useDashboardStore.getState();
        if (state.isTimerOpen) {
@@ -213,15 +262,49 @@ export default function Timer() {
     }
   };
 
+  const scheduleNotification = async (targetTimestamp: number) => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && (window as any).TimestampTrigger) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        registration.showNotification('Time is up!', {
+          body: 'Your focus session has ended.',
+          icon: '/icon-192x192.png',
+          vibrate: enableAlarmVibration ? [500, 500, 500, 500, 500] : undefined,
+          silent: !enableAlarmSound,
+          requireInteraction: true,
+          tag: 'timer-alarm',
+          showTrigger: new (window as any).TimestampTrigger(targetTimestamp)
+        } as any);
+      } catch (e) {
+        console.error('Failed to schedule notification:', e);
+      }
+    }
+  };
+
   const togglePause = () => {
     if (timerEndAt) {
       // Pause it
       setTimerPausedLeft(localTimeLeft);
       setTimerEndAt(null);
+      
+      // Clear scheduled background notification
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(async (registration) => {
+          try {
+            const notifications = await registration.getNotifications({ tag: 'timer-alarm', includeTriggered: true } as any);
+            notifications.forEach(n => n.close());
+          } catch(e) {}
+        });
+      }
     } else if (timerPausedLeft !== null) {
       // Resume it
-      setTimerEndAt(Date.now() + timerPausedLeft * 1000);
+      const newEndAt = Date.now() + timerPausedLeft * 1000;
+      setTimerEndAt(newEndAt);
       setTimerPausedLeft(null);
+      
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        scheduleNotification(newEndAt);
+      }
     }
   };
 

@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Flame } from 'lucide-react';
 import { getLocalDateString } from '@/utils/date';
+import { Timer, Clock, Flame } from 'lucide-react';
 
 export default function BigClock() {
   const [time, setTime] = useState<Date | null>(null);
@@ -170,7 +170,9 @@ export default function BigClock() {
               isTimetableOpen ? 'text-sm mt-0 scale-75 origin-top px-5 py-3' : 'text-lg mt-1 px-5 py-3'
             }`}
           >
-            <Flame className="text-orange-400 w-5 h-5 shrink-0" />
+            <div className="flex items-center justify-center bg-orange-500/20 w-6 h-6 md:w-8 md:h-8 rounded-full border border-orange-500/30 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+              <Flame className="text-orange-400 w-3.5 h-3.5 md:w-4 md:h-4" />
+            </div>
             <div className="flex items-center whitespace-nowrap">
               <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
               <span className="text-white/30 mx-2">|</span>
@@ -180,13 +182,15 @@ export default function BigClock() {
         );
 
         const mobilePills = (
-          <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-[90vw] pointer-events-none">
-            <div className="flex items-start justify-center relative w-full">
+          <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-full pointer-events-none">
+            <div className="flex flex-row items-start justify-center gap-2 px-2 max-w-full">
               <div
                 onClick={toggleHide}
-                className="flex items-center gap-1.5 text-[11px] px-6 pb-3 pt-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] rounded-b-3xl rounded-t-none bg-black text-white border border-t-0 border-white/10 cursor-pointer pointer-events-auto max-w-[200px] justify-center"
+                className="flex items-center gap-1.5 text-[11px] px-5 pb-2.5 pt-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] rounded-b-3xl bg-black text-white border border-t-0 border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95"
               >
-                <Flame className="text-orange-400 w-3.5 h-3.5 shrink-0" />
+                <div className="flex items-center justify-center bg-orange-500/20 w-5 h-5 rounded-full border border-orange-500/30 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+                  <Flame className="text-orange-400 w-3 h-3 shrink-0" />
+                </div>
                 <div className="flex items-center whitespace-nowrap">
                   <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
                   <span className="text-white/30 mx-1.5">|</span>
@@ -204,9 +208,16 @@ export default function BigClock() {
                         useDashboardStore.getState().toggleStopwatch();
                      }
                   }}
-                  className="absolute left-[calc(50%+85px)] ml-2 flex items-center justify-center text-[12px] font-bold tracking-widest bg-blue-500/20 border border-t-0 border-blue-500/30 text-blue-200 backdrop-blur-xl px-4 pb-2.5 pt-1.5 rounded-b-2xl shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform"
+                  className="flex items-center gap-1.5 text-[12px] font-bold tracking-widest bg-black/80 border border-t-0 border-blue-500/40 text-blue-200 backdrop-blur-xl px-4 pb-2.5 pt-1.5 rounded-b-3xl shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0"
                 >
-                   {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
+                   {activeTimerSecs !== null ? (
+                     <Timer className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                   ) : (
+                     <Clock className="w-3.5 h-3.5 text-green-400 animate-pulse" />
+                   )}
+                   <span className={activeTimerSecs !== null ? "text-blue-300" : "text-green-300"}>
+                     {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
+                   </span>
                 </div>
               )}
             </div>

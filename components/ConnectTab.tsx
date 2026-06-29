@@ -63,6 +63,13 @@ export default function ConnectTab({ friendStats, setFriendStats }: ConnectTabPr
       fetchFriendsData();
     }
     fetchBroadcasts();
+
+    // Listen for custom event from StatsModal
+    const handleOpenLeaderboard = () => {
+      setActiveTab('leaderboard');
+    };
+    window.addEventListener('open-leaderboard', handleOpenLeaderboard);
+    return () => window.removeEventListener('open-leaderboard', handleOpenLeaderboard);
   }, []);
 
   useEffect(() => {

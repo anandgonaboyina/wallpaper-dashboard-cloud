@@ -14,6 +14,16 @@ export default function Stopwatch() {
   const [addToStats, setAddToStats] = useState(true);
 
   useEffect(() => {
+    if (stopwatchStartTime) {
+      setIsRunning(true);
+      setElapsedSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
+    } else {
+      setIsRunning(false);
+      setElapsedSecs(0);
+    }
+  }, [stopwatchStartTime]);
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning && stopwatchStartTime) {
       interval = setInterval(() => {

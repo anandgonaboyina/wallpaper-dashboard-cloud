@@ -16,27 +16,27 @@ export interface Note {
   entries: Record<string, string>; // date string -> html content
 }
 
-export interface SubTopic {
+export type ResourceLink = {
+  id: string;
+  label: string;
+  url: string;
+};
+
+export type RoadmapItem = {
   id: string;
   title: string;
-  completed: boolean;
-}
+  description?: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  links?: ResourceLink[];
+  subItems?: RoadmapItem[];
+};
 
-export interface Deadline {
+export type Roadmap = {
   id: string;
-  date: string; // "YYYY-MM-DD" format
-  text: string;
-}
-
-export interface Plan {
-  id: string;
-  title: string;
-  category: string;
-  duration: string;
-  endDate: string;
-
-  subTopics: SubTopic[];
-}
+  name: string;
+  targetDate?: string; 
+  nodes: RoadmapItem[];
+};
 
 export interface HealthData {
   water: number;
@@ -162,15 +162,12 @@ interface DashboardState {
   setStopwatchStartTime: (time: number | null) => void;
 
   // Plans/Roadmap State
-  plans: Plan[];
+  roadmaps: Roadmap[];
+  setRoadmaps: (roadmaps: Roadmap[]) => void;
+  syntheticDeadlines: Record<string, string>;
+  setSyntheticDeadline: (status: string, date: string) => void;
   isPlansOpen: boolean;
   togglePlans: () => void;
-  addPlan: (plan: Plan) => void;
-  updatePlanDetails: (id: string, duration: string, endDate: string) => void;
-  deletePlan: (id: string) => void;
-  addSubTopic: (planId: string, title: string) => void;
-  toggleSubTopic: (planId: string, subTopicId: string) => void;
-  deleteSubTopic: (planId: string, subTopicId: string) => void;
 
   // Clock Format
   is24HourClock: boolean;
@@ -181,7 +178,7 @@ interface DashboardState {
   updateCountdown: (id: string, title: string, endDate: string | null) => void;
 
   // Deadlines
-  deadlines: Deadline[];
+  deadlines: any[];
   addDeadline: (date: string, text: string) => string;
   updateDeadline: (id: string, text: string) => void;
   deleteDeadline: (id: string) => void;
@@ -194,10 +191,14 @@ interface DashboardState {
 
   // Timetable
   timetableGrid: TimetableGrid;
+  timetableColors: Record<string, Record<string, string>>;
   updateTimetableCell: (day: string, time: string, subject: string) => void;
+  updateTimetableColor: (day: string, time: string, color: string) => void;
   weekdayTimes: string[];
   weekendTimes: string[];
-  updateTimetableTime: (isWeekend: boolean, index: number, newTime: string) => void;
+  updateTimetableTime: (isWeekend: boolean, index: number, newTime: string, keyMap?: Record<string, string>) => void;
+  renameTimetableKeys: (isWeekend: boolean, keyMap: Record<string, string>) => void;
+  resetTimetable: () => void;
   addTimetableRow: (isWeekend: boolean, prepend?: boolean) => void;
   deleteTimetableRow: (isWeekend: boolean, index: number) => void;
   useTimetableRange: boolean;
@@ -380,7 +381,7 @@ const performSave = async () => {
         deadlines: [...(parsedLocal.state.deadlines || []), ...(parsedCloud.state.deadlines || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
         notes: [...(parsedLocal.state.notes || []), ...(parsedCloud.state.notes || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
         stopwatchSessions: [...(parsedLocal.state.stopwatchSessions || []), ...(parsedCloud.state.stopwatchSessions || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
-        plans: [...(parsedLocal.state.plans || []), ...(parsedCloud.state.plans || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
+        roadmaps: [...(parsedLocal.state.roadmaps || []), ...(parsedCloud.state.roadmaps || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
       };
       
       const mergedData = { version: 2, state: mergedState };
@@ -811,33 +812,42 @@ export const useDashboardStore = create<DashboardState>()(
       stopwatchStartTime: null,
       setStopwatchStartTime: (time) => set({ stopwatchStartTime: time }),
 
-      // Plans State
-      plans: [],
+      // Plans/Roadmap State
+      roadmaps: [
+        {
+          id: 'default-roadmap-id',
+          name: 'My Personal Goals',
+          targetDate: '2026-12-31',
+          nodes: [
+            {
+              id: 'node-seed-1',
+              title: 'Core Objective 1',
+              description: 'Primary milestone focus area',
+              status: 'in-progress',
+              subItems: [
+                { id: 'node-seed-1-1', title: 'Action Item A', status: 'completed' },
+                { id: 'node-seed-1-2', title: 'Action Item B', status: 'pending' }
+              ]
+            },
+            {
+              id: 'node-seed-2',
+              title: 'Core Objective 2',
+              description: 'Secondary milestone focus area',
+              status: 'pending',
+              subItems: [
+                { id: 'node-seed-2-1', title: 'Sub-task Alpha', status: 'pending' }
+              ]
+            }
+          ]
+        }
+      ],
+      setRoadmaps: (roadmaps) => set({ roadmaps }),
+      syntheticDeadlines: {},
+      setSyntheticDeadline: (status, date) => set((state) => ({
+        syntheticDeadlines: { ...state.syntheticDeadlines, [status]: date }
+      })),
       isPlansOpen: false,
       togglePlans: () => set((state) => ({ isPlansOpen: !state.isPlansOpen })),
-      addPlan: (plan) => set((state) => ({ plans: [...state.plans, plan] })),
-      updatePlanDetails: (id, duration, endDate) => set((state) => ({
-        plans: state.plans.map(p => p.id === id ? { ...p, duration, endDate } : p)
-      })),
-      deletePlan: (id) => set((state) => ({ plans: state.plans.filter(p => p.id !== id) })),
-      addSubTopic: (planId, title) => set((state) => ({
-        plans: state.plans.map(p => p.id === planId ? {
-          ...p,
-          subTopics: [...p.subTopics, { id: Date.now().toString(), title, completed: false }]
-        } : p)
-      })),
-      toggleSubTopic: (planId, subTopicId) => set((state) => ({
-        plans: state.plans.map(p => p.id === planId ? {
-          ...p,
-          subTopics: p.subTopics.map(st => st.id === subTopicId ? { ...st, completed: !st.completed } : st)
-        } : p)
-      })),
-      deleteSubTopic: (planId, subTopicId) => set((state) => ({
-        plans: state.plans.map(p => p.id === planId ? {
-          ...p,
-          subTopics: p.subTopics.filter(st => st.id !== subTopicId)
-        } : p)
-      })),
 
       // Clock Format
       is24HourClock: false,
@@ -890,6 +900,7 @@ export const useDashboardStore = create<DashboardState>()(
         "Sat": { "09:00 AM": "Free", "10:00 AM": "Free", "11:00 AM": "Free", "12:00 PM": "Free", "01:00 PM": "Free", "02:00 PM": "Free", "03:00 PM": "Free", "04:00 PM": "Free", "05:00 PM": "Free" },
         "Sun": { "09:00 AM": "Free", "10:00 AM": "Free", "11:00 AM": "Free", "12:00 PM": "Free", "01:00 PM": "Free", "02:00 PM": "Free", "03:00 PM": "Free", "04:00 PM": "Free", "05:00 PM": "Free" },
       },
+      timetableColors: {},
       updateTimetableCell: (day, time, subject) => set((state) => ({
         timetableGrid: {
           ...state.timetableGrid,
@@ -899,9 +910,18 @@ export const useDashboardStore = create<DashboardState>()(
           }
         }
       })),
+      updateTimetableColor: (day, time, color) => set((state) => ({
+        timetableColors: {
+          ...state.timetableColors,
+          [day]: {
+            ...(state.timetableColors[day] || {}),
+            [time]: color
+          }
+        }
+      })),
       weekdayTimes: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"],
       weekendTimes: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"],
-      updateTimetableTime: (isWeekend, index, newTime) => set((state) => {
+      updateTimetableTime: (isWeekend, index, newTime, keyMap) => set((state) => {
         const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
         const fallbackArray = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
         const timesList = targetArray || fallbackArray;
@@ -909,67 +929,109 @@ export const useDashboardStore = create<DashboardState>()(
         const oldTime = newTimes[index];
         newTimes[index] = newTime;
         
-        // Also update the timetableGrid keys to preserve data
+        // Also update the timetableGrid and timetableColors keys to preserve data
         const newGrid = { ...state.timetableGrid };
+        const newColors = { ...(state.timetableColors || {}) };
+        const targetDays = isWeekend ? ["Sat", "Sun"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        
+        if (keyMap) {
+          targetDays.forEach(day => {
+            if (newGrid[day]) {
+              const currentDayData = { ...newGrid[day] };
+              let updatedDayData: Record<string, string> = {};
+              Object.entries(currentDayData).forEach(([oldKey, value]) => {
+                const newKey = keyMap[oldKey] || oldKey;
+                updatedDayData[newKey] = value;
+              });
+              newGrid[day] = updatedDayData;
+            }
+            if (newColors[day]) {
+              const currentDayColors = { ...newColors[day] };
+              let updatedDayColors: Record<string, string> = {};
+              Object.entries(currentDayColors).forEach(([oldKey, value]) => {
+                const newKey = keyMap[oldKey] || oldKey;
+                updatedDayColors[newKey] = value;
+              });
+              newColors[day] = updatedDayColors;
+            }
+          });
+        } else {
+          targetDays.forEach(day => {
+            if (newGrid[day] && newGrid[day][oldTime] !== undefined) {
+              newGrid[day] = { ...newGrid[day] };
+              newGrid[day][newTime] = newGrid[day][oldTime];
+              delete newGrid[day][oldTime];
+            }
+            if (newColors[day] && newColors[day][oldTime] !== undefined) {
+              newColors[day] = { ...newColors[day] };
+              newColors[day][newTime] = newColors[day][oldTime];
+              delete newColors[day][oldTime];
+            }
+          });
+        }
+
+        return isWeekend 
+          ? { weekendTimes: newTimes, timetableGrid: newGrid, timetableColors: newColors }
+          : { weekdayTimes: newTimes, timetableGrid: newGrid, timetableColors: newColors };
+      }),
+      renameTimetableKeys: (isWeekend, keyMap) => set((state) => {
+        const newGrid = { ...state.timetableGrid };
+        const newColors = { ...(state.timetableColors || {}) };
         const targetDays = isWeekend ? ["Sat", "Sun"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
         
         targetDays.forEach(day => {
-          if (newGrid[day] && newGrid[day][oldTime] !== undefined) {
-            newGrid[day] = { ...newGrid[day] };
-            newGrid[day][newTime] = newGrid[day][oldTime];
-            delete newGrid[day][oldTime];
+          if (newGrid[day]) {
+            const currentDayData = { ...newGrid[day] };
+            let updatedDayData: Record<string, string> = {};
+            
+            Object.entries(currentDayData).forEach(([oldKey, value]) => {
+              const newKey = keyMap[oldKey] || oldKey;
+              updatedDayData[newKey] = value;
+            });
+            newGrid[day] = updatedDayData;
+          }
+          if (newColors[day]) {
+            const currentDayColors = { ...newColors[day] };
+            let updatedDayColors: Record<string, string> = {};
+            
+            Object.entries(currentDayColors).forEach(([oldKey, value]) => {
+              const newKey = keyMap[oldKey] || oldKey;
+              updatedDayColors[newKey] = value;
+            });
+            newColors[day] = updatedDayColors;
           }
         });
-
-        return isWeekend 
-          ? { weekendTimes: newTimes, timetableGrid: newGrid }
-          : { weekdayTimes: newTimes, timetableGrid: newGrid };
+        
+        return { timetableGrid: newGrid, timetableColors: newColors };
       }),
+      resetTimetable: () => set(() => ({
+        timetableGrid: {
+          "Mon": { "09:00 AM": "DSA", "10:00 AM": "Web Dev", "11:00 AM": "OS", "12:00 PM": "Lunch", "01:00 PM": "Math", "02:00 PM": "Physics", "03:00 PM": "Project", "04:00 PM": "Free", "05:00 PM": "Free" },
+          "Tue": { "09:00 AM": "Math", "10:00 AM": "DSA", "11:00 AM": "Web Dev", "12:00 PM": "Lunch", "01:00 PM": "OS", "02:00 PM": "DB", "03:00 PM": "Project", "04:00 PM": "Free", "05:00 PM": "Free" },
+          "Wed": { "09:00 AM": "OS", "10:00 AM": "Math", "11:00 AM": "DSA", "12:00 PM": "Lunch", "01:00 PM": "Web Dev", "02:00 PM": "Physics", "03:00 PM": "Project", "04:00 PM": "Free", "05:00 PM": "Free" },
+          "Thu": { "09:00 AM": "DB", "10:00 AM": "OS", "11:00 AM": "Math", "12:00 PM": "Lunch", "01:00 PM": "DSA", "02:00 PM": "Web Dev", "03:00 PM": "Project", "04:00 PM": "Free", "05:00 PM": "Free" },
+          "Fri": { "09:00 AM": "Web Dev", "10:00 AM": "DB", "11:00 AM": "OS", "12:00 PM": "Lunch", "01:00 PM": "Math", "02:00 PM": "DSA", "03:00 PM": "Project", "04:00 PM": "Free", "05:00 PM": "Free" },
+          "Sat": { "09:00 AM": "Free", "10:00 AM": "Free", "11:00 AM": "Free", "12:00 PM": "Free", "01:00 PM": "Free", "02:00 PM": "Free", "03:00 PM": "Free", "04:00 PM": "Free", "05:00 PM": "Free" },
+          "Sun": { "09:00 AM": "Free", "10:00 AM": "Free", "11:00 AM": "Free", "12:00 PM": "Free", "01:00 PM": "Free", "02:00 PM": "Free", "03:00 PM": "Free", "04:00 PM": "Free", "05:00 PM": "Free" },
+        },
+        timetableColors: {},
+        weekdayTimes: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"],
+        weekendTimes: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"],
+      })),
       addTimetableRow: (isWeekend, prepend = false) => set((state) => {
         const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
-        const fallbackArray = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
-        const timesList = targetArray || fallbackArray;
-
-        let newTime = "06:00 PM";
-        if (prepend) {
-          // For top row: derive a time 60 mins before the first slot (placeholder; actual time driven by startTime in component)
-          newTime = timesList.length > 0 ? timesList[0] : "08:00 AM";
-          const newTimes = [newTime, ...timesList];
-          return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
-        } else {
-          // For bottom row: append after the last slot
-          if (timesList.length > 0) {
-            const lastTime = timesList[timesList.length - 1];
-            const match = lastTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
-            if (match) {
-              let h = parseInt(match[1]);
-              const ampm = h === 11 ? (match[3].toUpperCase() === "AM" ? "PM" : "AM") : match[3].toUpperCase();
-              h = h === 12 ? 1 : h + 1;
-              newTime = `${h.toString().padStart(2, '0')}:${match[2]} ${ampm}`;
-            }
-          }
-          const newTimes = [...timesList, newTime];
-          return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
-        }
+        const timesList = targetArray || [];
+        const newTimes = prepend ? ["60", ...timesList] : [...timesList, "60"];
+        return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
       }),
       deleteTimetableRow: (isWeekend, index) => set((state) => {
         const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
-        const timesList = targetArray || ["09:00 AM"];
-        const oldTime = timesList[index];
+        const timesList = targetArray || [];
         const newTimes = timesList.filter((_, i) => i !== index);
-        
-        const newGrid = { ...state.timetableGrid };
-        const targetDays = isWeekend ? ["Sat", "Sun"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
-        targetDays.forEach(day => {
-          if (newGrid[day] && newGrid[day][oldTime] !== undefined) {
-            newGrid[day] = { ...newGrid[day] };
-            delete newGrid[day][oldTime];
-          }
-        });
-        
-        return isWeekend 
-          ? { weekendTimes: newTimes, timetableGrid: newGrid }
-          : { weekdayTimes: newTimes, timetableGrid: newGrid };
+        // Do not aggressively delete keys from timetableGrid here.
+        // It relies on legacy string times and can accidentally delete shifted rows.
+        // Orphaned keys are harmless and prevent data loss.
+        return isWeekend ? { weekendTimes: newTimes } : { weekdayTimes: newTimes };
       }),
       useTimetableRange: true,
       toggleTimetableRange: () => set((state) => ({ useTimetableRange: !state.useTimetableRange })),

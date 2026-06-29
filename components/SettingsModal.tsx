@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { X, Upload, Trash2, Image as ImageIcon, Settings as SettingsIcon, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, ChevronLeft, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug } from 'lucide-react';
+import { X, Upload, BookOpen, Trash2, Image as ImageIcon, Settings as SettingsIcon, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, ChevronLeft, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug } from 'lucide-react';
 import ConnectTab from './ConnectTab';
+import UserManualModal from './UserManualModal';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 const DEFAULT_WALLPAPERS = [
@@ -13,12 +14,13 @@ const DEFAULT_WALLPAPERS = [
 ];
 
 export default function SettingsModal() {
-  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex } = useDashboardStore();
+  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, resetTimetable, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex } = useDashboardStore();
 
   const [focusPlatform, setFocusPlatform] = useState<'desktop' | 'mobile'>('desktop');
 
   // Mobile specific drill-down state
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+  const [isUserManualOpen, setIsUserManualOpen] = useState(false);
 
   const handleShortcutCapture = (e: React.KeyboardEvent<HTMLInputElement>, setter: (val: string) => void) => {
     const key = e.key.toLowerCase();
@@ -237,7 +239,7 @@ export default function SettingsModal() {
             deadlines: [...(currentState.deadlines || []), ...(parsed.state.deadlines || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
             notes: [...(currentState.notes || []), ...(parsed.state.notes || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
             stopwatchSessions: [...(currentState.stopwatchSessions || []), ...(parsed.state.stopwatchSessions || [])],
-            plans: [...(currentState.plans || []), ...(parsed.state.plans || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+            roadmaps: [...(currentState.roadmaps || []), ...(parsed.state.roadmaps || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
           }
         };
       }
@@ -411,6 +413,13 @@ export default function SettingsModal() {
                   <span className="text-[11px] md:text-[12px] font-semibold tracking-wide leading-tight text-white block">Support Developer & Connect</span>
                   <span className="text-[9px] md:text-[10px] text-blue-300 font-medium uppercase mt-0.5 md:mt-1 tracking-wider block truncate w-full">Gonaboyina Anand kumar</span>
                 </div>
+              </button>
+              
+              <button
+                onClick={() => setIsUserManualOpen(true)}
+                className={`flex w-full items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium bg-black/40 md:bg-transparent text-white/60 hover:bg-white/5 hover:text-white border border-transparent`}
+              >
+                <BookOpen className="w-5 h-5 text-blue-400" /> User Manual
               </button>
 
             </div>
@@ -1217,6 +1226,28 @@ export default function SettingsModal() {
                         </button>
                       </div>
                     </div>
+                    
+                    {/* Reset Timetable */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2.5 md:p-4 rounded-lg md:rounded-2xl bg-black/20 border border-white/5 gap-2">
+                      <div className="flex items-center gap-2 md:gap-4 min-w-0">
+                        <CalendarDays className="text-purple-400 w-4 h-4 md:w-6 md:h-6 shrink-0" />
+                        <div className="min-w-0 pr-1">
+                          <h4 className="font-medium text-[10px] md:text-lg whitespace-nowrap text-purple-300">Reset Timetable</h4>
+                          <p className="text-[8px] md:text-sm text-white/50 leading-tight">Wipe existing schedule and colors.</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to completely reset your Timetable to default? This cannot be undone.')) {
+                            resetTimetable();
+                            alert('Timetable reset successfully.');
+                          }
+                        }}
+                        className="w-full sm:w-auto justify-center px-2 py-1 md:px-4 md:py-2 bg-purple-500/20 text-purple-300 rounded text-[9px] md:text-sm font-bold border border-purple-500/50 flex items-center gap-1 md:gap-2 whitespace-nowrap"
+                      >
+                        Reset Schedule
+                      </button>
+                    </div>
 
                     {/* Danger Zone: Delete All Data */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2.5 md:p-4 rounded-lg md:rounded-2xl bg-red-500/10 border border-red-500/30 gap-2">
@@ -1562,6 +1593,7 @@ export default function SettingsModal() {
           </div>
         );
       })()}
+      <UserManualModal isOpen={isUserManualOpen} onClose={() => setIsUserManualOpen(false)} />
     </div>
   );
 }

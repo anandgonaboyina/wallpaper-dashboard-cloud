@@ -7,6 +7,18 @@ import { useEffect, useState, useRef } from "react";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const WEEKENDS = ["Sat", "Sun"];
 
+export const CELL_COLORS = [
+  { name: 'default', bg: 'bg-white/5', active: 'bg-purple-500/30', text: 'text-white' },
+  { name: 'red', bg: 'bg-red-500/20', active: 'bg-red-500/40', text: 'text-red-200' },
+  { name: 'blue', bg: 'bg-blue-500/20', active: 'bg-blue-500/40', text: 'text-blue-200' },
+  { name: 'green', bg: 'bg-green-500/20', active: 'bg-green-500/40', text: 'text-green-200' },
+  { name: 'yellow', bg: 'bg-yellow-500/20', active: 'bg-yellow-500/40', text: 'text-yellow-200' },
+  { name: 'purple', bg: 'bg-purple-500/20', active: 'bg-purple-500/40', text: 'text-purple-200' },
+  { name: 'orange', bg: 'bg-orange-500/20', active: 'bg-orange-500/40', text: 'text-orange-200' },
+  { name: 'cyan', bg: 'bg-cyan-500/20', active: 'bg-cyan-500/40', text: 'text-cyan-200' },
+  { name: 'pink', bg: 'bg-pink-500/20', active: 'bg-pink-500/40', text: 'text-pink-200' },
+];
+
 // Utility to format minutes into h:mm AM/PM
 const formatTime = (totalMins: number) => {
   let h = Math.floor(totalMins / 60) % 24;
@@ -17,7 +29,6 @@ const formatTime = (totalMins: number) => {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 };
 
-// Utility to parse h:mm AM/PM to minutes from midnight
 const parseMins = (tStr: string) => {
   if (!tStr) return 0;
   const m = tStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -30,16 +41,50 @@ const parseMins = (tStr: string) => {
   return h * 60 + min;
 };
 
+
+
 export default function Timetable() {
-  const { timetableGrid, updateTimetableCell, weekdayTimes, weekendTimes, updateTimetableTime, addTimetableRow, deleteTimetableRow, useTimetableRange, toggleTimetableRange } = useDashboardStore();
+  const { timetableGrid, timetableColors, updateTimetableCell, updateTimetableColor, weekdayTimes, weekendTimes, updateTimetableTime, addTimetableRow, deleteTimetableRow, useTimetableRange, toggleTimetableRange, renameTimetableKeys } = useDashboardStore();
   const [currentDayIndex, setCurrentDayIndex] = useState(() => new Date().getDay());
   const [viewMode, setViewMode] = useState<"weekdays" | "weekends">(
     () => (new Date().getDay() === 0 || new Date().getDay() === 6) ? "weekends" : "weekdays"
   );
-  const [focusedCell, setFocusedCell] = useState<{ day: string, time: string } | null>(null);
+  const [editingCell, setEditingCell] = useState<{ day: string, time: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [globalEditingIndex, setGlobalEditingIndex] = useState<number | null>(null);
+
+  // Scroll logic
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === 'TEXTAREA' || (e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).closest('button')) return;
+    setIsDragging(true);
+    setStartY(e.pageY - (scrollContainerRef.current?.offsetTop || 0));
+    setScrollTop(scrollContainerRef.current?.scrollTop || 0);
+    setStartX(e.pageX - (scrollContainerRef.current?.offsetLeft || 0));
+    setScrollLeft(scrollContainerRef.current?.scrollLeft || 0);
+  };
+
+  const handleMouseLeave = () => setIsDragging(false);
+  const handleMouseUp = () => setIsDragging(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const y = e.pageY - scrollContainerRef.current.offsetTop;
+    const walkY = (y - startY) * 1.5; 
+    scrollContainerRef.current.scrollTop = scrollTop - walkY;
+
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walkX = (x - startX) * 1.5; 
+    scrollContainerRef.current.scrollLeft = scrollLeft - walkX;
+  };
 
   // Day Start Times
   const [weekdayStartTime, setWeekdayStartTime] = useState(540); // 9:00 AM default
@@ -59,7 +104,27 @@ export default function Timetable() {
     else setViewMode("weekdays");
   }, []);
 
-  const handleSetStartTime = (mins: number) => {
+  const handleSetStartTime = (mins: number, skipRename = false) => {
+    if (!skipRename) {
+      const diff = mins - startTime;
+      if (diff !== 0) {
+        let oldAccumulated = startTime;
+        let newAccumulated = mins;
+        const keyMap: Record<string, string> = {};
+        
+        for (let i = 0; i < durations.length; i++) {
+          const oldStr = formatTime(oldAccumulated);
+          const newStr = formatTime(newAccumulated);
+          if (oldStr !== newStr) {
+            keyMap[oldStr] = newStr;
+          }
+          oldAccumulated += durations[i];
+          newAccumulated += durations[i];
+        }
+        renameTimetableKeys(isWeekendMode, keyMap);
+      }
+    }
+
     if (viewMode === "weekdays") {
       setWeekdayStartTime(mins);
       localStorage.setItem('timetable_start_weekday', mins.toString());
@@ -137,7 +202,31 @@ export default function Timetable() {
   }, []);
 
   const handleUpdateDuration = (idx: number, newDur: number) => {
-    updateTimetableTime(isWeekendMode, idx, newDur as any);
+    let oldAccumulated = startTime;
+    const oldTimesStrs: string[] = [];
+    for (let i = 0; i < durations.length; i++) {
+      oldTimesStrs.push(formatTime(oldAccumulated));
+      oldAccumulated += durations[i];
+    }
+    
+    const newDurations = [...durations];
+    newDurations[idx] = newDur;
+    
+    let newAccumulated = startTime;
+    const newTimesStrs: string[] = [];
+    for (let i = 0; i < newDurations.length; i++) {
+      newTimesStrs.push(formatTime(newAccumulated));
+      newAccumulated += newDurations[i];
+    }
+    
+    const keyMap: Record<string, string> = {};
+    for (let i = 0; i < oldTimesStrs.length; i++) {
+      if (oldTimesStrs[i] !== newTimesStrs[i]) {
+        keyMap[oldTimesStrs[i]] = newTimesStrs[i];
+      }
+    }
+
+    updateTimetableTime(isWeekendMode, idx, newDur as any, keyMap);
   };
 
   // --- SMART ROW MANAGEMENT ---
@@ -147,7 +236,7 @@ export default function Timetable() {
       alert("Cannot start before midnight!");
       return;
     }
-    handleSetStartTime(newStart); // Shift start time backward by 1hr
+    handleSetStartTime(newStart, true); // skip key renaming
     addTimetableRow(isWeekendMode, true);
     setShowSettings(false);
   };
@@ -156,7 +245,7 @@ export default function Timetable() {
     if (confirm("Delete the top row?")) {
       const durationToRemove = generatedTimes[0]?.duration || 60;
       const newStart = startTime + durationToRemove;
-      handleSetStartTime(newStart); // Shift start time forward
+      handleSetStartTime(newStart, true); // skip key renaming
       deleteTimetableRow(isWeekendMode, 0);
       setShowSettings(false);
     }
@@ -228,7 +317,14 @@ export default function Timetable() {
           <Clock size={10} /> Day Starts: {formatTime(startTime)}
         </button>
       </div>
-      <div className="overflow-x-auto custom-scrollbar pb-1 px-1 w-full">
+      <div 
+        className="overflow-auto custom-scrollbar pb-1 px-1 w-full max-h-[50vh] md:max-h-[60vh] cursor-grab active:cursor-grabbing"
+        ref={scrollContainerRef}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+      >
         <div
           className={`grid gap-1 md:gap-1.5 ${viewMode === "weekdays" ? "min-w-[500px] md:min-w-[750px] grid-cols-[75px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)]" : "min-w-[280px] md:min-w-[400px] grid-cols-[75px_repeat(2,1fr)] md:grid-cols-[120px_repeat(2,1fr)]"}`}
         >
@@ -278,6 +374,8 @@ export default function Timetable() {
                 {generatedTimes.map((block, index) => {
                   const gridKey = block.startStr;
                   const subject = timetableGrid?.[day]?.[gridKey] || "";
+                  const customColorName = timetableColors?.[day]?.[gridKey];
+                  const customColor = CELL_COLORS.find(c => c.name === customColorName) || CELL_COLORS[0];
 
                   const prevKey = index > 0 ? generatedTimes[index - 1].startStr : null;
                   const prevSubject = prevKey ? (timetableGrid?.[day]?.[prevKey] || "") : "";
@@ -298,7 +396,7 @@ export default function Timetable() {
                     }
                   }
 
-                  const isDayFocused = focusedCell?.day === day;
+                  const isDayFocused = editingCell?.day === day;
                   const isActiveBlock = false;
 
                   let roundedClass = 'rounded-xl';
@@ -311,40 +409,33 @@ export default function Timetable() {
                   const isPartOfBlock = isContinuation || spanCount > 1;
                   const isHiddenText = !isDayFocused && isPartOfBlock;
 
-                  const textClass = isHiddenText ? 'text-transparent placeholder:text-transparent selection:bg-transparent' : (isActiveBlock ? 'text-white font-bold placeholder:text-white/40' : 'text-white placeholder:text-white/20');
+                  const textClassFinal = isHiddenText ? 'text-transparent' : customColor.text;
                   const borderClass = isActiveBlock ? 'border-purple-400/80 shadow-[0_0_15px_rgba(168,85,247,0.3)] z-20' : 'border-transparent';
-                  const bgClass = isActiveBlock ? 'bg-purple-500/30' : (isToday ? 'bg-purple-500/10' : 'bg-white/5');
+                  const bgClass = isActiveBlock ? customColor.active : (isToday && customColor.name === 'default' ? 'bg-purple-500/10' : customColor.bg);
                   const marginBottom = (!isDayFocused && isContinuedByNext) ? 'mb-0' : 'mb-[2px]';
 
                   const showOverlay = !isContinuation && spanCount > 1 && !isDayFocused;
                   const overlayHeightPx = spanCount * 40;
+                  
+                  const isEditingThisCell = editingCell?.day === day && editingCell?.time === gridKey;
 
                   return (
-                    <div key={index} className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all z-10 ${borderClass} ${roundedClass} hover:bg-white/10 focus-within:bg-white/10 focus-within:border-purple-500/50 focus-within:z-20 ${bgClass}`}>
-
-                      {showOverlay && (
+                    <div 
+                      key={index} 
+                      onDoubleClick={() => setEditingCell({ day, time: gridKey })}
+                      className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all z-10 ${borderClass} ${roundedClass} hover:bg-white/10 ${isEditingThisCell ? 'ring-2 ring-purple-500 z-50' : ''} ${bgClass}`}
+                    >
+                      {showOverlay && !isEditingThisCell && (
                         <div style={{ height: `${overlayHeightPx}px` }} className="absolute top-0 left-0 w-full pointer-events-none flex items-center justify-center z-30">
-                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : 'text-white font-semibold'} px-1 md:px-2 text-center break-words transition-all duration-200 text-[10px] md:text-xs`}>{subject || "Free"}</span>
+                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : (customColor.name !== 'default' ? customColor.text : 'text-white')} font-semibold px-1 md:px-2 text-center break-words transition-all duration-200 text-[10px] md:text-xs`}>{subject || "Free"}</span>
                         </div>
                       )}
 
-                      <textarea
-                        value={subject}
-                        onChange={(e) => updateTimetableCell(day, gridKey, e.target.value)}
-                        onFocus={() => setFocusedCell({ day, time: gridKey })}
-                        onBlur={() => setFocusedCell(null)}
-                        ref={el => {
-                          if (el) {
-                            el.style.height = 'auto';
-                            el.style.height = el.scrollHeight + 'px';
-                          }
-                        }}
-                        rows={1}
-                        placeholder="Free"
-                        spellCheck={false}
-                        className={`w-full text-center bg-transparent outline-none ${textClass} text-[10px] md:text-xs leading-snug resize-none overflow-hidden break-words px-1`}
-                      />
-                      <Edit2 size={10} className={`absolute right-1 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 pointer-events-none ${isHiddenText ? 'text-transparent' : 'text-white'} z-20`} />
+                      <div className={`w-full h-full flex items-center justify-center overflow-hidden break-words px-1 cursor-pointer select-none ${isEditingThisCell ? 'opacity-30' : ''}`}>
+                        <span className={`w-full text-center ${textClassFinal} text-[10px] md:text-xs leading-snug`}>{subject || (!isHiddenText ? "Free" : "")}</span>
+                      </div>
+
+                      {!isEditingThisCell && <Edit2 size={10} className={`absolute right-1 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 pointer-events-none ${isHiddenText ? 'text-transparent' : customColor.text} z-20`} />}
                     </div>
                   );
                 })}
@@ -354,6 +445,60 @@ export default function Timetable() {
 
         </div>
       </div>
+
+      {/* Centered Cell Editor Modal */}
+      {editingCell && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingCell(null)}>
+          <div className="bg-[#0f0f11] border border-purple-500/50 rounded-2xl shadow-2xl p-4 w-full max-w-[280px] flex flex-col gap-4 relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setEditingCell(null)} className="absolute top-2 right-2 p-1 text-white/50 hover:text-white transition-colors rounded-lg hover:bg-white/10"><X size={16}/></button>
+            
+            <div className="text-center">
+              <h3 className="font-bold text-white text-sm uppercase tracking-wider">{editingCell.day} - {editingCell.time}</h3>
+              <p className="text-[10px] text-white/40 mt-0.5 uppercase font-semibold">Edit subject and color</p>
+            </div>
+            
+            <textarea
+              value={timetableGrid?.[editingCell.day]?.[editingCell.time] || ""}
+              onChange={(e) => updateTimetableCell(editingCell.day, editingCell.time, e.target.value)}
+              autoFocus
+              data-gramm="false"
+              data-gramm_editor="false"
+              data-enable-grammarly="false"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  setEditingCell(null);
+                }
+              }}
+              rows={2}
+              placeholder="e.g. Math, Free, Meeting..."
+              spellCheck={false}
+              className="w-full text-center bg-black/40 border border-white/10 rounded-xl outline-none text-white text-sm md:text-base leading-snug resize-none overflow-hidden break-words p-3 focus:border-purple-500/50 transition-colors shadow-inner shadow-black"
+            />
+            
+            <div className="flex flex-wrap gap-2 justify-center mx-auto mt-1 px-1">
+              {CELL_COLORS.map(c => {
+                const isActive = (timetableColors?.[editingCell.day]?.[editingCell.time] || 'default') === c.name;
+                return (
+                  <button
+                    key={c.name}
+                    onClick={() => updateTimetableColor(editingCell.day, editingCell.time, c.name)}
+                    title={c.name}
+                    className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${c.bg.replace('/20', '/80')} ${isActive ? 'ring-2 ring-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'opacity-60 hover:opacity-100 hover:scale-105'} transition-all flex items-center justify-center shrink-0`}
+                  >
+                     {isActive && <Check size={14} className="text-white drop-shadow-md" />}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button onClick={() => setEditingCell(null)} className="mt-1 w-full py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-purple-500/20">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

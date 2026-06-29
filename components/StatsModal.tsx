@@ -1,6 +1,6 @@
 'use client';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { X, Flame, Calendar, Clock, BookOpen, GraduationCap, MessageCircle, ChevronDown, CalendarDays } from 'lucide-react';
+import { X, Flame, Calendar, Clock, BookOpen, GraduationCap, MessageCircle, ChevronDown, CalendarDays, Trophy, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getLocalDateString } from '@/utils/date';
 import ScrollableWithArrows from './ScrollableWithArrows';
@@ -163,6 +163,30 @@ export default function StatsModal() {
                   </div>
                 </div>
               </div>
+
+              {/* Leaderboard Link Button */}
+              <button 
+                onClick={() => {
+                  toggleStats();
+                  useDashboardStore.getState().setSettingsActiveTab('connect');
+                  if (!useDashboardStore.getState().isSettingsOpen) {
+                    useDashboardStore.getState().toggleSettings();
+                  }
+                  window.dispatchEvent(new CustomEvent('open-leaderboard'));
+                }}
+                className="w-full mt-2 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-white/10 hover:border-white/30 transition-all flex items-center justify-between group shadow-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
+                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight">Global Leaderboard</h3>
+                    <p className="text-[9px] sm:text-[10px] text-white/50">Compare your focus time</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </button>
             </ScrollableWithArrows>
           </div>
 

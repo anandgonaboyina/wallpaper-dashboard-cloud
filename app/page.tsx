@@ -4,123 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Lock, User as UserIcon, Loader2, Eye, EyeOff, Target, Calendar, ListTodo, Cloud, Trophy, Pin } from 'lucide-react';
 
-const features = [
-  { id: 1, title: 'Unified Workspace', desc: 'Eliminate distractions with a clean, centralized hub. Stay deeply focused, organize your day, and crush your daily objectives from anywhere.', icon: Target, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  { id: 2, title: 'Smart Timetable', desc: 'Take absolute control of your schedule. Use our precision interactive, draggable timetable to map out every hour of your workflow.', icon: Calendar, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  { id: 3, title: 'Task Management', desc: 'Never miss a deadline again. Stay on top of your workflow with intuitive, interactive drag-and-drop to-do lists.', icon: ListTodo, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { id: 4, title: 'Global Leaderboard', desc: 'Turn productivity into a game! Climb the global ranks and compete alongside other highly driven users mastering their time.', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-  { id: 5, title: 'Focus Widgets', desc: 'Customize your space. Pin beautiful sticky notes, live weather updates, and your most important goals directly to your screen.', icon: Pin, color: 'text-rose-400', bg: 'bg-rose-500/10' },
-  { id: 6, title: 'Cloud Sync', desc: 'Your data, everywhere. Seamlessly and securely access your entire dashboard configuration across all your devices in real-time.', icon: Cloud, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-];
+import FeatureCarousel from '@/components/FeatureCarousel';
+import UserManualModal from '@/components/UserManualModal';
+import { BookOpen } from 'lucide-react';
 
-function FeatureCarousel() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (!scrollRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollRef.current.offsetLeft);
-    setScrollLeft(scrollRef.current.scrollLeft);
-  };
-
-  const handlePointerUp = () => setIsDragging(false);
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || !scrollRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    scrollRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const containerCenter = scrollRef.current.scrollLeft + scrollRef.current.offsetWidth / 2;
-    let closestIndex = 0;
-    let minDistance = Infinity;
-
-    Array.from(scrollRef.current.children).forEach((child, index) => {
-      const childCenter = (child as HTMLElement).offsetLeft + (child as HTMLElement).offsetWidth / 2;
-      const distance = Math.abs(containerCenter - childCenter);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIndex = index;
-      }
-    });
-
-    if (closestIndex !== activeIndex) setActiveIndex(closestIndex);
-  };
-
-  useEffect(() => {
-    if (isDragging) return;
-    const interval = setInterval(() => {
-      if (scrollRef.current && scrollRef.current.children.length > 0) {
-        let nextIndex = activeIndex + 1;
-        if (nextIndex >= features.length) nextIndex = 0;
-
-        const targetElement = scrollRef.current.children[nextIndex] as HTMLElement;
-        if (targetElement) {
-          const scrollPos = targetElement.offsetLeft - (scrollRef.current.offsetWidth / 2) + (targetElement.offsetWidth / 2);
-          scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
-        }
-      }
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [activeIndex, isDragging]);
-
-  return (
-    <div className="w-full relative flex flex-col items-center select-none touch-pan-y">
-      <div className="lg:mb-0 lg:absolute lg:-top-6 z-20 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 backdrop-blur-md shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center animate-fade-in">
-        <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-blue-200">Core Features</span>
-      </div>
-      <div
-        ref={scrollRef}
-        className={`w-full flex overflow-x-auto hide-scrollbar pt-4 pb-8 lg:py-8 cursor-grab active:cursor-grabbing px-[5%] sm:px-[15%] lg:px-[22.5%] ${isDragging ? '' : 'snap-x snap-mandatory scroll-smooth'}`}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerMove={handlePointerMove}
-        onScroll={handleScroll}
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {features.map((feat, idx) => {
-          const Icon = feat.icon;
-          const isActive = idx === activeIndex;
-
-          return (
-            <div key={feat.id} className="min-w-[90%] sm:min-w-[70%] lg:min-w-[90%] flex-[0_0_90%] sm:flex-[0_0_70%] lg:flex-[0_0_55%] snap-center px-1.5 flex justify-center items-center transition-transform duration-500">
-              <div className={`w-full p-4 sm:p-6 rounded-3xl border backdrop-blur-2xl flex flex-col gap-2 sm:gap-3 transition-all duration-500 shadow-2xl ${isActive ? 'scale-[1.02] sm:scale-110 bg-white/20 border-white/40 opacity-100 z-10' : 'scale-[0.92] sm:scale-[0.88] bg-white/5 border-white/10 opacity-50 z-0'}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${feat.bg} ${feat.color} shadow-lg ring-1 ring-white/10`}>
-                    <Icon className="w-5 h-5 sm:w-7 sm:h-7" />
-                  </div>
-                  <h3 className="text-base sm:text-xl font-bold text-white tracking-tight">{feat.title}</h3>
-                </div>
-                <p className="text-xs sm:text-sm text-white/70 leading-relaxed text-left">{feat.desc}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex gap-1.5 mt-2 sm:mt-5">
-        {features.map((_, idx) => (
-          <div key={idx} onClick={() => {
-            if (scrollRef.current) {
-              const targetElement = scrollRef.current.children[idx] as HTMLElement;
-              const scrollPos = targetElement.offsetLeft - (scrollRef.current.offsetWidth / 2) + (targetElement.offsetWidth / 2);
-              scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
-            }
-          }} className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer hover:bg-white/40 ${activeIndex === idx ? 'w-6 bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'w-1.5 bg-white/20'}`} />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function CloudLogin() {
   const [username, setUsername] = useState('');
@@ -138,6 +26,7 @@ export default function CloudLogin() {
   const [forgotStep, setForgotStep] = useState(1);
   const [resetCode, setResetCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isUserManualOpen, setIsUserManualOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -296,22 +185,22 @@ export default function CloudLogin() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 text-white flex flex-col lg:flex-row items-center justify-start lg:justify-center pt-2 sm:pt-6 lg:pt-6 pb-12 px-2 sm:px-6 lg:p-12 font-sans relative overflow-x-hidden overflow-y-auto lg:overflow-hidden gap-2 lg:gap-16 w-full">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 text-white flex flex-col lg:flex-row items-center justify-center pt-8 sm:pt-12 lg:pt-0 pb-12 px-4 sm:px-6 lg:p-12 font-sans relative overflow-x-hidden overflow-y-auto lg:overflow-hidden gap-8 lg:gap-16 w-full">
 
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[600px] sm:h-[600px] bg-pink-500/20 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none z-0"></div>
 
       {/* Feature Carousel (Hero Section) */}
       {!isAdminMode && (
-        <div className="w-full lg:w-1/2 max-w-full lg:max-w-xl z-10 animate-slide-up duration-700 flex flex-col justify-center shrink-0">
+        <div className="w-full lg:w-1/2 max-w-full -mt-4 lg:max-w-xl z-10 animate-slide-up duration-700 flex flex-col justify-center shrink-0">
           <FeatureCarousel />
         </div>
       )}
 
       {/* Form Container */}
-      <div className={`w-full max-w-md bg-white/10 border border-white/20 rounded-3xl p-5 sm:p-8 backdrop-blur-xl relative z-10 shadow-2xl animate-zoom-in shrink-0 mb-4 lg:mb-0 mx-2 lg:mx-0 ${isAdminMode ? 'mx-auto' : ''}`}>
+      <div className={`w-full max-w-md bg-white/10 border border-white/20 rounded-3xl p-4 sm:p-8 backdrop-blur-xl relative z-10 shadow-2xl animate-zoom-in shrink-0 mx-auto lg:mx-0`}>
 
-        <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 mb-4 sm:mb-6 text-center">
+        <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-6 text-center">
           <div className="animate-slide-up delay-300">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 mb-1">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{isAdminMode ? 'Admin Access' : (isRegisterMode ? 'Create Account' : (isForgotMode ? 'Reset Password' : 'Productive Dashboard'))}</h1>
@@ -320,6 +209,15 @@ export default function CloudLogin() {
               {isAdminMode ? 'Sign in to access the Global Admin Panel.' : (isRegisterMode ? 'Register to sync your dashboard data.' : (isForgotMode ? 'Recover your account access.' : 'Sign in to sync your dashboard data.'))}
             </p>
           </div>
+        </div>
+
+        <div className="mb-4 sm:mb-6 text-center animate-slide-up delay-300">
+          <button
+            onClick={() => setIsUserManualOpen(true)}
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-200 hover:text-white transition-all text-sm font-medium shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+          >
+            <BookOpen className="w-4 h-3 text-blue-400" /> New here? View User Manual
+          </button>
         </div>
 
         <div className="flex bg-black/30 p-1 rounded-xl w-full mb-4 sm:mb-6 border border-white/10 animate-slide-up delay-500">
@@ -346,7 +244,7 @@ export default function CloudLogin() {
           </button>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-3 animate-slide-up delay-700">
+        <form onSubmit={handleLogin} className="flex flex-col gap-2 animate-slide-up delay-700">
           {(error || successMsg) && (
             <div className={`p-2 sm:p-3 border text-xs sm:text-sm rounded-xl text-center ${successMsg ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-100' : 'bg-red-500/20 border-red-500/30 text-red-100'}`}>
               {error || successMsg}
@@ -478,6 +376,8 @@ export default function CloudLogin() {
         </form>
 
       </div>
+
+      <UserManualModal isOpen={isUserManualOpen} onClose={() => setIsUserManualOpen(false)} />
     </div>
   );
 }
