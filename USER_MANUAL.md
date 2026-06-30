@@ -278,30 +278,27 @@ Click the **⚙️** settings icon next to the schedule title:
 
 ## 9. Focus Mode & Panic Mode
 
-### Desktop — Keyboard Shortcuts
-Configure shortcuts in **Settings → Focus / Panic Mode**.
+### Desktop Controls (Keyboard & Click)
+On Desktop, there is no Eye icon. Instead, you can control visibility using two methods:
+1. **Keyboard Shortcuts**: Configure separate shortcuts in **Settings → Focus / Panic Mode**.
+   - **Focus Mode**: Hides only the widgets you specifically selected in the "Focus Specific Setup" list. Press the shortcut again to restore them.
+   - **Panic Mode**: Instantly hides ALL widgets, regardless of your focus setup.
+2. **Top Pill Click**: You can simply click on the **Today Focus** pill at the top of the dashboard to quickly toggle your hidden state without using the keyboard.
 
-| Mode | What it does |
-|---|---|
-| **Focus Mode** | Hides the widgets you selected in the "Focus Specific Setup" section. Press again to restore. |
-| **Panic Mode** | Instantly hides ALL widgets. Press again to restore. |
-
-- Click the shortcut input box → press your desired key combo (e.g. `Ctrl + H`) → it saves automatically.
-- You can also click **"Trigger"** button to test it manually.
 - **Switch Wallpaper on Panic** — toggle ON if you want the wallpaper to also change when Panic is triggered.
 
-### Mobile — Eye Icon Panic
-On mobile, there is no keyboard. Instead:
+### Mobile Controls (Eye Icon)
+On mobile devices, you use the **👁️ Eye icon** located on the right side of the screen. 
+- You can configure this icon in Settings to either act as a **Panic** button (hiding everything) or a **Focus** button (hiding only your selected widgets).
+- Tap the eye icon again to bring everything back.
 
-- Look for the **👁️ Eye icon** on the right side of the screen.
-- Tap it to trigger the Panic action instantly.
-
-**Panic Action has two modes** (set in Settings → Focus / Panic Mode → Panic Action):
+### Panic Actions
+If you trigger Panic Mode (or configure the Eye Icon to act as Panic), you can choose what happens:
 
 | Mode | What happens |
 |---|---|
 | **Redirect** | The browser immediately navigates to a random/neutral website, making the dashboard completely invisible to anyone looking. To return: press **Back** in the browser — the dashboard reloads and your session is still active. |
-| **Hide UI** | All widgets disappear and the screen goes transparent/blank. Tap the eye icon again to bring everything back. |
+| **Hide UI** | All widgets disappear and the screen goes transparent/blank. |
 
 ---
 
@@ -567,6 +564,17 @@ View your submission status:
 
 ---
 
+## 22.Hidden Widget Drag Controls
+
+many widgets can be controlled using swipe gestures instead of buttons for a faster experience:
+
+- **Countdowns**: Swipe left or right on the widget to switch between your countdowns. Swipe **UP** directly on the widget to close/hide it. You can also do a right or left swipe on the top Focus Pill to toggle the Countdowns widget open or closed.
+- **Calendar**: Swipe left or right near top-left edge on screen to show or hide calendar quickly without calender button you can hide it from settings if you want.
+- **Task Manager**: Swipe left or right near top-right edge on screen to show or hide the tasks quickly without calender button you can hide it from settings if you want.
+- **Menus & Modals**: You can use mouse click and drag (or swipe on touch screens) to close or navigate the Settings side menu and the Health & Habits modal.
+
+---
+
 ## Quick Reference
 
 | What you want to do | Where |
@@ -594,7 +602,7 @@ View your submission status:
 | Hide/show widgets | Settings → Preferences → Widget Visibility |
 | Lock widgets in place | Settings → Preferences → Widget Drag Locking |
 | Reset widget positions | Settings → Preferences → Reset Default Positions |
-| Panic button (mobile) | Tap 👁️ Eye icon on right side of screen |
+| Panic button (mobile) | Tap 👁️ Eye icon on right side of screen to hide/enter to panic mode and click same place to get back note eye icon remains same place but invisible or use top pill to do same thing by click on it |
 | Panic / Focus shortcut (desktop) | Settings → Focus / Panic Mode |
 | Set alias for leaderboard | Settings → Connect → Profile → Security & Alias |
 | Reset password | Login screen → "Forgot Password?" |

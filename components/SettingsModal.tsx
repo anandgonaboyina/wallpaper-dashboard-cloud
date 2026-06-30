@@ -36,6 +36,15 @@ export default function SettingsModal() {
           <h4 className="font-bold text-white text-[13px]">Display Options</h4>
           <p className="text-[11px] leading-relaxed mb-1"><strong>24-Hour Clock:</strong> Toggle the big dashboard clock between a standard 12-hour AM/PM format and a 24-hour military time format.</p>
           <p className="text-[11px] leading-relaxed"><strong>Deadline Alert Days:</strong> Configure how many days in advance the dashboard should warn you about an upcoming deadline on your calendar. If a deadline falls within this threshold, a prominent red warning banner will appear automatically when you open the app.</p>
+
+          <h4 className="font-bold text-white text-[13px] mt-2">Widget Drag Controls</h4>
+          <p className="text-[11px] leading-relaxed">many widgets can be controlled using swipe gestures instead of buttons for a faster experience:</p>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>Countdowns:</strong> Swipe left or right on the widget to switch between your countdowns. Swipe <strong>UP</strong> directly on the widget to close/hide it.  You can also do a right or left swipe on the top Focus Pill to toggle the Countdowns widget open or closed.</li>
+            <li><strong>Calendar:</strong> Swipe left or right near top-left edge on screen to show or hide calendar quickly without calender button you can hide it from settings if you want.</li>
+            <li><strong>Task Manager:</strong> Swipe left or right near top-right edge on screen to show or hide the tasks quickly without calender button you can hide it from settings if you want.</li>
+            <li><strong>Menus & Modals:</strong> You can use mouse click and drag (or swipe on touch screens) to close or navigate the Settings side menu and the Health & Habits modal.</li>
+          </ul>
         </div>
       )
     },
@@ -68,15 +77,15 @@ export default function SettingsModal() {
       title: 'Focus / Panic Mode',
       content: (
         <div className="space-y-3 text-sm text-white/80 pb-2">
-          <p className="text-[11px] leading-relaxed">Configure shortcuts to instantly hide your dashboard or specific widgets.</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Focus Mode</h4>
-          <p className="text-[11px] leading-relaxed">Focus Mode is designed to eliminate distractions while you work. By pressing your configured shortcut key, the app will instantly hide all the widgets you selected in the "Focus Specific Setup" section. Press the shortcut again to restore them.</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Panic Mode</h4>
-          <p className="text-[11px] leading-relaxed">Panic Mode is designed for privacy. It instantly hides ALL widgets regardless of your Focus settings. You can trigger this via your configured keyboard shortcut on Desktop, or by tapping the Eye icon on the right side of the screen on Mobile.</p>
+          <p className="text-[11px] leading-relaxed">Configure how to instantly hide your dashboard or specific widgets.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Desktop Controls</h4>
+          <p className="text-[11px] leading-relaxed">On Desktop, there is no Eye icon. Instead, you use Keyboard Shortcuts (configured below) or simply click on the <strong>Today Focus top pill</strong> to toggle your hidden state. You can set separate shortcuts for <strong>Focus Mode</strong> (hides only selected widgets) and <strong>Panic Mode</strong> (hides everything).</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Mobile Controls</h4>
+          <p className="text-[11px] leading-relaxed">On Mobile, use the <strong>👁️ Eye icon</strong> on the right side of the screen. Tap 👁️ Eye icon on right side of screen to hide all and click on same place to get back all that icon becomes invisible on peak mode but remains on same place to toggle back, You can configure this icon below to act as either a Panic button (hide all) or a Focus button (hide selected).</p>
           <h4 className="font-bold text-white text-[13px] mt-2">Panic Actions</h4>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
-            <li><strong>Redirect:</strong> The browser immediately navigates away to a random neutral website, completely hiding the fact that you were on the dashboard. To return, just press "Back" in your browser.</li>
-            <li><strong>Hide UI:</strong> Makes all widgets instantly disappear and the screen goes completely blank. Tap the eye icon again to bring everything back.</li>
+            <li><strong>Redirect:</strong> The browser immediately navigates away to a random neutral website. Press "Back" in your browser to return.</li>
+            <li><strong>Hide UI:</strong> Makes all widgets instantly disappear, leaving a blank screen.</li>
           </ul>
         </div>
       )
@@ -129,6 +138,20 @@ export default function SettingsModal() {
           </ul>
           <h4 className="font-bold text-white text-[13px] mt-2">Submission Status</h4>
           <p className="text-[11px] leading-relaxed">Track the progress of your tickets right here. The status will update from "Reviewing" (not yet looked at), to "Reviewed" (seen by developer), to "✓ Roadmap!" when a feature is accepted and planned for a future update.</p>
+        </div>
+      )
+    },
+    dragControls: {
+      title: 'Widget Drag Controls',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <p className="text-[11px] leading-relaxed">many widgets can be controlled using swipe gestures instead of buttons for a faster experience:</p>
+          <ul className="list-disc pl-4 space-y-2 text-[11px]">
+            <li><strong>Countdowns:</strong> Swipe left or right on the widget to switch between your countdowns. Swipe <strong>UP</strong> directly on the widget to close/hide it.  You can also do a right or left swipe on the top Focus Pill to toggle the Countdowns widget open or closed.</li>
+            <li><strong>Calendar:</strong> Swipe left or right near top-left edge on screen to show or hide calendar quickly without calender button you can hide it from settings if you want.</li>
+            <li><strong>Task Manager:</strong> Swipe left or right near top-right edge on screen to show or hide the tasks quickly without calender button you can hide it from settings if you want.</li>
+            <li><strong>Menus & Modals:</strong> You can use mouse click and drag (or swipe on touch screens) to close or navigate the Settings side menu and the Health & Habits modal.</li>
+          </ul>
         </div>
       )
     }
@@ -427,22 +450,39 @@ export default function SettingsModal() {
               </button>
             )}
             <SettingsIcon className={`${isMobileDetailView ? 'hidden md:block' : 'block'} text-blue-400 w-5 h-5`} />
-            <h2 className="text-base md:text-lg font-bold tracking-wide leading-tight">
+            <h2 className="text-base md:text-lg font-bold tracking-wide leading-tight flex items-center gap-1.5 md:gap-2">
               {isMobileDetailView ? (
                 <span className="md:hidden capitalize">{(settingsActiveTab != "about") ? settingsActiveTab + " Settings" : "About Developer"} </span>
               ) : null}
               <span className={isMobileDetailView ? 'hidden md:inline' : 'inline'}>Dashboard Settings</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setInfoModalKey('dragControls'); }}
+                className={`${isMobileDetailView ? 'hidden md:flex' : 'flex'} p-1 text-blue-400 hover:text-blue-300 bg-white/5 hover:bg-white/10 rounded-full transition-colors shrink-0`}
+                title="View Drag Controls"
+              >
+                <Info className="w-4 h-4 md:w-4 md:h-4" />
+              </button>
             </h2>
           </div>
-          <button
-            onClick={() => {
-              toggleSettings();
-              setIsMobileDetailView(false);
-            }}
-            className="p-1.5 md:p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1 md:gap-2">
+            {isMobileDetailView && ['preferences', 'sound', 'focus', 'wallpaper', 'data', 'feedback'].includes(settingsActiveTab) && (
+              <button
+                onClick={() => setInfoModalKey(settingsActiveTab === 'wallpaper' ? 'wallpapers' : settingsActiveTab === 'focus' ? 'panic' : settingsActiveTab === 'data' ? 'backup' : settingsActiveTab)}
+                className="md:hidden p-1.5 hover:bg-white/10 rounded-xl transition-colors text-blue-400 bg-white/5 border border-white/10 shadow-sm"
+              >
+                <Info className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                toggleSettings();
+                setIsMobileDetailView(false);
+              }}
+              className="p-1.5 md:p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full">
@@ -588,10 +628,10 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="hidden md:block text-base font-semibold">General Preferences</h3>
+                      <h3 className="text-sm md:text-base font-semibold">General Preferences</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Customize how your dashboard looks and feels.</p>
                     </div>
-                    <button onClick={() => setInfoModalKey('preferences')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('preferences')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>
@@ -766,10 +806,10 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="hidden md:block text-base font-semibold">Sound Settings</h3>
+                      <h3 className="text-sm md:text-base font-semibold">Sound Settings</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Configure audio for alarms and timers.</p>
                     </div>
-                    <button onClick={() => setInfoModalKey('sound')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('sound')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>
@@ -851,10 +891,10 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-3 md:gap-4 min-h-[60vh]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="hidden md:block text-base font-semibold">Feedback & Bugs</h3>
+                      <h3 className="text-sm md:text-base font-semibold">Feedback & Bugs</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Help us improve the dashboard.</p>
                     </div>
-                    <button onClick={() => setInfoModalKey('feedback')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('feedback')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>
@@ -948,10 +988,10 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-4 md:gap-6 h-full pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="hidden md:block text-base font-semibold">Custom Wallpapers</h3>
+                      <h3 className="text-sm md:text-base font-semibold">Custom Wallpapers</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Provide external image URLs.</p>
                     </div>
-                    <button onClick={() => setInfoModalKey('wallpapers')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('wallpapers')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>
@@ -1105,10 +1145,10 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="hidden md:block text-base font-semibold">Focus & Panic Mode</h3>
+                      <h3 className="text-sm md:text-base font-semibold">Focus & Panic Mode</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Configure visibility shortcuts.</p>
                     </div>
-                    <button onClick={() => setInfoModalKey('panic')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('panic')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>
@@ -1274,10 +1314,10 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="hidden md:block text-base font-semibold">Data & Backup</h3>
+                      <h3 className="text-sm md:text-base font-semibold">Data & Backup</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Manage local data.</p>
                     </div>
-                    <button onClick={() => setInfoModalKey('backup')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('backup')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>

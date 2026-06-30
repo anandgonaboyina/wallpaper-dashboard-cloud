@@ -40,48 +40,38 @@ export default function BigClock() {
     return () => media.removeEventListener('change', listener);
   }, []);
 
-  // Global swipe/drag detector for the top notch (Desktop & Mobile)
-  useEffect(() => {
-    let startY = 0;
+  const swipeStartX = useRef<number | null>(null);
+  const wasSwiped = useRef<boolean>(false);
 
-    const handleStart = (clientY: number) => {
-      // Only track if swipe starts within the top 80px (where the notch is)
-      if (clientY > 80) return;
-      startY = clientY;
-    };
+  const handlePillTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    wasSwiped.current = false;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    swipeStartX.current = clientX;
+  };
 
-    const handleEnd = (clientY: number) => {
-      if (startY === 0) return; // Ignore if it didn't start at the top
+  const handlePillTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (swipeStartX.current === null) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const diffX = clientX - swipeStartX.current;
+    
+    if (Math.abs(diffX) > 10) {
+      wasSwiped.current = true;
+    }
+  };
 
-      const diffY = clientY - startY;
+  const handlePillTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (swipeStartX.current === null) return;
+    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
+    const diffX = clientX - swipeStartX.current;
 
-      if (diffY > 30) {
-        useDashboardStore.getState().setIsMobileCountdownsVisible(true); // Swiped down -> show
-      } else if (diffY < -30) {
-        useDashboardStore.getState().setIsMobileCountdownsVisible(false); // Swiped up -> hide
-      }
-
-      startY = 0; // Reset
-    };
-
-    const handleTouchStart = (e: TouchEvent) => handleStart(e.touches[0].clientY);
-    const handleTouchEnd = (e: TouchEvent) => handleEnd(e.changedTouches[0].clientY);
-
-    const handleMouseDown = (e: MouseEvent) => handleStart(e.clientY);
-    const handleMouseUp = (e: MouseEvent) => handleEnd(e.clientY);
-
-    window.addEventListener('touchstart', handleTouchStart);
-    window.addEventListener('touchend', handleTouchEnd);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
+    if (Math.abs(diffX) > 50) {
+      // Long horizontal swipe toggles countdowns
+      useDashboardStore.getState().setIsMobileCountdownsVisible(
+        !useDashboardStore.getState().isMobileCountdownsVisible
+      );
+    }
+    swipeStartX.current = null;
+  };
 
   const timerEndAtRef = useRef(timerEndAt);
   const timerPausedLeftRef = useRef(timerPausedLeft);
@@ -199,12 +189,27 @@ export default function BigClock() {
       {/* Top Floating Pills (Global Focus + Global Timer) */}
       {typeof document !== 'undefined' && createPortal(
         <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-full pointer-events-none mt-2 md:mt-3">
-          <div className="flex flex-row items-start  justify-center gap-2 px-2 max-w-full">
+          <div 
+            className="flex flex-row items-start justify-center gap-2 px-2 max-w-full"
+            onTouchStart={handlePillTouchStart}
+            onTouchMove={handlePillTouchMove}
+            onTouchEnd={handlePillTouchEnd}
+            onMouseDown={handlePillTouchStart}
+            onMouseMove={handlePillTouchMove}
+            onMouseUp={handlePillTouchEnd}
+            onMouseLeave={handlePillTouchEnd}
+          >
 
             {/* Focus Pill for BOTH Desktop & Mobile */}
             {focusPillVisible && (
               <div
-                onClick={toggleHide}
+                onClick={(e) => {
+                  if (wasSwiped.current) {
+                    wasSwiped.current = false;
+                    return;
+                  }
+                  toggleHide();
+                }}
                 title="Toggle Hidden Mode (Ctrl+H)"
                 className="flex items-center gap-1.5  md:gap-2 text-[11px] md:text-[13px] px-4 py-1.5 shadow-[0_5px_20px_rgba(59,130,246,0.3)] rounded-full bg-black/80 backdrop-blur-xl text-white border border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95 hover:bg-black/90"
               >
@@ -223,6 +228,10 @@ export default function BigClock() {
             {timerPillVisible && (activeTimerSecs !== null || activeStopwatchSecs !== null) && (
               <div
                 onClick={() => {
+                  if (wasSwiped.current) {
+                    wasSwiped.current = false;
+                    return;
+                  }
                   if (activeTimerSecs !== null) {
                     useDashboardStore.getState().toggleTimer();
                   } else if (activeStopwatchSecs !== null) {

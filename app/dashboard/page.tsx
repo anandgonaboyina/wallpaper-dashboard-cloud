@@ -52,6 +52,7 @@ export default function Dashboard() {
   const countdowns = useDashboardStore((state) => state.countdowns);
   const [activeCountdownIndex, setActiveCountdownIndex] = useState(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
   const isMobileCountdownsVisible = useDashboardStore((state) => state.isMobileCountdownsVisible);
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
@@ -201,17 +202,28 @@ export default function Dashboard() {
             >
               <div
                 className="relative flex items-center justify-center group pointer-events-auto"
-                onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                onTouchStart={(e) => {
+                  setTouchStartX(e.touches[0].clientX);
+                  setTouchStartY(e.touches[0].clientY);
+                }}
                 onTouchEnd={(e) => {
-                  if (touchStartX === null) return;
+                  if (touchStartX === null || touchStartY === null) return;
                   const touchEndX = e.changedTouches[0].clientX;
-                  const diff = touchStartX - touchEndX;
-                  if (diff > 40) {
+                  const touchEndY = e.changedTouches[0].clientY;
+                  const diffX = touchStartX - touchEndX;
+                  const diffY = touchStartY - touchEndY;
+                  
+                  // Hide if swiped UP significantly
+                  if (diffY > 50 && Math.abs(diffY) > Math.abs(diffX)) {
+                    useDashboardStore.getState().setIsMobileCountdownsVisible(false);
+                  } else if (diffX > 40) {
                     setActiveCountdownIndex(p => Math.min(countdowns.length - 1, p + 1));
-                  } else if (diff < -40) {
+                  } else if (diffX < -40) {
                     setActiveCountdownIndex(p => Math.max(0, p - 1));
                   }
+                  
                   setTouchStartX(null);
+                  setTouchStartY(null);
                 }}
               >
                 {countdowns.length > 0 && (() => {

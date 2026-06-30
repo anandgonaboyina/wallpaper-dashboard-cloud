@@ -123,16 +123,7 @@ export default function StatsModal() {
             <Flame className="text-orange-500 w-5 h-5 sm:w-6 sm:h-6" /> {viewingFriend ? `${viewingFriend.username}'s Stats` : 'Focus History'}
           </h2>
           <div className="flex items-center gap-2">
-            {viewingFriend && (
-              <button
-                onClick={() => setShowFriendTimetable(true)}
-                className="p-1.5 sm:p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg sm:rounded-xl transition-colors border border-blue-500/30 flex items-center gap-1.5"
-                title="View Timetable"
-              >
-                <CalendarDays size={18} />
-                <span className="text-xs font-semibold hidden sm:inline">Timetable</span>
-              </button>
-            )}
+
             <button
               onClick={handleClose}
               className="p-1.5 sm:p-2 bg-white/5 hover:bg-white/10 rounded-lg sm:rounded-xl transition-colors"
@@ -198,33 +189,52 @@ export default function StatsModal() {
               </div>
 
               {/* Leaderboard Link Button */}
-              <button 
-                onClick={() => {
-                  if (viewingFriend) setViewingFriend(null);
-                  if (typeof window !== 'undefined') sessionStorage.removeItem('returnToConnect');
-                  toggleStats();
-                  useDashboardStore.getState().setConnectInitialTab('leaderboard');
-                  useDashboardStore.getState().setSettingsActiveTab('connect');
-                  if (!useDashboardStore.getState().isSettingsOpen) {
-                    useDashboardStore.getState().toggleSettings();
-                  }
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new Event('open-leaderboard'));
-                  }
-                }}
-                className="w-full mt-2 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-white/10 hover:border-white/30 transition-all flex items-center justify-between group shadow-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
-                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+              {/* Leaderboard / Timetable Link Button */}
+              {viewingFriend ? (
+                <button 
+                  onClick={() => setShowFriendTimetable(true)}
+                  className="w-full mt-2 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border border-white/10 hover:border-white/30 transition-all flex items-center justify-between group shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
+                      <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight">{viewingFriend.username}'s Timetable</h3>
+                      <p className="text-[9px] sm:text-[10px] text-white/50">View weekly schedule</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight">Global Leaderboard</h3>
-                    <p className="text-[9px] sm:text-[10px] text-white/50">Compare your focus time</p>
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    if (viewingFriend) setViewingFriend(null);
+                    if (typeof window !== 'undefined') sessionStorage.removeItem('returnToConnect');
+                    toggleStats();
+                    useDashboardStore.getState().setConnectInitialTab('leaderboard');
+                    useDashboardStore.getState().setSettingsActiveTab('connect');
+                    if (!useDashboardStore.getState().isSettingsOpen) {
+                      useDashboardStore.getState().toggleSettings();
+                    }
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new Event('open-leaderboard'));
+                    }
+                  }}
+                  className="w-full mt-2 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-white/10 hover:border-white/30 transition-all flex items-center justify-between group shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-lg group-hover:scale-110 transition-transform">
+                      <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight">Global Leaderboard</h3>
+                      <p className="text-[9px] sm:text-[10px] text-white/50">Compare your focus time</p>
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </button>
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </button>
+              )}
             </ScrollableWithArrows>
           </div>
 
