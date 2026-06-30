@@ -6,8 +6,8 @@ import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, C
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 export default function ConnectTab() {
-  const { history, tasks, timetableGrid } = useDashboardStore();
-  const [activeTab, setActiveTab] = useState<'profile' | 'friends' | 'broadcasts' | 'leaderboard'>('profile');
+  const { history, tasks, timetableGrid, connectInitialTab, setConnectInitialTab } = useDashboardStore();
+  const [activeTab, setActiveTab] = useState<'profile' | 'friends' | 'broadcasts' | 'leaderboard'>(connectInitialTab || 'profile');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
 
@@ -66,6 +66,18 @@ export default function ConnectTab() {
     window.addEventListener('open-leaderboard', handleOpenLeaderboard);
     return () => window.removeEventListener('open-leaderboard', handleOpenLeaderboard);
   }, []);
+
+  useEffect(() => {
+    if (connectInitialTab) {
+      setActiveTab(connectInitialTab);
+      // We clear it after a short delay to ensure it doesn't get stuck, 
+      // but long enough that it isn't cleared before being used.
+      const timer = setTimeout(() => {
+        setConnectInitialTab(undefined);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [connectInitialTab, setConnectInitialTab]);
 
   useEffect(() => {
     if (isLoggedIn && activeTab === 'friends') {
@@ -387,6 +399,7 @@ export default function ConnectTab() {
       const data = await res.json();
       if (res.ok) {
         useDashboardStore.getState().setViewingFriend({ username: friendUsername, stats: data.stats });
+        sessionStorage.setItem('returnToConnect', 'true');
         useDashboardStore.getState().toggleSettings(); // Close settings to see stats modal
         if (!useDashboardStore.getState().isStatsOpen) {
           useDashboardStore.getState().toggleStats();
@@ -775,6 +788,7 @@ export default function ConnectTab() {
               <button
                 onClick={() => {
                   useDashboardStore.getState().setViewingFriend(null);
+                  sessionStorage.setItem('returnToConnect', 'true');
                   useDashboardStore.getState().toggleSettings();
                   if (!useDashboardStore.getState().isStatsOpen) useDashboardStore.getState().toggleStats();
                 }}

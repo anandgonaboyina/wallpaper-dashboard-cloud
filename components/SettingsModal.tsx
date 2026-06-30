@@ -132,6 +132,15 @@ export default function SettingsModal() {
     }
   }, [settingsActiveTab]);
 
+  useEffect(() => {
+    const handleOpenLeaderboard = () => {
+      setSettingsActiveTab('connect');
+      setIsMobileDetailView(true);
+    };
+    window.addEventListener('open-leaderboard', handleOpenLeaderboard);
+    return () => window.removeEventListener('open-leaderboard', handleOpenLeaderboard);
+  }, [setSettingsActiveTab]);
+
   const isDragging = useRef(false);
   const startY = useRef(0);
   const startScrollTop = useRef(0);

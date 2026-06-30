@@ -7,16 +7,17 @@ import { useEffect, useState, useRef } from "react";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const WEEKENDS = ["Sat", "Sun"];
 
+// Upgraded to a richer, softer, more modern color palette
 export const CELL_COLORS = [
-  { name: 'default', bg: 'bg-white/5', active: 'bg-purple-500/30', text: 'text-white' },
-  { name: 'red', bg: 'bg-red-500/20', active: 'bg-red-500/40', text: 'text-red-200' },
-  { name: 'blue', bg: 'bg-blue-500/20', active: 'bg-blue-500/40', text: 'text-blue-200' },
-  { name: 'green', bg: 'bg-green-500/20', active: 'bg-green-500/40', text: 'text-green-200' },
-  { name: 'yellow', bg: 'bg-yellow-500/20', active: 'bg-yellow-500/40', text: 'text-yellow-200' },
-  { name: 'purple', bg: 'bg-purple-500/20', active: 'bg-purple-500/40', text: 'text-purple-200' },
-  { name: 'orange', bg: 'bg-orange-500/20', active: 'bg-orange-500/40', text: 'text-orange-200' },
-  { name: 'cyan', bg: 'bg-cyan-500/20', active: 'bg-cyan-500/40', text: 'text-cyan-200' },
-  { name: 'pink', bg: 'bg-pink-500/20', active: 'bg-pink-500/40', text: 'text-pink-200' },
+  { name: 'default', bg: 'bg-white/5', active: 'bg-violet-500/30', text: 'text-gray-300', solidBg: 'bg-white/40' },
+  { name: 'red', bg: 'bg-rose-500/15', active: 'bg-rose-500/30', text: 'text-rose-300', solidBg: 'bg-rose-500/80' },
+  { name: 'blue', bg: 'bg-sky-500/15', active: 'bg-sky-500/30', text: 'text-sky-300', solidBg: 'bg-sky-500/80' },
+  { name: 'green', bg: 'bg-emerald-500/15', active: 'bg-emerald-500/30', text: 'text-emerald-300', solidBg: 'bg-emerald-500/80' },
+  { name: 'yellow', bg: 'bg-amber-500/15', active: 'bg-amber-500/30', text: 'text-amber-300', solidBg: 'bg-amber-500/80' },
+  { name: 'purple', bg: 'bg-violet-500/15', active: 'bg-violet-500/30', text: 'text-violet-300', solidBg: 'bg-violet-500/80' },
+  { name: 'orange', bg: 'bg-orange-500/15', active: 'bg-orange-500/30', text: 'text-orange-300', solidBg: 'bg-orange-500/80' },
+  { name: 'cyan', bg: 'bg-cyan-500/15', active: 'bg-cyan-500/30', text: 'text-cyan-300', solidBg: 'bg-cyan-500/80' },
+  { name: 'pink', bg: 'bg-fuchsia-500/15', active: 'bg-fuchsia-500/30', text: 'text-fuchsia-300', solidBg: 'bg-fuchsia-500/80' },
 ];
 
 // Utility to format minutes into h:mm AM/PM
@@ -41,16 +42,14 @@ const parseMins = (tStr: string) => {
   return h * 60 + min;
 };
 
-
-
 export default function Timetable() {
-  const { 
-    timetableGrid: myTimetableGrid, 
-    timetableColors: myTimetableColors, 
+  const {
+    timetableGrid: myTimetableGrid,
+    timetableColors: myTimetableColors,
     weekdayTimes: myWeekdayTimes,
     weekendTimes: myWeekendTimes,
-    updateTimetableCell, updateTimetableColor, 
-    updateTimetableTime, addTimetableRow, deleteTimetableRow, 
+    updateTimetableCell, updateTimetableColor,
+    updateTimetableTime, addTimetableRow, deleteTimetableRow,
     useTimetableRange, toggleTimetableRange, renameTimetableKeys,
     viewingFriend, setViewingFriend
   } = useDashboardStore();
@@ -93,11 +92,11 @@ export default function Timetable() {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
     const y = e.pageY - scrollContainerRef.current.offsetTop;
-    const walkY = (y - startY) * 1.5; 
+    const walkY = (y - startY) * 1.5;
     scrollContainerRef.current.scrollTop = scrollTop - walkY;
 
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walkX = (x - startX) * 1.5; 
+    const walkX = (x - startX) * 1.5;
     scrollContainerRef.current.scrollLeft = scrollLeft - walkX;
   };
 
@@ -126,7 +125,7 @@ export default function Timetable() {
         let oldAccumulated = startTime;
         let newAccumulated = mins;
         const keyMap: Record<string, string> = {};
-        
+
         for (let i = 0; i < durations.length; i++) {
           const oldStr = formatTime(oldAccumulated);
           const newStr = formatTime(newAccumulated);
@@ -223,17 +222,17 @@ export default function Timetable() {
       oldTimesStrs.push(formatTime(oldAccumulated));
       oldAccumulated += durations[i];
     }
-    
+
     const newDurations = [...durations];
     newDurations[idx] = newDur;
-    
+
     let newAccumulated = startTime;
     const newTimesStrs: string[] = [];
     for (let i = 0; i < newDurations.length; i++) {
       newTimesStrs.push(formatTime(newAccumulated));
       newAccumulated += newDurations[i];
     }
-    
+
     const keyMap: Record<string, string> = {};
     for (let i = 0; i < oldTimesStrs.length; i++) {
       if (oldTimesStrs[i] !== newTimesStrs[i]) {
@@ -267,45 +266,45 @@ export default function Timetable() {
   };
 
   return (
-    <div suppressHydrationWarning className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-1.5 shadow-2xl w-full max-w-[100vw] md:w-fit overflow-hidden md:overflow-visible">
+    <div suppressHydrationWarning className="bg-gradient-to-br from-[#12121a] to-[#0a0a0c] border border-white/10 rounded-3xl p-1.5 md:p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.4)] w-full max-w-[100vw] md:w-fit overflow-hidden md:overflow-visible relative">
       {/* Start Time Modal Overlay */}
       {isEditingStartTime && (
         <StartTimeEditor currentMins={startTime} onSave={handleSetStartTime} onCancel={() => setIsEditingStartTime(false)} />
       )}
 
-      <div className="flex items-center justify-between text-white/80 mb-2 pb-1.5 border-b border-white/10 mt-1 px-2 min-w-0 md:min-w-[300px]">
+      <div className="flex items-center justify-between text-white/90 mb-3 pb-2 border-b border-white/5 mt-1 px-2 min-w-0 md:min-w-[300px]">
         <button
           onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
-          className="p-1.5 hover:bg-white/10 rounded-xl transition-colors shrink-0"
+          className="p-1.5 hover:bg-white/10 active:scale-95 rounded-xl transition-all shrink-0 text-white/70 hover:text-white"
           title="Previous view"
         >
           <ChevronLeft size={20} />
         </button>
 
         <div className="flex items-center gap-1.5 md:gap-2 relative" ref={settingsRef}>
-          <CalendarDays size={18} className="text-purple-400 md:w-5 md:h-5" />
-          <span className="font-bold tracking-widest uppercase text-sm md:text-base text-center truncate">
+          <CalendarDays size={18} className="text-violet-400 md:w-5 md:h-5" />
+          <span className="font-bold tracking-widest uppercase text-sm md:text-base text-center truncate text-gray-100">
             {viewMode === "weekdays" ? "Weekly Schedule" : "Weekend Schedule"}
           </span>
           {!viewingFriend && (
-            <button onClick={() => setShowSettings(!showSettings)} className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors ml-1 shrink-0">
+            <button onClick={() => setShowSettings(!showSettings)} className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all hover:rotate-90 ml-1 shrink-0">
               <Settings size={14} />
             </button>
           )}
 
           {showSettings && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl py-1 z-50 flex flex-col min-w-[200px]">
-              <div className="px-3 py-1.5 text-[10px] text-white/40 uppercase tracking-wider font-bold border-b border-white/5">Row Management</div>
-              <button onClick={handleAddTopRow} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center justify-between transition-colors w-full text-left border-b border-white/5">
-                <span className="flex items-center gap-2"><ArrowUp size={14} /> Add Top Row</span>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-1.5 z-50 flex flex-col min-w-[200px] animate-in slide-in-from-top-2 fade-in duration-200">
+              <div className="px-3 py-1.5 text-[10px] text-white/40 uppercase tracking-wider font-bold border-b border-white/5 mb-1">Row Management</div>
+              <button onClick={handleAddTopRow} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center justify-between transition-colors w-full text-left">
+                <span className="flex items-center gap-2"><ArrowUp size={14} className="text-emerald-400" /> Add Top Row</span>
               </button>
-              <button onClick={() => { addTimetableRow(isWeekendMode); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center gap-2 transition-colors border-b border-white/5 w-full text-left">
-                <ArrowDown size={14} /> Add Bottom Row
+              <button onClick={() => { addTimetableRow(isWeekendMode); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center justify-between transition-colors w-full text-left border-b border-white/5 pb-3 mb-1">
+                <span className="flex items-center gap-2"><ArrowDown size={14} className="text-sky-400" /> Add Bottom Row</span>
               </button>
-              <button onClick={handleDeleteTopRow} className="px-3 py-2 hover:bg-red-500/20 text-xs text-red-400 flex items-center gap-2 transition-colors w-full text-left">
+              <button onClick={handleDeleteTopRow} className="px-3 py-2 hover:bg-rose-500/10 text-xs text-rose-400 flex items-center gap-2 transition-colors w-full text-left">
                 <Trash size={14} /> Delete Top Row
               </button>
-              <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className="px-3 py-2 hover:bg-red-500/20 text-xs text-red-400 flex items-center gap-2 transition-colors w-full text-left border-b border-white/5">
+              <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className="px-3 py-2 hover:bg-rose-500/10 text-xs text-rose-400 flex items-center gap-2 transition-colors w-full text-left">
                 <Trash size={14} /> Delete Bottom Row
               </button>
             </div>
@@ -314,23 +313,25 @@ export default function Timetable() {
 
         <button
           onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
-          className="p-1.5 hover:bg-white/10 rounded-xl transition-colors shrink-0"
+          className="p-1.5 hover:bg-white/10 active:scale-95 rounded-xl transition-all shrink-0 text-white/70 hover:text-white"
           title="Next view"
         >
           <ChevronRight size={20} />
         </button>
       </div>
+
       {/* Compact Start Time Trigger */}
-      <div className="mb-1 mx-auto flex justify-center">
+      <div className="mb-2 mx-auto flex justify-center">
         <button
           onClick={() => !viewingFriend && setIsEditingStartTime(true)}
-          className={`text-[9px] md:text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-bold shadow-sm ${viewingFriend ? 'cursor-default' : ''}`}
+          className={`text-[9px] md:text-[10px] text-sky-300 bg-sky-500/10 px-2.5 py-1 rounded-full border border-sky-500/20 hover:bg-sky-500/20 transition-all flex items-center gap-1.5 font-semibold shadow-sm ${viewingFriend ? 'cursor-default' : 'active:scale-95 hover:shadow-[0_0_12px_rgba(14,165,233,0.15)]'}`}
         >
-          <Clock size={10} /> Day Starts: {formatTime(startTime)}
+          <Clock size={12} /> Day Starts: {formatTime(startTime)}
         </button>
       </div>
-      <div 
-        className="overflow-auto custom-scrollbar pb-1 px-1 w-full max-h-[50vh] md:max-h-[60vh] cursor-grab active:cursor-grabbing"
+
+      <div
+        className="relative overflow-auto custom-scrollbar pb-1 px-1 w-full max-h-[50vh] md:max-h-[60vh] cursor-grab active:cursor-grabbing"
         ref={scrollContainerRef}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
@@ -338,16 +339,15 @@ export default function Timetable() {
         onMouseMove={handleMouseMove}
       >
         <div
-          className={`grid gap-1 md:gap-1.5 ${viewMode === "weekdays" ? "min-w-[500px] md:min-w-[750px] grid-cols-[75px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)]" : "min-w-[280px] md:min-w-[400px] grid-cols-[75px_repeat(2,1fr)] md:grid-cols-[120px_repeat(2,1fr)]"}`}
+          className={`grid gap-1.5 md:gap-2 ${viewMode === "weekdays" ? "min-w-[500px] md:min-w-[750px] grid-cols-[75px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)]" : "min-w-[280px] md:min-w-[400px] grid-cols-[75px_repeat(2,1fr)] md:grid-cols-[120px_repeat(2,1fr)]"}`}
         >
           {/* Time Column */}
-          <div className="sticky left-0 rounded-xl z-30 bg-[#0a0a0a] flex flex-col">
-            <div className="text-center font-bold text-white/40 uppercase tracking-widest text-[9px] md:text-[10px] py-1 mb-1">Time</div>
-
+          <div className="sticky left-0 rounded-xl z-30 bg-[#0f0f13]/90 backdrop-blur-md flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.5)] pr-1">
+            <div className="text-center font-bold text-white/30 uppercase tracking-widest text-[9px] md:text-[10px] py-1.5 mb-1.5">Time</div>
 
             {generatedTimes.map((block, index) => {
               return (
-                <div key={index} className="mb-[2px] relative">
+                <div key={index} className="mb-[3px] relative">
                   <DurationCell
                     block={block}
                     index={index}
@@ -369,18 +369,18 @@ export default function Timetable() {
             const isToday = currentDayIndex === dayIndexMap[day];
 
             const colorMap: Record<string, string> = {
-              "Mon": "text-red-400 border-red-400/20 bg-red-500/5",
-              "Tue": "text-orange-400 border-orange-400/20 bg-orange-500/5",
-              "Wed": "text-yellow-400 border-yellow-400/20 bg-yellow-500/5",
-              "Thu": "text-green-400 border-green-400/20 bg-green-500/5",
-              "Fri": "text-blue-400 border-blue-400/20 bg-blue-500/5",
-              "Sat": "text-purple-400 border-purple-400/20 bg-purple-500/5",
-              "Sun": "text-pink-400 border-pink-400/20 bg-pink-500/5"
+              "Mon": "text-rose-300 border-rose-400/20 bg-rose-500/10",
+              "Tue": "text-orange-300 border-orange-400/20 bg-orange-500/10",
+              "Wed": "text-amber-300 border-amber-400/20 bg-amber-500/10",
+              "Thu": "text-emerald-300 border-emerald-400/20 bg-emerald-500/10",
+              "Fri": "text-sky-300 border-sky-400/20 bg-sky-500/10",
+              "Sat": "text-violet-300 border-violet-400/20 bg-violet-500/10",
+              "Sun": "text-fuchsia-300 border-fuchsia-400/20 bg-fuchsia-500/10"
             };
 
             return (
-              <div key={day} className={`flex flex-col rounded-2xl p-0.5 transition-colors ${isToday ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]' : ''}`}>
-                <div className={`text-center font-bold uppercase tracking-widest text-[10px] md:text-xs py-1 rounded-xl border ${isToday ? 'bg-purple-500/20 text-purple-200 border-purple-500/30' : colorMap[day]}`}>
+              <div key={day} className={`flex flex-col rounded-2xl p-1 transition-all duration-300 ${isToday ? 'bg-white/[0.08] border border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]' : ''}`}>
+                <div className={`text-center font-bold uppercase tracking-widest text-[10px] md:text-xs py-1.5 mb-1.5 rounded-xl border backdrop-blur-sm ${isToday ? 'bg-violet-500/20 text-violet-200 border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]' : colorMap[day]}`}>
                   {day}
                 </div>
 
@@ -410,45 +410,53 @@ export default function Timetable() {
                   }
 
                   const isDayFocused = editingCell?.day === day;
-                  const isActiveBlock = false;
+                  const isActiveBlock = isToday && activeTimeIndex === index;
 
                   let roundedClass = 'rounded-xl';
                   if (!isDayFocused) {
-                    if (isContinuation && isContinuedByNext) roundedClass = 'rounded-none';
-                    else if (isContinuation) roundedClass = 'rounded-b-xl rounded-t-sm';
-                    else if (isContinuedByNext) roundedClass = 'rounded-t-xl rounded-b-sm';
+                    if (isContinuation && isContinuedByNext) roundedClass = 'rounded-none border-y-transparent';
+                    else if (isContinuation) roundedClass = 'rounded-b-xl rounded-t-[4px] border-t-transparent';
+                    else if (isContinuedByNext) roundedClass = 'rounded-t-xl rounded-b-[4px] border-b-transparent';
                   }
 
                   const isPartOfBlock = isContinuation || spanCount > 1;
                   const isHiddenText = !isDayFocused && isPartOfBlock;
 
                   const textClassFinal = isHiddenText ? 'text-transparent' : customColor.text;
-                  const borderClass = isActiveBlock ? 'border-purple-400/80 shadow-[0_0_15px_rgba(168,85,247,0.3)] z-20' : 'border-transparent';
-                  const bgClass = isActiveBlock ? customColor.active : (isToday && customColor.name === 'default' ? 'bg-purple-500/10' : customColor.bg);
-                  const marginBottom = (!isDayFocused && isContinuedByNext) ? 'mb-0' : 'mb-[2px]';
+                  const borderClass = isActiveBlock
+                    ? 'border-violet-400/60 shadow-[0_0_12px_rgba(139,92,246,0.4)] z-20'
+                    : (customColor.name === 'default' ? 'border-white/5' : 'border-transparent');
+
+                  const bgClass = isActiveBlock ? customColor.active : customColor.bg;
+                  const marginBottom = (!isDayFocused && isContinuedByNext) ? 'mb-0' : 'mb-[3px]';
 
                   const showOverlay = !isContinuation && spanCount > 1 && !isDayFocused;
-                  const overlayHeightPx = spanCount * 40;
-                  
+                  const overlayHeightPx = spanCount * 43; // Adjusted for gap/margins
+
                   const isEditingThisCell = editingCell?.day === day && editingCell?.time === gridKey;
 
                   return (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       onDoubleClick={() => !viewingFriend && setEditingCell({ day, time: gridKey })}
-                      className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all z-10 ${borderClass} ${roundedClass} ${!viewingFriend ? 'hover:bg-white/10' : ''} ${isEditingThisCell ? 'ring-2 ring-purple-500 z-50' : ''} ${bgClass}`}
+                      className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all duration-200 z-10 ${borderClass} ${roundedClass} ${!viewingFriend ? 'hover:brightness-125' : ''} ${isEditingThisCell ? 'ring-2 ring-violet-500 z-50 shadow-lg' : ''} ${bgClass}`}
                     >
                       {showOverlay && !isEditingThisCell && (
                         <div style={{ height: `${overlayHeightPx}px` }} className="absolute top-0 left-0 w-full pointer-events-none flex items-center justify-center z-30">
-                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : (customColor.name !== 'default' ? customColor.text : 'text-white')} font-semibold px-1 md:px-2 text-center break-words transition-all duration-200 text-[10px] md:text-xs`}>{subject || "Free"}</span>
+                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : (customColor.name !== 'default' ? customColor.text : 'text-gray-300')} font-medium px-1 md:px-2 text-center break-words transition-all duration-200 text-[10px] md:text-xs tracking-wide`}>{subject || "Free"}</span>
                         </div>
                       )}
 
                       <div className={`w-full h-full flex items-center justify-center overflow-hidden break-words px-1 cursor-pointer select-none ${isEditingThisCell ? 'opacity-30' : ''}`}>
-                        <span className={`w-full text-center ${textClassFinal} text-[10px] md:text-xs leading-snug`}>{subject || (!isHiddenText ? "Free" : "")}</span>
+                        <span className={`w-full text-center ${textClassFinal} text-[10px] md:text-xs leading-snug tracking-wide font-medium`}>{subject || (!isHiddenText ? "Free" : "")}</span>
                       </div>
 
-                      {!viewingFriend && !isEditingThisCell && <Edit2 size={10} className={`absolute right-1 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 pointer-events-none ${isHiddenText ? 'text-transparent' : customColor.text} z-20`} />}
+                      {!viewingFriend && !isEditingThisCell && <Edit2 size={10} className={`absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 pointer-events-none ${isHiddenText ? 'text-transparent' : customColor.text} z-20 transition-opacity`} />}
+
+                      {/* Active indicator dot */}
+                      {isActiveBlock && (
+                        <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse shadow-[0_0_8px_rgba(139,92,246,1)]" />
+                      )}
                     </div>
                   );
                 })}
@@ -461,15 +469,15 @@ export default function Timetable() {
 
       {/* Centered Cell Editor Modal */}
       {editingCell && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingCell(null)}>
-          <div className="bg-[#0f0f11] border border-purple-500/50 rounded-2xl shadow-2xl p-4 w-full max-w-[280px] flex flex-col gap-4 relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setEditingCell(null)} className="absolute top-2 right-2 p-1 text-white/50 hover:text-white transition-colors rounded-lg hover:bg-white/10"><X size={16}/></button>
-            
-            <div className="text-center">
-              <h3 className="font-bold text-white text-sm uppercase tracking-wider">{editingCell.day} - {editingCell.time}</h3>
-              <p className="text-[10px] text-white/40 mt-0.5 uppercase font-semibold">Edit subject and color</p>
+        <div className="fixed inset-4 z-[10000] flex items-center justify-center p-4  animate-in fade-in duration-200" onClick={() => setEditingCell(null)}>
+          <div className="bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-5 w-full max-w-[300px] flex flex-col gap-4 relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setEditingCell(null)} className="absolute top-3 right-3 p-1.5 text-white/40 hover:text-white transition-all rounded-full hover:bg-white/10 active:scale-95"><X size={16} /></button>
+
+            <div className="text-center mt-1">
+              <h3 className="font-bold text-gray-100 text-sm uppercase tracking-wider">{editingCell.day} <span className="text-white/30 mx-1">•</span> <span className="text-violet-300">{editingCell.time}</span></h3>
+              <p className="text-[10px] text-white/40 mt-1 uppercase font-semibold tracking-wide">Edit Subject & Color</p>
             </div>
-            
+
             <textarea
               value={timetableGrid?.[editingCell.day]?.[editingCell.time] || ""}
               onChange={(e) => updateTimetableCell(editingCell.day, editingCell.time, e.target.value)}
@@ -484,12 +492,12 @@ export default function Timetable() {
                 }
               }}
               rows={2}
-              placeholder="e.g. Math, Free, Meeting..."
+              placeholder="e.g. Math, Free, Break..."
               spellCheck={false}
-              className="w-full text-center bg-black/40 border border-white/10 rounded-xl outline-none text-white text-sm md:text-base leading-snug resize-none overflow-hidden break-words p-3 focus:border-purple-500/50 transition-colors shadow-inner shadow-black"
+              className="w-full text-center bg-black/20 border border-white/10 rounded-2xl outline-none text-white text-sm md:text-base leading-relaxed resize-none overflow-hidden break-words p-3 focus:bg-black/40 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all shadow-inner placeholder:text-white/20"
             />
-            
-            <div className="flex flex-wrap gap-2 justify-center mx-auto mt-1 px-1">
+
+            <div className="flex flex-wrap gap-2.5 bg-white/20 rounded-md justify-center mx-auto mt-2 p-1">
               {CELL_COLORS.map(c => {
                 const isActive = (timetableColors?.[editingCell.day]?.[editingCell.time] || 'default') === c.name;
                 return (
@@ -497,15 +505,15 @@ export default function Timetable() {
                     key={c.name}
                     onClick={() => updateTimetableColor(editingCell.day, editingCell.time, c.name)}
                     title={c.name}
-                    className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${c.bg.replace('/20', '/80')} ${isActive ? 'ring-2 ring-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]' : 'opacity-60 hover:opacity-100 hover:scale-105'} transition-all flex items-center justify-center shrink-0`}
+                    className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${c.solidBg} ${isActive ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-900 scale-110 shadow-lg' : 'opacity-100 hover:scale-110'} transition-all duration-200 flex items-center justify-center shrink-0`}
                   >
-                     {isActive && <Check size={14} className="text-white drop-shadow-md" />}
+                    {isActive && <Check size={14} className="text-white drop-shadow-md" />}
                   </button>
                 );
               })}
             </div>
-            
-            <button onClick={() => setEditingCell(null)} className="mt-1 w-full py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-purple-500/20">
+
+            <button onClick={() => setEditingCell(null)} className="mt-2 w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold rounded-2xl transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] active:scale-95">
               Save Changes
             </button>
           </div>
@@ -539,30 +547,35 @@ function StartTimeEditor({ currentMins, onSave, onCancel }: { currentMins: numbe
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
       <div
-        className="bg-[#0f0f11] border border-blue-500/40 rounded-2xl shadow-2xl p-5 flex flex-col items-center gap-4 w-full max-w-[240px] animate-in zoom-in-95 duration-200"
+        className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6 flex flex-col items-center gap-5 w-full max-w-[260px] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-white font-bold text-sm tracking-wide">Set Day Start Time</h3>
+        <div className="flex flex-col items-center gap-1">
+          <div className="p-2 bg-sky-500/10 text-sky-400 rounded-full mb-1">
+            <Clock size={20} />
+          </div>
+          <h3 className="text-gray-100 font-bold text-sm tracking-wide">Set Day Start Time</h3>
+        </div>
 
         <input
           type="time"
           value={timeValue}
           onChange={e => setTimeValue(e.target.value)}
-          className="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-white text-lg text-center outline-none focus:border-blue-500 transition-colors cursor-pointer [color-scheme:dark]"
+          className="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3 text-white text-xl font-medium tracking-wider text-center outline-none focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all cursor-pointer [color-scheme:dark] shadow-inner"
         />
 
-        <div className="flex w-full gap-2 mt-1">
+        <div className="flex w-full gap-3 mt-2">
           <button
             onClick={(e) => { e.stopPropagation(); onCancel(); }}
-            className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
+            className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold rounded-xl transition-all active:scale-95"
           >
             Cancel
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); save(); }}
-            className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-lg transition-colors"
+            className="flex-1 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all active:scale-95"
           >
             Save
           </button>
@@ -618,47 +631,44 @@ function DurationCell({
   };
 
   return (
-    <div className={`relative group h-10 flex items-center justify-center rounded-xl border px-0.5 transition-colors ${isActive ? 'bg-purple-600/30 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] z-20' : 'bg-black/20 border-white/5 hover:border-white/20'}`}>
+    <div className={`relative group h-10 flex items-center justify-center rounded-xl border transition-all duration-300 ${isActive ? 'bg-violet-600/20 border-violet-500/50 shadow-[inset_0_0_15px_rgba(139,92,246,0.15)] z-20' : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/5'}`}>
       {isEditingOverride ? (
-        <div className="absolute inset-0 z-[60] bg-[#0f0f11] border border-purple-500/50 rounded-xl shadow-2xl flex items-center justify-center px-1 scale-[1.15]">
-          <div className="flex items-center gap-1 text-white">
+        <div className="absolute inset-0 z-[60] bg-gray-900/95 backdrop-blur-md border border-violet-500/50 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center justify-center px-1 scale-[1.15] animate-in zoom-in-95 duration-150">
+          <div className="flex items-center gap-1.5 text-white">
             <div className="flex flex-col items-center">
-              <button onClick={() => adjust(15)} className="hover:text-purple-400 p-0.5"><ChevronUp size={12} /></button>
-              <div className="flex items-baseline">
+              <button onClick={() => adjust(15)} className="hover:text-violet-400 p-0.5 transition-colors"><ChevronUp size={14} /></button>
+              <div className="flex items-baseline bg-black/40 px-1.5 rounded-md border border-white/5">
                 <input
                   value={durStr}
                   onChange={e => setDurStr(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && save()}
-                  className="w-6 md:w-8 text-center bg-transparent outline-none text-[10px] md:text-xs font-bold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-7 md:w-9 text-center bg-transparent outline-none text-[10px] md:text-xs font-bold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-[8px] text-white/50 -ml-1">m</span>
+                <span className="text-[8px] text-white/40 -ml-0.5">m</span>
               </div>
-              <button onClick={() => adjust(-15)} className="hover:text-purple-400 p-0.5"><ChevronDown size={12} /></button>
+              <button onClick={() => adjust(-15)} className="hover:text-violet-400 p-0.5 transition-colors"><ChevronDown size={14} /></button>
             </div>
-            <button onClick={save} className="ml-1 p-1 bg-purple-500 hover:bg-purple-600 rounded-md transition-colors"><Check size={10} /></button>
+            <button onClick={save} className="ml-0.5 p-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg transition-all active:scale-90 shadow-md"><Check size={12} /></button>
           </div>
         </div>
       ) : (
         <div
           onClick={() => setEditingOverride(true)}
-          className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 rounded-lg transition-colors leading-none"
+          className="w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors leading-none"
         >
-          {/* {isRange ? ( */}
-          <div className="absolute top-1 flex flex-col md:flex-row items-center justify-center gap-0.1 md:gap-1 text-[9px] md:text-xs tracking-tight font-semibold font-mono select-none w-full px-1">
-            <span className="text-white/80 transition-colors group-hover:text-purple-400">
+          <div className="absolute top-1.5 flex flex-col md:flex-row items-center justify-center gap-[1px] md:gap-1 text-[9px] md:text-[10px] tracking-tight font-semibold font-mono select-none w-full px-1">
+            <span className="text-white/70 transition-colors group-hover:text-white">
               {block.startStr.replace(" AM", "AM").replace(" PM", "PM")}
             </span>
-            <span className="text-white/30 hidden md:inline">-</span>
-            <span className="text-white/50 transition-colors group-hover:text-purple-400">
+            <span className="text-white/20 hidden md:inline">-</span>
+            <span className="text-white/40 transition-colors group-hover:text-white/80">
               {block.endStr.replace(" AM", "AM").replace(" PM", "PM")}
             </span>
           </div>
-          {/* ) : (
-            <span className="text-white/80 text-[10px] md:text-sm font-semibold font-mono select-none group-hover:text-purple-400 transition-colors">
-              {block.startStr}
-            </span>
-          )} */}
-          <span className="absolute bottom-0.5 text-[8px] text-yellow-300/60 font-bold uppercase ">{block.duration > 60 ? Math.floor(block.duration / 60) + "hr " + block.duration % 60 + "m" : block.duration + "m"}</span>
+
+          <span className="absolute bottom-[3px] text-[7px] md:text-[8px] text-violet-300/60 font-bold uppercase tracking-wider group-hover:text-violet-300/90 transition-colors">
+            {block.duration > 60 ? Math.floor(block.duration / 60) + "hr " + block.duration % 60 + "m" : block.duration + "m"}
+          </span>
         </div>
       )}
     </div>

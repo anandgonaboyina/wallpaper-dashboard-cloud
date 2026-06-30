@@ -25,7 +25,23 @@ export default function StatsModal() {
 
   // ----- DESKTOP SITE OVERRIDE LOGIC -----
 
-  // ---------------------------------------
+  const handleClose = () => {
+    const wasViewingFriend = !!viewingFriend;
+    const shouldReturn = wasViewingFriend || (typeof window !== 'undefined' && sessionStorage.getItem('returnToConnect') === 'true');
+    if (viewingFriend) {
+      setViewingFriend(null);
+    }
+    
+    if (shouldReturn) {
+      if (typeof window !== 'undefined') sessionStorage.removeItem('returnToConnect');
+      // Ensure Settings Modal is open and on the connect tab
+      useDashboardStore.getState().setSettingsActiveTab('connect');
+      if (!useDashboardStore.getState().isSettingsOpen) {
+        useDashboardStore.getState().toggleSettings();
+      }
+    }
+    toggleStats();
+  };
 
   if (!isStatsOpen) return null;
 
@@ -90,7 +106,7 @@ export default function StatsModal() {
   return (
     <div
       className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
-      onClick={toggleStats}
+      onClick={handleClose}
     >
       <div
         className="relative w-full max-h-[80vh] max-w-5xl rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-900 via-blue-900 to-purple-900 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 flex flex-col border border-white/20"
@@ -118,10 +134,7 @@ export default function StatsModal() {
               </button>
             )}
             <button
-              onClick={() => {
-                if (viewingFriend) setViewingFriend(null);
-                toggleStats();
-              }}
+              onClick={handleClose}
               className="p-1.5 sm:p-2 bg-white/5 hover:bg-white/10 rounded-lg sm:rounded-xl transition-colors"
             >
               <X size={20} className="sm:w-6 sm:h-6" />
@@ -187,11 +200,16 @@ export default function StatsModal() {
               {/* Leaderboard Link Button */}
               <button 
                 onClick={() => {
+                  if (viewingFriend) setViewingFriend(null);
+                  if (typeof window !== 'undefined') sessionStorage.removeItem('returnToConnect');
                   toggleStats();
                   useDashboardStore.getState().setConnectInitialTab('leaderboard');
                   useDashboardStore.getState().setSettingsActiveTab('connect');
                   if (!useDashboardStore.getState().isSettingsOpen) {
                     useDashboardStore.getState().toggleSettings();
+                  }
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('open-leaderboard'));
                   }
                 }}
                 className="w-full mt-2 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-white/10 hover:border-white/30 transition-all flex items-center justify-between group shadow-lg"
@@ -328,8 +346,14 @@ export default function StatsModal() {
       </div>
 
       {showFriendTimetable && viewingFriend && (
-        <div className="fixed inset-0 z-[10005] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300 p-4">
-          <div className="w-full max-w-4xl relative animate-in zoom-in-95 duration-300">
+        <div 
+          className="fixed inset-0 z-[10005] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300 p-4"
+          onClick={() => setShowFriendTimetable(false)}
+        >
+          <div 
+            className="w-full max-w-4xl relative animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setShowFriendTimetable(false)}
               className="absolute -top-12 right-0 bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors text-white"

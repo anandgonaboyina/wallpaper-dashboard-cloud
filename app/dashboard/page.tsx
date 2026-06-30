@@ -180,7 +180,7 @@ export default function Dashboard() {
               style={{ zIndex: widgetZIndices.countdowns || 50 }}
               className={`absolute top-[140px] md:top-36 left-1/2 -translate-x-1/2 scale-[0.85] md:scale-100 origin-top pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex justify-center ${!isMobileCountdownsVisible ? '-translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'}`}
             >
-              <div 
+              <div
                 className="relative flex items-center justify-center group pointer-events-auto"
                 onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
                 onTouchEnd={(e) => {
@@ -198,9 +198,9 @@ export default function Dashboard() {
                 {countdowns.length > 0 && (() => {
                   const safeIndex = Math.min(activeCountdownIndex, Math.max(0, countdowns.length - 1));
                   return (
-                    <Countdown 
-                      key={countdowns[safeIndex].id} 
-                      id={countdowns[safeIndex].id} 
+                    <Countdown
+                      key={countdowns[safeIndex].id}
+                      id={countdowns[safeIndex].id}
                       hasPrev={safeIndex > 0}
                       hasNext={safeIndex < countdowns.length - 1}
                       onPrev={() => setActiveCountdownIndex(p => p - 1)}
@@ -242,7 +242,7 @@ export default function Dashboard() {
           {(!isHidden || !hideConfig.timetable) && showTimetable && (
             <div
               style={{ zIndex: widgetZIndices.timetable || 50 }}
-              className="absolute bottom-24 left-[10px] right-[10px] w-[calc(100vw-20px)] md:bottom-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-auto flex flex-col items-center scale-[0.9] md:scale-100 origin-bottom pointer-events-none"
+              className="absolute bottom-24  w-[calc(100vw)] md:bottom-40 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-auto flex flex-col items-center scale-[0.9] md:scale-100 origin-bottom pointer-events-none"
             >
               {/* The Expanded Timetable */}
               <div
