@@ -343,7 +343,7 @@ export default function Timetable() {
         >
           {/* Time Column */}
           <div className="sticky left-0 rounded-xl z-30 bg-[#0f0f13]/90 backdrop-blur-md flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.5)] pr-1">
-            <div className="text-center font-bold text-white/30 uppercase tracking-widest text-[9px] md:text-[10px] py-1.5 mb-1.5">Time</div>
+            <div className="text-center font-bold text-white/30 uppercase tracking-widest text-[9px] md:text-[10px] py-1.5 mb-3">Time</div>
 
             {generatedTimes.map((block, index) => {
               return (

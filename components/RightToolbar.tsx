@@ -75,9 +75,9 @@ export default function RightToolbar() {
     }
   };
 
-  return (
-    <DraggableWidget id="toolbar">
-      <div className="flex flex-col gap-2 md:gap-3 pointer-events-auto">
+    return (
+      <DraggableWidget id="toolbar">
+        <div className="flex flex-col gap-2 md:gap-3 pointer-events-auto">
         {/* Panic Button - Mobile Only */}
         <button
           onClick={handlePanic}
@@ -174,7 +174,7 @@ export default function RightToolbar() {
             <Settings size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
-      </div>
-    </DraggableWidget>
-  );
+        </div>
+      </DraggableWidget>
+    );
 }

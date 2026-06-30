@@ -125,6 +125,12 @@ export default function Timer() {
             setTimerInitialMins(null);
           }
 
+          // Unhide dashboard if it was hidden, so user sees the timer ringing
+          const state = useDashboardStore.getState();
+          if (state.isHidden) {
+            state.toggleHide();
+          }
+
           // Show quote popup
           fetchQuote().then(q => showQuotePopup(q));
         } else {
@@ -253,13 +259,6 @@ export default function Timer() {
         scheduleNotification(Date.now() + seconds * 1000);
       }
     }
-
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-       const state = useDashboardStore.getState();
-       if (state.isTimerOpen) {
-          state.toggleTimer();
-       }
-    }
   };
 
   const scheduleNotification = async (targetTimestamp: number) => {
@@ -367,11 +366,12 @@ export default function Timer() {
     }
   };
 
-  if (!isTimerOpen) return null;
+  // Always render to keep interval running, but can hide visually if needed.
+  // Actually, we'll just not return null.
 
   return (
     <DraggableWidget id="timer">
-    <div className="relative pointer-events-auto select-none">
+    <div className={`relative pointer-events-auto select-none ${isTimerOpen ? '' : 'hidden'}`}>
       <div className="w-64 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl p-3 text-white flex flex-col gap-2">
         {/* Timer Display / Editor */}
         <div className="text-center min-h-[80px] flex flex-col items-center justify-center relative">
@@ -383,7 +383,7 @@ export default function Timer() {
           )}
           <div className="flex items-center justify-center w-full relative">
             {/* Quick Presets Right */}
-            {!timerEndAt && !timerPausedLeft && localTimeLeft === 0 && !isEditingTime && (
+            {!timerEndAt && !timerPausedLeft && localTimeLeft === 0 && !isEditingTime && !isAlarmPlaying && (
               <div className="absolute right-1 top-1/2 mt-[20px] ml-[5px] -translate-y-1/2 flex flex-col gap-1.5">
                 {[5, 15, 25].map((preset) => (
                   <button

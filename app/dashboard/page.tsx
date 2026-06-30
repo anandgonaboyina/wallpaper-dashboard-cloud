@@ -26,7 +26,7 @@ import VideoBackground from "@/components/VideoBackground";
 import LoadingScreen from "@/components/LoadingScreen";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, CalendarDays, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronUp, CalendarDays, Settings, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
 import { useDashboardStore, hasUnsavedChanges } from "@/store/dashboardStore";
 import { fetchQuote } from "@/utils/quoteEngine";
 
@@ -57,6 +57,9 @@ export default function Dashboard() {
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
   const setIsTimetableOpen = useDashboardStore((state) => state.setIsTimetableOpen);
   const isCalendarOpen = useDashboardStore((state) => state.isCalendarOpen);
+  const isTaskManagerOpen = useDashboardStore((state) => state.isTaskManagerOpen);
+  const [edgeTouchStartX, setEdgeTouchStartX] = useState<number | null>(null);
+  const [isMobileToolbarOpen, setIsMobileToolbarOpen] = useState(false);
 
   const showHealth = useDashboardStore((state) => state.showHealth);
   const showQuote = useDashboardStore((state) => state.showQuote);
@@ -83,6 +86,21 @@ export default function Dashboard() {
   const togglePanicHide = useDashboardStore((state) => state.togglePanicHide);
   const panicShortcutKey = useDashboardStore((state) => state.panicShortcutKey);
   const focusShortcutKey = useDashboardStore((state) => state.focusShortcutKey);
+  const enablePanicButton = useDashboardStore((state) => state.enablePanicButton);
+  const panicButtonMode = useDashboardStore((state) => state.panicButtonMode);
+
+  const handlePanic = () => {
+    if (isHidden) {
+      toggleHide();
+      return;
+    }
+    if (panicButtonMode === 'hide') {
+      toggleHide();
+    } else {
+      const urls = ['tg://resolve?domain=telegram', 'flipkart://'];
+      window.location.href = urls[Math.floor(Math.random() * urls.length)];
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -212,14 +230,94 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Top Right: Mini Calendar */}
-          {(!isHidden || !hideConfig.calendar) && showCalendar && isCalendarOpen && (
-            <div
-              style={{ zIndex: widgetZIndices.calendar || 50 }}
-              className="absolute top-48 right-15 md:top-15 md:right-12 scale-[0.8] sm:scale-85 md:scale-100 origin-top-right pointer-events-none"
-            >
-              <MiniCalendar />
-            </div>
+          {/* Draggable Widgets */}
+          <div className="absolute inset-0 pointer-events-none z-50">
+          </div>
+
+          {/* Left Side Drawer: Calendar */}
+          {(!isHidden || !hideConfig.calendar) && showCalendar && (
+            <>
+              {/* Invisible backdrop for clicking outside to close */}
+              {isCalendarOpen && (
+                <div 
+                  className="fixed inset-0 z-[90] pointer-events-auto" 
+                  onClick={() => useDashboardStore.setState({ isCalendarOpen: false })} 
+                />
+              )}
+
+              {/* Left Edge Trigger (Mobile Swipe / Desktop Hover) */}
+              <div 
+                className={`fixed left-0 top-[20vh] w-6 sm:w-8 h-[30vh] z-[40] cursor-pointer touch-none ${isCalendarOpen ? 'hidden' : ''}`}
+                onMouseEnter={() => { if (!isMobile && !isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true }) }}
+                onClick={() => { if (!isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true }) }}
+                onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
+                onTouchEnd={(e) => {
+                  if (edgeTouchStartX !== null && e.changedTouches[0].clientX - edgeTouchStartX > 30) {
+                    if (!isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true });
+                  }
+                  setEdgeTouchStartX(null);
+                }}
+              />
+              
+              <div 
+                className={`fixed top-[100px] left-0 h-auto max-h-[calc(100vh-140px)] w-[320px] sm:w-[340px] max-w-[85vw] pb-4 pl-2 pr-0 sm:pl-4 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-2xl z-[100] ${isCalendarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'}`}
+                onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
+                onTouchEnd={(e) => {
+                  if (edgeTouchStartX !== null && edgeTouchStartX - e.changedTouches[0].clientX > 40) {
+                    if (isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: false });
+                  }
+                  setEdgeTouchStartX(null);
+                }}
+                onTouchCancel={() => setEdgeTouchStartX(null)}
+              >
+                <div className="w-full h-full relative">
+                  <MiniCalendar />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Right Side Drawer: Tasks */}
+          {(!isHidden || !hideConfig.tasks) && showTasks && (
+            <>
+              {/* Invisible backdrop for clicking outside to close */}
+              {isTaskManagerOpen && (
+                <div 
+                  className="fixed inset-0 z-[90] pointer-events-auto" 
+                  onClick={() => useDashboardStore.setState({ isTaskManagerOpen: false })} 
+                />
+              )}
+
+              {/* Right Edge Trigger (Mobile Swipe / Desktop Hover) */}
+              <div 
+                className={`fixed right-0 top-[20vh] w-6 sm:w-8 h-[30vh] z-[40] cursor-pointer touch-none ${isTaskManagerOpen ? 'hidden' : ''}`}
+                onMouseEnter={() => { if (!isMobile && !isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true }) }}
+                onClick={() => { if (!isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true }) }}
+                onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
+                onTouchEnd={(e) => {
+                  if (edgeTouchStartX !== null && edgeTouchStartX - e.changedTouches[0].clientX > 30) {
+                    if (!isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true });
+                  }
+                  setEdgeTouchStartX(null);
+                }}
+              />
+
+              <div 
+                className={`fixed top-[140px] right-0 h-auto max-h-[calc(100vh-200px)] w-[320px] sm:w-[340px] max-w-[85vw] pb-4 pr-2 pl-0 sm:pr-4 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-2xl z-[100] ${isTaskManagerOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
+                onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
+                onTouchEnd={(e) => {
+                  if (edgeTouchStartX !== null && e.changedTouches[0].clientX - edgeTouchStartX > 40) {
+                    if (isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: false });
+                  }
+                  setEdgeTouchStartX(null);
+                }}
+                onTouchCancel={() => setEdgeTouchStartX(null)}
+              >
+                <div className="w-full h-full relative">
+                  <TaskManager />
+                </div>
+              </div>
+            </>
           )}
 
           {/* BigClock */}
@@ -294,10 +392,13 @@ export default function Dashboard() {
           >
             {/* TaskManager & Timer Group */}
             <div className="flex flex-col items-end gap-2 pointer-events-none mr-1 md:mr-[10px]">
-              {(!isHidden || !hideConfig.tasks) && showTasks && <TaskManager />}
               <div className="flex flex-col md:flex-row items-end md:items-start gap-2 md:gap-3 pointer-events-none">
-                {(!isHidden || !hideConfig.stopwatch) && showStopwatch && <Stopwatch />}
-                {(!isHidden || !hideConfig.timer) && showTimer && <Timer />}
+                <div className={(!isHidden || !hideConfig.stopwatch) && showStopwatch ? '' : 'hidden'}>
+                  <Stopwatch />
+                </div>
+                <div className={(!isHidden || !hideConfig.timer) && showTimer ? '' : 'hidden'}>
+                  <Timer />
+                </div>
               </div>
             </div>
 

@@ -33,19 +33,14 @@ export default function Stopwatch() {
     return () => clearInterval(interval);
   }, [isRunning, stopwatchStartTime]);
 
-  if (!isStopwatchOpen) return null;
+  // Always render to keep interval ticking, hide visually if closed
+  // if (!isStopwatchOpen) return null;
 
   const handleStart = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!isRunning) {
       setStopwatchStartTime(Date.now() - elapsedSecs * 1000);
       setIsRunning(true);
-      
-      if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-         if (isStopwatchOpen) {
-            useDashboardStore.getState().toggleStopwatch();
-         }
-      }
     }
   };
 
@@ -84,7 +79,7 @@ export default function Stopwatch() {
 
   return (
     <DraggableWidget id="stopwatch">
-      <div className="relative pointer-events-auto select-none" onClick={(e) => e.stopPropagation()}>
+      <div className={`relative pointer-events-auto select-none ${isStopwatchOpen ? '' : 'hidden'}`} onClick={(e) => e.stopPropagation()}>
         <div className="w-56 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl p-3 text-white flex flex-col gap-2 min-h-[120px]">
           
           {viewingHistory ? (
