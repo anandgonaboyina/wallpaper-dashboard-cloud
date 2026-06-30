@@ -417,7 +417,7 @@ export default function SettingsModal() {
                   }}
                 />
                 <div className="flex flex-col items-start md:items-center text-left md:text-center relative z-10 min-w-0">
-                  <span className="text-[11px] md:text-[10px] font-semibold tracking-wide leading-tight text-white block">Support Dev</span>
+                  <span className="text-[11px] md:text-[10px] font-semibold tracking-wide leading-tight text-white block">Support Developer</span>
                   <span className="text-[9px] md:text-[9px] text-blue-300 font-medium uppercase mt-0.5 tracking-wider block truncate w-full">Anand kumar</span>
                 </div>
               </button>
@@ -1331,8 +1331,8 @@ export default function SettingsModal() {
 
 
                   {/* Donation Section */}
-                  <div className="flex flex-col p-3 md:p-3 bg-black/20 border border-white/5 rounded-lg md:rounded-2xl text-center items-center justify-center relative overflow-hidden md:mt-4 mt-2">
-                    <h3 className="text-sm md:text-base font-bold mb-1 md:mb-1.5 md:mt-1">Support the Project ❤️</h3>
+                  <div className="flex flex-col p-3 md:p-3 bg-black/20 border border-white/5 rounded-lg md:rounded-2xl text-center items-center justify-center relative overflow-hidden md:mt-4 ">
+                    <h3 className="text-sm md:text-base font-bold mb-0 md:mb-1.5 md:mt-1">Support the Project ❤️</h3>
                     <p className="text-[9px] md:text-[10px] text-white/60 max-w-md mx-auto mb-2.5 md:mb-4 leading-relaxed px-1">
                       Built with love, but inspired by the pain of endless distractions and messy workspaces. It took many late nights to bring this vision to life. If this dashboard helps you reclaim your focus, consider supporting its continued development. A small tip goes a long way—and please leave a message, I'd love to hear how it's helping you!
                     </p>
@@ -1378,7 +1378,7 @@ export default function SettingsModal() {
                   </div>
 
                   {/* Credits & Supporters Section */}
-                  <div className="flex flex-col gap-3 md:gap-4 mt-4 md:mt-6 pt-3 md:pt-4 border-t border-white/10">
+                  <div className="flex flex-col gap-3 md:gap-4 mt-1 md:mt-6 pt-3 md:pt-4 border-t border-white/10">
                     <h3 className="text-xs md:text-sm font-semibold flex items-center gap-1.5 md:gap-2">
                       <BadgeCheck className="text-pink-400 w-4 h-4 md:w-5 md:h-5" /> Credits & Supporters
                     </h3>

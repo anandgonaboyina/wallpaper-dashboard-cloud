@@ -157,6 +157,21 @@ From the **Tasks** panel, click the **▶** button next to any task. The timer s
 - A motivational quote popup appears.
 - All minutes for the session are recorded to your Stats.
 
+### Advanced: Background Alarm via MacroDroid (Android)
+Because mobile operating systems suspend background web apps, the browser may not be able to continuously play a looping alarm sound if you close the app or lock the screen. 
+To guarantee a full alarm rings even while the app is closed, you can use an automation app like **MacroDroid** to intercept the app's push notification.
+
+**How to set it up in MacroDroid:**
+1. Create a new Macro.
+2. **Trigger:** Select `Notification Present`. Choose `Any Application` (or your browser/PWA) and set the **Text Content** to strictly match one of the following exact titles:
+   - `PWA_ALARM_RING_VIBRATE` (Triggered when both sound and vibration are enabled in your app settings)
+   - `PWA_ALARM_RING` (Triggered when only sound is enabled)
+   - `PWA_ALARM_VIBRATE` (Triggered when only vibration is enabled)
+   - `PWA_ALARM_TRIGGER` (Fallback title)
+3. **Action:** Set it to `Play/Stop Sound` and choose your preferred alarm tone, or `Vibrate` depending on the notification title.
+4. **Constraint (Optional):** Only run if the screen is off.
+5. Create a second macro to **Stop** the sound when you interact with the phone (e.g., **Trigger:** `Device Shake` or `Volume Button Pressed` → **Action:** `Play/Stop Sound` -> Stop).
+
 ---
 
 ## 5. Stats (Focus History)

@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash, ListTodo, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash, ListTodo, X } from 'lucide-react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import DraggableWidget from './DraggableWidget';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 export default function MiniCalendar() {
@@ -11,10 +10,9 @@ export default function MiniCalendar() {
   const [showAllDeadlines, setShowAllDeadlines] = useState(false);
   const [editingDeadlineId, setEditingDeadlineId] = useState<string | null>(null);
 
-  const { deadlines, addDeadline, updateDeadline, deleteDeadline, deleteAllDeadlinesForDay, deleteAllDeadlines } = useDashboardStore();
+  const { deadlines, addDeadline, updateDeadline, deleteDeadline, deleteAllDeadlinesForDay, deleteAllDeadlines, toggleCalendar } = useDashboardStore();
 
   const handleCloseDate = () => {
-    // Cleanup empty deadlines before closing
     if (selectedDate) {
       deadlines.forEach(d => {
         if (d.date === selectedDate && !d.text.trim()) {
@@ -45,18 +43,21 @@ export default function MiniCalendar() {
   const sortedAllDeadlines = [...deadlines].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-3xl p-4 sm:p-5 w-full min-h-[350px] h-full flex flex-col relative overflow-hidden transition-all duration-300 select-none pointer-events-auto shadow-2xl">
-      <button onClick={() => useDashboardStore.getState().toggleCalendar()} className="absolute top-4 -right-5 p-1.5 md:hidden text-white/30 hover:text-white/70 hover:bg-white/10 rounded-full transition-colors z-50">
-        <ChevronLeft size={16} />
-      </button>
+    <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 w-full max-w-[250px] h-[280px] flex flex-col relative overflow-hidden transition-all duration-300 select-none pointer-events-auto shadow-xl _8px_30px_rgb(0,0,0,0.3)]">
+
+      {/* Mobile Close Button - Changed to X to avoid confusion with Back arrows */}
+
+
       {showAllDeadlines ? (
-        <div className="flex flex-col h-full flex-1 animate-in slide-in-from-right-4 duration-300">
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
+        <div className="flex flex-col h-full w-full animate-in slide-in-from-right-4 duration-300">
+          <div className="flex justify-between items-center mb-2 pb-1.5 border-b border-white/10 pr-7 shrink-0">
             <div className="flex items-center">
               <button onClick={() => setShowAllDeadlines(false)} className="p-1 hover:bg-white/10 rounded-lg text-white/70 transition-colors">
-                <ChevronLeft size={18} />
+                <ChevronLeft className="w-4 h-4 " />
               </button>
-              <span className="text-white font-medium ml-2 flex items-center gap-2"><ListTodo size={16} className="text-blue-400" /> All Deadlines</span>
+              <span className="text-white text-xs font-medium ml-1.5 flex items-center gap-1.5 ">
+                <ListTodo className="w-3.5 h-3.5 text-sky-400" /> All Deadlines
+              </span>
             </div>
             {sortedAllDeadlines.length > 0 && (
               <button
@@ -64,46 +65,46 @@ export default function MiniCalendar() {
                   const val = window.prompt("Type 'delete' to confirm clearing ALL deadlines permanently:");
                   if (val && val.toLowerCase() === 'delete') deleteAllDeadlines();
                 }}
-                className="p-1.5 text-red-400/80 bg-red-500/10 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold px-2"
+                className="p-1 text-rose-400/80 bg-rose-500/10 hover:text-rose-300 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1 text-[9px] font-semibold px-1.5 shrink-0"
                 title="Delete All Deadlines"
               >
-                <Trash size={14} /> Clear All
+                <Trash className="w-3 h-3 " /> <span className="hidden ">Clear All</span>
               </button>
             )}
           </div>
-          <ScrollableWithArrows className="space-y-2 pr-2 max-h-[240px]">
-            {sortedAllDeadlines.length === 0 && <div className="text-white/40 text-sm text-center mt-6 italic">No upcoming deadlines</div>}
+
+          <ScrollableWithArrows className="flex-1 h-0 space-y-1.5 pr-1 ">
+            {sortedAllDeadlines.length === 0 && <div className="text-white/40 text-[10px] text-center mt-4 italic">No upcoming deadlines</div>}
             {sortedAllDeadlines.map(d => (
-              <div key={d.id} className="flex flex-col gap-1 bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition-colors group">
+              <div key={d.id} className="flex flex-col gap-0.5 bg-white/5 hover:bg-white/10 p-2 rounded-lg border border-white/5 transition-colors group shrink-0">
                 <div className="flex justify-between items-center">
-                  <span className="text-red-400 text-xs font-bold tracking-wider">{d.date}</span>
+                  <span className="text-rose-400 text-[9px] font-bold tracking-wider">{d.date}</span>
                   <button
                     onClick={() => {
                       if (window.confirm('Are you sure you want to delete this deadline?')) {
                         deleteDeadline(d.id);
                       }
                     }}
-                    style={{ marginRight: '5px' }}
-                    className="text-red-400/80 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 p-1.5 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all shrink-0"
+                    className="text-rose-400/80 bg-rose-500/10 hover:bg-rose-500/20 hover:text-rose-300 p-1 rounded transition-all shrink-0 opacity-100"
                   >
-                    <Trash size={14} />
+                    <Trash className="w-3 h-3 " />
                   </button>
                 </div>
-                <span className="text-white/90 text-sm leading-snug">{d.text || <span className="text-white/30 italic">Empty deadline</span>}</span>
+                <span className="text-white/90 text-[11px] leading-snug">{d.text || <span className="text-white/30 italic">Empty deadline</span>}</span>
               </div>
             ))}
           </ScrollableWithArrows>
         </div>
       ) : selectedDate ? (
-        <div className="flex flex-col h-full flex-1 animate-in slide-in-from-bottom-4 duration-300">
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/10">
-            <div className="flex items-center">
-              <button onClick={handleCloseDate} className="p-1 hover:bg-white/10 rounded-lg text-white/70 transition-colors">
-                <ChevronLeft size={18} />
+        <div className="flex flex-col h-full w-full animate-in slide-in-from-bottom-4 duration-300">
+          <div className="flex justify-between items-center mb-2 pb-1.5 border-b border-white/10 pr-7 shrink-0">
+            <div className="flex items-center min-w-0">
+              <button onClick={handleCloseDate} className="p-1 hover:bg-white/10 rounded-lg text-white/70 transition-colors shrink-0">
+                <ChevronLeft className="w-4 h-4 " />
               </button>
-              <div className="flex flex-col ml-2">
-                <span className="text-white font-medium text-sm">Deadlines for</span>
-                <span className="text-red-400 text-xs font-bold tracking-wider">{selectedDate}</span>
+              <div className="flex flex-col ml-1.5 min-w-0">
+                <span className="text-white font-medium text-[10px] leading-tight truncate">Deadlines for</span>
+                <span className="text-rose-400 text-[9px] font-bold tracking-wider leading-tight truncate">{selectedDate}</span>
               </div>
             </div>
             {dayDeadlines.length > 0 && (
@@ -111,18 +112,19 @@ export default function MiniCalendar() {
                 onClick={() => {
                   if (confirm('Clear all deadlines for this day?')) deleteAllDeadlinesForDay(selectedDate);
                 }}
-                className="p-1.5 text-red-400/80 bg-red-500/10 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold px-2"
+                className="p-1 text-rose-400/80 bg-rose-500/10 hover:text-rose-300 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1 text-[9px] font-semibold px-1.5 shrink-0"
                 title="Delete all"
               >
-                <Trash size={14} /> Clear All
+                <Trash className="w-3 h-3 " /> <span className="hidden ">Clear All</span>
               </button>
             )}
           </div>
-          <ScrollableWithArrows className="space-y-2 pr-2 max-h-[220px]">
-            {dayDeadlines.length === 0 && <div className="text-white/40 text-xs text-center my-2">No deadlines set for this day.</div>}
+
+          <ScrollableWithArrows className="flex-1 h-0 space-y-1.5 pr-1 ">
+            {dayDeadlines.length === 0 && <div className="text-white/40 text-[10px] text-center my-1 ">No deadlines set for this day.</div>}
             {dayDeadlines.map(d => (
-              <div key={d.id} className="flex gap-2 items-center bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 focus-within:border-blue-500/30 transition-all group shadow-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_red] py-1 shrink-0" />
+              <div key={d.id} className="flex gap-1.5 items-center bg-black/20 px-2 py-1 rounded-md border border-white/5 focus-within:border-sky-500/30 transition-all group shadow-sm shrink-0">
+                <div className="w-1 h-1 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e] shrink-0" />
                 {editingDeadlineId === d.id || !d.text.trim() ? (
                   <textarea
                     value={d.text}
@@ -146,7 +148,7 @@ export default function MiniCalendar() {
                       target.style.height = 'auto';
                       target.style.height = `${target.scrollHeight}px`;
                     }}
-                    className="flex-1 bg-transparent outline-none text-white/90 text-sm min-h-[32px] leading-tight placeholder:text-white/30 border-b border-white/20 transition-colors resize-none overflow-hidden py-1.5"
+                    className="flex-1 bg-transparent outline-none text-white/90 text-[11px] min-h-[24px] leading-tight placeholder:text-white/30 border-b border-white/20 transition-colors resize-none overflow-hidden py-1 "
                     placeholder="Enter deadline here..."
                     autoFocus
                     rows={1}
@@ -155,7 +157,7 @@ export default function MiniCalendar() {
                   <div
                     onDoubleClick={() => setEditingDeadlineId(d.id)}
                     title="Double click to edit"
-                    className="flex-1 text-white/90 text-sm leading-tight cursor-text whitespace-pre-wrap break-words py-1.5"
+                    className="flex-1 text-white/90 text-[11px] leading-tight cursor-text whitespace-pre-wrap break-words py-1 "
                   >
                     {d.text}
                   </div>
@@ -166,47 +168,47 @@ export default function MiniCalendar() {
                       deleteDeadline(d.id);
                     }
                   }}
-                  style={{ marginRight: '5px' }}
-                  className="text-red-400/80 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 p-1.5 rounded-md transition-all shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                  className="text-rose-400/80 bg-rose-500/10 hover:bg-rose-500/20 hover:text-rose-300 p-1 rounded transition-all shrink-0 opacity-100"
                 >
-                  <Trash size={14} />
+                  <Trash className="w-3 h-3 " />
                 </button>
               </div>
             ))}
           </ScrollableWithArrows>
-          <div className="mt-2 pt-2 border-t border-white/10">
+
+          <div className="mt-auto pt-1.5 border-t border-white/10 shrink-0">
             <button
               onClick={() => addDeadline(selectedDate, "")}
-              className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-bold text-white/70 bg-white/5 hover:bg-white/10 hover:text-white rounded-xl transition-all border border-dashed border-white/20 hover:border-white/40"
+              className="w-full py-1.5 flex items-center justify-center gap-1 text-[9px] font-bold text-white/70 bg-white/5 hover:bg-white/10 hover:text-white rounded-lg transition-all border border-dashed border-white/10 hover:border-white/40 active:scale-[0.98]"
             >
-              <Plus size={14} /> ADD DEADLINE
+              <Plus className="w-3 h-3 " /> ADD DEADLINE
             </button>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col flex-1 animate-in fade-in duration-500">
+        <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
           {/* Header */}
-          <div className="flex justify-between items-center mb-5">
-            <button onClick={prevMonth} className="p-1.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white transition-all border border-white/5">
-              <ChevronLeft size={16} />
+          <div className="flex justify-between items-center mb-2.5 pr-7 shrink-0">
+            <button onClick={prevMonth} className="p-1 bg-white/5 hover:bg-white/10 rounded-md text-white/70 hover:text-white transition-all border border-white/5 shrink-0">
+              <ChevronLeft className="w-3.5 h-3.5 " />
             </button>
-            <div className="text-white font-semibold tracking-wide text-sm">
+            <div className="text-white font-semibold tracking-wide text-[11px] truncate px-1">
               {monthNames[currentDate.getMonth()]} <span className="text-white/50">{currentDate.getFullYear()}</span>
             </div>
-            <button onClick={nextMonth} className="p-1.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white transition-all border border-white/5">
-              <ChevronRight size={16} />
+            <button onClick={nextMonth} className="p-1 bg-white/5 hover:bg-white/10 rounded-md text-white/70 hover:text-white transition-all border border-white/5 shrink-0">
+              <ChevronRight className="w-3.5 h-3.5 " />
             </button>
           </div>
 
           {/* Days Header */}
-          <div className="grid grid-cols-7 gap-1 text-center mb-3">
+          <div className="grid grid-cols-7 gap-0.5 text-center mb-1.5 shrink-0">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-              <div key={d} className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{d}</div>
+              <div key={d} className="text-[8px] font-bold text-white/30 uppercase tracking-widest">{d}</div>
             ))}
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-y-2 gap-x-1 text-center mb-auto">
+          <div className="grid grid-cols-7 gap-y-1 gap-x-0.5 text-center flex-1 place-content-start">
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
               <div key={`blank-${i}`} />
             ))}
@@ -223,17 +225,17 @@ export default function MiniCalendar() {
                 <div
                   key={day}
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`relative h-8 w-8 rounded-full flex items-center justify-center text-xs mx-auto transition-all cursor-pointer group
-                    ${isToday ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)] font-bold border border-blue-400'
-                      : hasDeadline ? 'bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/40 font-semibold shadow-inner'
+                  className={`relative h-6 w-6 rounded-full flex items-center justify-center text-[10px] mx-auto transition-all cursor-pointer group shrink-0
+  ${isToday ? 'bg-sky-500 text-white shadow-[0_0_12px_rgba(14,165,233,0.5)] font-bold border border-sky-400'
+                      : hasDeadline ? 'bg-rose-500/20 text-rose-200 border border-rose-500/40 hover:bg-rose-500/40 font-semibold shadow-[inset_0_0_8px_rgba(244,63,94,0.2)]'
                         : 'text-white/70 hover:bg-white/10 hover:text-white font-medium border border-transparent'}`}
                 >
                   {day}
                   {hasDeadline && !isToday && (
-                    <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-black/50 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                    <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-rose-500 rounded-full border border-black/50 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
                   )}
                   {hasDeadline && isToday && (
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse" />
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full border border-sky-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] animate-pulse" />
                   )}
                 </div>
               );
@@ -241,15 +243,15 @@ export default function MiniCalendar() {
           </div>
 
           {/* Footer Button */}
-          <div className="mt-5 pt-4 border-t border-white/10">
+          <div className="mt-auto pt-2 border-t border-white/10 shrink-0">
             <button
               onClick={() => setShowAllDeadlines(true)}
-              className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-semibold text-white/80 hover:text-white transition-all flex items-center justify-center gap-2 group"
+              className="w-full py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[9px] font-semibold text-white/80 hover:text-white transition-all flex items-center justify-center gap-1.5 group active:scale-[0.98]"
             >
-              <ListTodo size={14} className="text-white/50 group-hover:text-blue-400 transition-colors" />
+              <ListTodo className="w-3 h-3 text-white/50 group-hover:text-sky-400 transition-colors" />
               VIEW ALL DEADLINES
               {deadlines.length > 0 && (
-                <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1 shadow-[0_0_8px_rgba(239,68,68,0.6)]">
+                <span className="bg-rose-500 text-white text-[8px] px-1 py-px rounded-full ml-0.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]">
                   {deadlines.length}
                 </span>
               )}

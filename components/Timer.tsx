@@ -125,12 +125,6 @@ export default function Timer() {
             setTimerInitialMins(null);
           }
 
-          // Unhide dashboard if it was hidden, so user sees the timer ringing
-          const state = useDashboardStore.getState();
-          if (state.isHidden) {
-            state.toggleHide();
-          }
-
           // Show quote popup
           fetchQuote().then(q => showQuotePopup(q));
         } else {
@@ -193,6 +187,13 @@ export default function Timer() {
     };
   }, [isAlarmPlaying, enableAlarmVibration]);
 
+  const getAlarmTitle = () => {
+    if (enableAlarmSound && enableAlarmVibration) return 'PWA_ALARM_RING_VIBRATE';
+    if (enableAlarmSound) return 'PWA_ALARM_RING';
+    if (enableAlarmVibration) return 'PWA_ALARM_VIBRATE';
+    return 'PWA_ALARM_TRIGGER';
+  };
+
   const playAlarm = async () => {
     setIsAlarmPlaying(true);
     const durationSecs = useDashboardStore.getState().alarmDurationSecs || 60;
@@ -201,22 +202,24 @@ export default function Timer() {
       try {
         if ('serviceWorker' in navigator) {
           const registration = await navigator.serviceWorker.ready;
-          registration.showNotification('Time is up!', {
+          registration.showNotification(getAlarmTitle(), {
             body: 'Your focus session has ended.',
             icon: '/icon-192x192.png',
             vibrate: enableAlarmVibration ? [500, 500, 500, 500, 500] : undefined,
             silent: !enableAlarmSound,
             requireInteraction: true,
-            tag: 'timer-alarm'
+            tag: 'alarm-alert',
+            renotify: true
           } as any);
         } else {
-          new Notification('Time is up!', {
+          new Notification(getAlarmTitle(), {
             body: 'Your focus session has ended.',
             icon: '/icon-192x192.png',
             vibrate: enableAlarmVibration ? [500, 500, 500, 500, 500] : undefined,
             silent: !enableAlarmSound,
             requireInteraction: true,
-            tag: 'timer-alarm'
+            tag: 'alarm-alert',
+            renotify: true
           } as any);
         }
       } catch (e) {
@@ -234,9 +237,9 @@ export default function Timer() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        const notifications = await registration.getNotifications({ tag: 'timer-alarm', includeTriggered: true } as any);
+        const notifications = await registration.getNotifications({ tag: 'alarm-alert' } as any);
         notifications.forEach(n => n.close());
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -265,13 +268,14 @@ export default function Timer() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && (window as any).TimestampTrigger) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        registration.showNotification('Time is up!', {
+        registration.showNotification(getAlarmTitle(), {
           body: 'Your focus session has ended.',
           icon: '/icon-192x192.png',
           vibrate: enableAlarmVibration ? [500, 500, 500, 500, 500] : undefined,
           silent: !enableAlarmSound,
           requireInteraction: true,
-          tag: 'timer-alarm',
+          tag: 'alarm-alert',
+          renotify: true,
           showTrigger: new (window as any).TimestampTrigger(targetTimestamp)
         } as any);
       } catch (e) {
@@ -290,7 +294,7 @@ export default function Timer() {
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(async (registration) => {
           try {
-            const notifications = await registration.getNotifications({ tag: 'timer-alarm', includeTriggered: true } as any);
+            const notifications = await registration.getNotifications({ tag: 'alarm-alert', includeTriggered: true } as any);
             notifications.forEach(n => n.close());
           } catch(e) {}
         });
@@ -371,7 +375,7 @@ export default function Timer() {
 
   return (
     <DraggableWidget id="timer">
-    <div className={`relative pointer-events-auto select-none ${isTimerOpen ? '' : 'hidden'}`}>
+    <div className={`relative pointer-events-auto select-none ${isTimerOpen || isAlarmPlaying ? '' : 'hidden'}`}>
       <div className="w-64 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl p-3 text-white flex flex-col gap-2">
         {/* Timer Display / Editor */}
         <div className="text-center min-h-[80px] flex flex-col items-center justify-center relative">

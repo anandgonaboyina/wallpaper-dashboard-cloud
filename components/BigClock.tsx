@@ -83,6 +83,16 @@ export default function BigClock() {
     };
   }, []);
 
+  const timerEndAtRef = useRef(timerEndAt);
+  const timerPausedLeftRef = useRef(timerPausedLeft);
+  const stopwatchStartTimeRef = useRef(stopwatchStartTime);
+
+  useEffect(() => {
+    timerEndAtRef.current = timerEndAt;
+    timerPausedLeftRef.current = timerPausedLeft;
+    stopwatchStartTimeRef.current = stopwatchStartTime;
+  }, [timerEndAt, timerPausedLeft, stopwatchStartTime]);
+
   useEffect(() => {
     // Initial set
     setTime(new Date());
@@ -93,26 +103,34 @@ export default function BigClock() {
     }, 1000);
 
     const activeInterval = setInterval(() => {
-      if (timerEndAt) {
-        setActiveTimerSecs(Math.max(0, Math.floor((timerEndAt - Date.now()) / 1000)));
-      } else if (timerPausedLeft !== null) {
-        setActiveTimerSecs(timerPausedLeft);
-      } else {
-        setActiveTimerSecs(null);
-      }
+      const endAt = timerEndAtRef.current;
+      const pausedLeft = timerPausedLeftRef.current;
+      const stopStart = stopwatchStartTimeRef.current;
 
-      if (stopwatchStartTime) {
-        setActiveStopwatchSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
-      } else {
-        setActiveStopwatchSecs(null);
-      }
+      setActiveTimerSecs(prev => {
+        let next = null;
+        if (endAt) {
+          next = Math.max(0, Math.floor((endAt - Date.now()) / 1000));
+        } else if (pausedLeft !== null) {
+          next = pausedLeft;
+        }
+        return prev !== next ? next : prev;
+      });
+
+      setActiveStopwatchSecs(prev => {
+        let next = null;
+        if (stopStart) {
+          next = Math.floor((Date.now() - stopStart) / 1000);
+        }
+        return prev !== next ? next : prev;
+      });
     }, 250);
 
     return () => {
       clearInterval(interval);
       clearInterval(activeInterval);
     };
-  }, [timerEndAt, timerPausedLeft, stopwatchStartTime]);
+  }, []);
 
   const formatPillTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
