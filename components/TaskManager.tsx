@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Plus, Play, Trash2, CheckCircle, Circle, Clock } from 'lucide-react';
+import { Plus, Play, Trash2, CheckCircle, Circle, Clock, RotateCcw } from 'lucide-react';
 import { fetchQuote } from '@/utils/quoteEngine';
 import DraggableWidget from './DraggableWidget';
 import ScrollableWithArrows from './ScrollableWithArrows';
@@ -13,7 +13,7 @@ export default function TaskManager() {
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingDurationId, setEditingDurationId] = useState<string | null>(null);
 
-    const { tasks, addTask, toggleTask, deleteTask, triggerTimer, isTaskManagerOpen, showQuotePopup, editTaskDuration, updateTaskTitle } = useDashboardStore();
+    const { tasks, setTasks, addTask, toggleTask, deleteTask, triggerTimer, isTaskManagerOpen, showQuotePopup, editTaskDuration, updateTaskTitle } = useDashboardStore();
 
     if (!isTaskManagerOpen) return null;
 
@@ -25,6 +25,18 @@ export default function TaskManager() {
         if (task && !task.completed) {
             const q = await fetchQuote();
             showQuotePopup(q);
+        }
+    };
+
+    const handleRestartTask = (id: string) => {
+        if (window.confirm('Are you sure you want to restart this task?')) {
+            setTasks(tasks.map(t => {
+                if (t.id === id) {
+                    const totalDuration = t.duration + (t.timeSpent || 0);
+                    return { ...t, completed: false, duration: totalDuration > 0 ? totalDuration : 25, timeSpent: 0 };
+                }
+                return t;
+            }));
         }
     };
 
@@ -75,7 +87,7 @@ export default function TaskManager() {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-2">
-                                {tasks.map((task, index) => (
+                                {[...tasks].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1)).map((task, index) => (
                                     <div
                                         key={task.id}
                                         className={`group flex items-start justify-between p-3 rounded-2xl border border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 transition-all shadow-sm ${task.completed ? 'opacity-50' : ''}`}
@@ -175,13 +187,24 @@ export default function TaskManager() {
                                         </div>
 
                                         <div className="flex items-center gap-2 shrink-0 mt-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => triggerTimer(task.duration, task.id, task.title)}
-                                                className="p-1.5 bg-blue-500/20 text-blue-300 hover:bg-blue-500 hover:text-white rounded-lg transition-colors"
-                                                title={`Start ${task.duration}m timer`}
-                                            >
-                                                <Play size={14} className="fill-current" />
-                                            </button>
+                                            {!task.completed && (
+                                                <button
+                                                    onClick={() => triggerTimer(task.duration, task.id, task.title)}
+                                                    className="p-1.5 bg-blue-500/20 text-blue-300 hover:bg-blue-500 hover:text-white rounded-lg transition-colors"
+                                                    title={`Start ${task.duration}m timer`}
+                                                >
+                                                    <Play size={14} className="fill-current" />
+                                                </button>
+                                            )}
+                                            {(task.completed || (task.timeSpent !== undefined && task.timeSpent > 0)) && (
+                                                <button
+                                                    onClick={() => handleRestartTask(task.id)}
+                                                    className="p-1.5 bg-orange-500/20 text-orange-300 hover:bg-orange-500 hover:text-white rounded-lg transition-colors"
+                                                    title="Restart task"
+                                                >
+                                                    <RotateCcw size={14} />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => {
                                                     if (window.confirm('Are you sure you want to delete this task?')) {

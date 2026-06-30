@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useDashboardStore } from "@/store/dashboardStore";
-import { Clock, Edit2, Check } from "lucide-react";
+import { Clock, Edit2, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import CustomDatePicker from "@/components/CustomDatePicker";
 
-export default function Countdown({ id }: { id: string }) {
+export default function Countdown({
+  id,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext
+}: {
+  id: string;
+  onPrev?: () => void;
+  onNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
+}) {
   const { countdowns, updateCountdown } = useDashboardStore();
   const examCountdown = countdowns.find(c => c.id === id) || { title: 'Target', endDate: null };
 
@@ -78,34 +90,46 @@ export default function Countdown({ id }: { id: string }) {
   const hasTime = examCountdown.endDate && examCountdown.endDate.includes('T') && examCountdown.endDate.split('T')[1] !== '';
 
   return (
-    <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl w-[calc(100vw-32px)] max-w-[320px] sm:w-80 pointer-events-auto select-none">
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <div className="flex items-center gap-1.5 sm:gap-2 text-white/80 cursor-grab active:cursor-grabbing">
-          <Clock size={16} className="text-blue-400 sm:w-[18px] sm:h-[18px]" />
-          <span className="font-semibold tracking-wide uppercase text-xs sm:text-sm truncate max-w-[160px] sm:max-w-[200px]">
+    <div className="group bg-black/20 backdrop-blur-2xl border border-white/10 rounded-2xl sm:rounded-3xl p-2 sm:p-3 shadow-2xl w-[calc(100vw-32px)] max-w-[290px] sm:w-[300px] pointer-events-auto select-none">
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <div className="flex items-center gap-1 sm:gap-1.5 text-white/80 cursor-grab active:cursor-grabbing">
+          {hasPrev && (
+            <button onClick={onPrev} className="p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-colors cursor-pointer md:opacity-0 md:group-hover:opacity-100">
+              <ChevronLeft size={16} />
+            </button>
+          )}
+          <Clock size={14} className="text-blue-400 sm:w-[16px] sm:h-[16px] shrink-0" />
+          <span className="font-semibold tracking-wide uppercase text-xs sm:text-[13px]  max-w-[120px] sm:max-w-[160px]">
             {isEditing ? "Edit Target" : examCountdown.title}
           </span>
         </div>
-        <button
-          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all border ${isEditing ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:border-green-500/50' : 'bg-white/5 border-white/10 hover:bg-white/15 hover:border-white/20'}`}
-          title={isEditing ? "Save Target" : "Edit Target"}
-        >
-          {isEditing ? <Check size={18} className="text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.5)] sm:w-5 sm:h-5" /> : <Edit2 size={16} className="text-white/80 sm:w-[18px] sm:h-[18px]" />}
-        </button>
+        <div>
+          {hasNext && (
+            <button onClick={onNext} className="p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-colors cursor-pointer md:opacity-0 md:group-hover:opacity-100">
+              <ChevronRight size={16} />
+            </button>
+          )}
+          <button
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all border ${isEditing ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:border-green-500/50' : 'bg-white/5 border-white/10 hover:bg-white/15 hover:border-white/20'}`}
+            title={isEditing ? "Save Target" : "Edit Target"}
+          >
+            {isEditing ? <Check size={18} className="text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.5)] sm:w-5 sm:h-5" /> : <Edit2 size={16} className="text-white/80 sm:w-[18px] sm:h-[18px]" />}
+          </button>
+        </div>
       </div>
 
       {isEditing ? (
-        <div className="space-y-2.5 sm:space-y-3">
+        <div className="space-y-2">
           <input
             type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 py-2 text-white outline-none focus:border-white/30 text-sm"
+            className="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-2.5 py-1.5 text-white outline-none focus:border-white/30 text-sm"
             placeholder="Target Title"
           />
-          <div className="flex flex-col sm:flex-row gap-2 relative items-stretch">
-            <div className="flex-1 min-h-[40px] sm:min-h-0">
+          <div className="flex flex-col sm:flex-row gap-1.5 relative items-stretch">
+            <div className="flex-1 min-h-[36px] sm:min-h-0">
               <CustomDatePicker value={editDateOnly} onChange={setEditDateOnly} />
             </div>
             <div className="w-full sm:w-28 shrink-0 min-h-[40px] sm:min-h-0">
@@ -114,24 +138,24 @@ export default function Countdown({ id }: { id: string }) {
           </div>
         </div>
       ) : hasTime ? (
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center">
-          <div className="bg-white/5 rounded-xl sm:rounded-2xl py-2 sm:py-3 border border-white/5">
-            <div className="text-2xl sm:text-3xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
-            <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-0.5 sm:mt-1">Days</div>
+        <div className="grid grid-cols-3 gap-1 text-center">
+          <div className="bg-white/5 rounded-lg sm:rounded-xl py-1.5 sm:py-2 border border-white/5">
+            <div className="text-xl sm:text-2xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
+            <div className="text-[9px] text-white/50 uppercase tracking-widest mt-0.5">Days</div>
           </div>
-          <div className="bg-white/5 rounded-xl sm:rounded-2xl py-2 sm:py-3 border border-white/5">
-            <div className="text-2xl sm:text-3xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
-            <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-0.5 sm:mt-1">Hrs</div>
+          <div className="bg-white/5 rounded-lg sm:rounded-xl py-1.5 sm:py-2 border border-white/5">
+            <div className="text-xl sm:text-2xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
+            <div className="text-[9px] text-white/50 uppercase tracking-widest mt-0.5">Hrs</div>
           </div>
-          <div className="bg-white/5 rounded-xl sm:rounded-2xl py-2 sm:py-3 border border-white/5">
-            <div className="text-2xl sm:text-3xl font-bold text-white">{String(timeLeft.mins).padStart(2, '0')}</div>
-            <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-0.5 sm:mt-1">Min</div>
+          <div className="bg-white/5 rounded-lg sm:rounded-xl py-1.5 sm:py-2 border border-white/5">
+            <div className="text-xl sm:text-2xl font-bold text-white">{String(timeLeft.mins).padStart(2, '0')}</div>
+            <div className="text-[9px] text-white/50 uppercase tracking-widest mt-0.5">Min</div>
           </div>
         </div>
       ) : (
-        <div className="bg-white/5 rounded-xl sm:rounded-2xl py-3 sm:py-4 border border-white/5 text-center flex flex-col items-center justify-center">
-          <div className="text-4xl sm:text-5xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
-          <div className="text-[10px] sm:text-xs text-white/50 uppercase tracking-widest mt-1.5 sm:mt-2">Days Remaining</div>
+        <div className="bg-white/5 rounded-lg sm:rounded-xl py-2 sm:py-3 border border-white/5 text-center flex flex-col items-center justify-center">
+          <div className="text-3xl sm:text-4xl font-bold text-white">{String(timeLeft.days).padStart(2, '0')}</div>
+          <div className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest mt-1 sm:mt-1.5">Days Remaining</div>
         </div>
       )}
     </div>

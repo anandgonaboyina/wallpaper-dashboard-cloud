@@ -4,10 +4,12 @@ import { X, Flame, Calendar, Clock, BookOpen, GraduationCap, MessageCircle, Chev
 import { useState, useEffect } from 'react';
 import { getLocalDateString } from '@/utils/date';
 import ScrollableWithArrows from './ScrollableWithArrows';
+import Timetable from './Timetable';
 
 export default function StatsModal() {
-  const { history: myHistory, healthData: myHealthData, isStatsOpen, toggleStats, viewingFriend, setViewingFriend, setIsTimetableOpen } = useDashboardStore();
+  const { history: myHistory, healthData: myHealthData, isStatsOpen, toggleStats, viewingFriend, setViewingFriend } = useDashboardStore();
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+  const [showFriendTimetable, setShowFriendTimetable] = useState(false);
 
   const history = viewingFriend ? viewingFriend.stats.history || {} : myHistory;
   const healthData = viewingFriend ? viewingFriend.stats.healthData || {} : myHealthData;
@@ -107,7 +109,7 @@ export default function StatsModal() {
           <div className="flex items-center gap-2">
             {viewingFriend && (
               <button
-                onClick={() => setIsTimetableOpen(true)}
+                onClick={() => setShowFriendTimetable(true)}
                 className="p-1.5 sm:p-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg sm:rounded-xl transition-colors border border-blue-500/30 flex items-center gap-1.5"
                 title="View Timetable"
               >
@@ -324,6 +326,20 @@ export default function StatsModal() {
           </div>
         </div>
       </div>
+
+      {showFriendTimetable && viewingFriend && (
+        <div className="fixed inset-0 z-[10005] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300 p-4">
+          <div className="w-full max-w-4xl relative animate-in zoom-in-95 duration-300">
+            <button
+              onClick={() => setShowFriendTimetable(false)}
+              className="absolute -top-12 right-0 bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors text-white"
+            >
+              <X size={24} />
+            </button>
+            <Timetable />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

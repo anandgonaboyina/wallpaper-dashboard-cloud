@@ -27,10 +27,11 @@ const nextConfig: NextConfig = {
     ]
   }
 };
-module.exports = {
-  allowedDevOrigins: ['192.168.1.5'],
-}
+
 module.exports = {
   allowedDevOrigins: ['10.197.163.230'],
+}
+module.exports = {
+  allowedDevOrigins: ['192.168.1.5'],
 }
 export default withPWA(nextConfig);

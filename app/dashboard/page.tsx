@@ -26,7 +26,7 @@ import VideoBackground from "@/components/VideoBackground";
 import LoadingScreen from "@/components/LoadingScreen";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, CalendarDays, Settings } from "lucide-react";
+import { ChevronDown, ChevronUp, CalendarDays, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDashboardStore, hasUnsavedChanges } from "@/store/dashboardStore";
 import { fetchQuote } from "@/utils/quoteEngine";
 
@@ -50,7 +50,9 @@ export default function Dashboard() {
   const toggleHide = useDashboardStore((state) => state.toggleHide);
   const currentBgType = useDashboardStore((state) => state.currentBgType);
   const countdowns = useDashboardStore((state) => state.countdowns);
-  const [isCountdownsExpanded, setIsCountdownsExpanded] = useState(false);
+  const [activeCountdownIndex, setActiveCountdownIndex] = useState(1);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
   const isMobileCountdownsVisible = useDashboardStore((state) => state.isMobileCountdownsVisible);
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
   const setIsTimetableOpen = useDashboardStore((state) => state.setIsTimetableOpen);
@@ -172,36 +174,41 @@ export default function Dashboard() {
           {/* Roadmap & Plans */}
           {(!isHidden || !hideConfig.plans) && showPlans && <RoadmapManager />}
 
-          {/* Top Leftish: Target Countdowns */}
+          {/* Top Center: Target Countdowns */}
           {(!isHidden || !hideConfig.countdowns) && showCountdowns && (
             <div
               style={{ zIndex: widgetZIndices.countdowns || 50 }}
-              className={`absolute top-[120px] left-1/2 -translate-x-1/2 md:top-32 md:left-auto md:right-[320px] md:translate-x-0 scale-[0.85] md:scale-100 origin-top pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isMobile && !isMobileCountdownsVisible ? '-translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'}`}
+              className={`absolute top-[140px] md:top-36 left-1/2 -translate-x-1/2 scale-[0.85] md:scale-100 origin-top pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex justify-center ${!isMobileCountdownsVisible ? '-translate-y-[150%] opacity-0' : 'translate-y-0 opacity-100'}`}
             >
-              <DraggableWidget id="countdowns">
-                <div className="flex flex-col gap-1 items-center">
-                  {countdowns.length > 0 && (
-                    <Countdown key={countdowns[0].id} id={countdowns[0].id} />
-                  )}
-
-                  {isCountdownsExpanded && countdowns.slice(1).map(c => (
-                    <Countdown key={c.id} id={c.id} />
-                  ))}
-
-                  <button
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsCountdownsExpanded(!isCountdownsExpanded);
-                    }}
-                    className="flex items-center justify-center p-1 text-white/40 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-all border border-white/10"
-                    title={isCountdownsExpanded ? "Hide extra targets" : "Show all targets"}
-                  >
-                    {isCountdownsExpanded ? <ChevronUp size={22} /> : <ChevronDown size={22} />}
-                  </button>
-                </div>
-              </DraggableWidget>
+              <div 
+                className="relative flex items-center justify-center group pointer-events-auto"
+                onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                onTouchEnd={(e) => {
+                  if (touchStartX === null) return;
+                  const touchEndX = e.changedTouches[0].clientX;
+                  const diff = touchStartX - touchEndX;
+                  if (diff > 40) {
+                    setActiveCountdownIndex(p => Math.min(countdowns.length - 1, p + 1));
+                  } else if (diff < -40) {
+                    setActiveCountdownIndex(p => Math.max(0, p - 1));
+                  }
+                  setTouchStartX(null);
+                }}
+              >
+                {countdowns.length > 0 && (() => {
+                  const safeIndex = Math.min(activeCountdownIndex, Math.max(0, countdowns.length - 1));
+                  return (
+                    <Countdown 
+                      key={countdowns[safeIndex].id} 
+                      id={countdowns[safeIndex].id} 
+                      hasPrev={safeIndex > 0}
+                      hasNext={safeIndex < countdowns.length - 1}
+                      onPrev={() => setActiveCountdownIndex(p => p - 1)}
+                      onNext={() => setActiveCountdownIndex(p => p + 1)}
+                    />
+                  );
+                })()}
+              </div>
             </div>
           )}
 

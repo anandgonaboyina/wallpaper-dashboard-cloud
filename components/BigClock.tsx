@@ -16,13 +16,13 @@ export default function BigClock() {
   const toggle24HourClock = useDashboardStore((state) => state.toggle24HourClock);
   const showClock = useDashboardStore((state) => state.showClock);
   const showTodayWork = useDashboardStore((state) => state.showTodayWork);
-  
+
   const timerEndAt = useDashboardStore((state) => state.timerEndAt);
   const timerPausedLeft = useDashboardStore((state) => state.timerPausedLeft);
   const stopwatchStartTime = useDashboardStore((state) => state.stopwatchStartTime);
-  
+
   const [isMobile, setIsMobile] = useState(false);
-  
+
   const [activeTimerSecs, setActiveTimerSecs] = useState<number | null>(null);
   const [activeStopwatchSecs, setActiveStopwatchSecs] = useState<number | null>(null);
 
@@ -35,39 +35,48 @@ export default function BigClock() {
     return () => media.removeEventListener('change', listener);
   }, []);
 
-  // Global swipe detector for the top notch
+  // Global swipe/drag detector for the top notch (Desktop & Mobile)
   useEffect(() => {
-    if (!isMobile) return;
     let startY = 0;
-    
-    const handleTouchStart = (e: TouchEvent) => {
+
+    const handleStart = (clientY: number) => {
       // Only track if swipe starts within the top 80px (where the notch is)
-      if (e.touches[0].clientY > 80) return;
-      startY = e.touches[0].clientY;
+      if (clientY > 80) return;
+      startY = clientY;
     };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
+
+    const handleEnd = (clientY: number) => {
       if (startY === 0) return; // Ignore if it didn't start at the top
-      
-      const endY = e.changedTouches[0].clientY;
-      const diffY = endY - startY;
-      
+
+      const diffY = clientY - startY;
+
       if (diffY > 30) {
         useDashboardStore.getState().setIsMobileCountdownsVisible(true); // Swiped down -> show
       } else if (diffY < -30) {
         useDashboardStore.getState().setIsMobileCountdownsVisible(false); // Swiped up -> hide
       }
-      
+
       startY = 0; // Reset
     };
-    
+
+    const handleTouchStart = (e: TouchEvent) => handleStart(e.touches[0].clientY);
+    const handleTouchEnd = (e: TouchEvent) => handleEnd(e.changedTouches[0].clientY);
+
+    const handleMouseDown = (e: MouseEvent) => handleStart(e.clientY);
+    const handleMouseUp = (e: MouseEvent) => handleEnd(e.clientY);
+
     window.addEventListener('touchstart', handleTouchStart);
     window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isMobile]);
+  }, []);
 
   useEffect(() => {
     // Initial set
@@ -79,19 +88,19 @@ export default function BigClock() {
     }, 1000);
 
     const activeInterval = setInterval(() => {
-       if (timerEndAt) {
-          setActiveTimerSecs(Math.max(0, Math.floor((timerEndAt - Date.now()) / 1000)));
-       } else if (timerPausedLeft !== null) {
-          setActiveTimerSecs(timerPausedLeft);
-       } else {
-          setActiveTimerSecs(null);
-       }
-       
-       if (stopwatchStartTime) {
-          setActiveStopwatchSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
-       } else {
-          setActiveStopwatchSecs(null);
-       }
+      if (timerEndAt) {
+        setActiveTimerSecs(Math.max(0, Math.floor((timerEndAt - Date.now()) / 1000)));
+      } else if (timerPausedLeft !== null) {
+        setActiveTimerSecs(timerPausedLeft);
+      } else {
+        setActiveTimerSecs(null);
+      }
+
+      if (stopwatchStartTime) {
+        setActiveStopwatchSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
+      } else {
+        setActiveStopwatchSecs(null);
+      }
     }, 250);
 
     return () => {
@@ -160,74 +169,55 @@ export default function BigClock() {
         </>
       )}
 
-      {/* Today's Focus History */}
-      {showTodayWork && (() => {
-        const desktopPill = (
-          <div
-            onClick={toggleHide}
-            title="Toggle Hidden Mode (Ctrl+H)"
-            className={`flex items-center gap-1.5 md:gap-2 text-white/60 font-medium tracking-wide bg-black/60 backdrop-blur-xl md:px-4 md:py-2 rounded-full border border-white/10 shadow-xl cursor-pointer pointer-events-auto hover:bg-black/40 transition-all duration-700 ${
-              isTimetableOpen ? 'text-sm mt-0 scale-75 origin-top px-5 py-3' : 'text-lg mt-1 px-5 py-3'
-            }`}
-          >
-            <div className="flex items-center justify-center bg-orange-500/20 w-6 h-6 md:w-8 md:h-8 rounded-full border border-orange-500/30 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
-              <Flame className="text-orange-400 w-3.5 h-3.5 md:w-4 md:h-4" />
-            </div>
-            <div className="flex items-center whitespace-nowrap">
-              <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
-              <span className="text-white/30 mx-2">|</span>
-              <span className="text-white/80">{timeLeftText}</span>
-            </div>
-          </div>
-        );
+      {/* Top Floating Pills (Global Focus + Global Timer) */}
+      {typeof document !== 'undefined' && createPortal(
+        <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-full pointer-events-none mt-2 md:mt-3">
+          <div className="flex flex-row items-start  justify-center gap-2 px-2 max-w-full">
 
-        const mobilePills = (
-          <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-full pointer-events-none">
-            <div className="flex flex-row items-start justify-center gap-2 px-2 max-w-full">
+            {/* Focus Pill for BOTH Desktop & Mobile */}
+            {showTodayWork && (
               <div
                 onClick={toggleHide}
-                className="flex items-center gap-1.5 text-[11px] px-5 pb-2.5 pt-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] rounded-b-3xl bg-black text-white border border-t-0 border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95"
+                title="Toggle Hidden Mode (Ctrl+H)"
+                className="flex items-center gap-1.5  md:gap-2 text-[11px] md:text-[13px] px-4 py-1.5 shadow-[0_5px_20px_rgba(59,130,246,0.3)] rounded-full bg-black/80 backdrop-blur-xl text-white border border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95 hover:bg-black/90"
               >
-                <div className="flex items-center justify-center bg-orange-500/20 w-5 h-5 rounded-full border border-orange-500/30 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
-                  <Flame className="text-orange-400 w-3 h-3 shrink-0" />
+                <div className="flex items-center justify-center bg-orange-500/20 w-5 h-5 md:w-6 md:h-6 rounded-full border-blue-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+                  <Flame className="text-orange-400 w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" />
                 </div>
                 <div className="flex items-center whitespace-nowrap">
                   <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
-                  <span className="text-white/30 mx-1.5">|</span>
+                  <span className="text-white/30 mx-1.5 md:mx-2">|</span>
                   <span className="text-white/80">{timeLeftText}</span>
                 </div>
               </div>
+            )}
 
-              {/* ACTIVE TIMER/STOPWATCH PILL FOR MOBILE */}
-              {(activeTimerSecs !== null || activeStopwatchSecs !== null) && (
-                <div
-                  onClick={() => {
-                     if (activeTimerSecs !== null) {
-                        useDashboardStore.getState().toggleTimer();
-                     } else if (activeStopwatchSecs !== null) {
-                        useDashboardStore.getState().toggleStopwatch();
-                     }
-                  }}
-                  className="flex items-center gap-1.5 text-[12px] font-bold tracking-widest bg-black/80 border border-t-0 border-blue-500/40 text-blue-200 backdrop-blur-xl px-4 pb-2.5 pt-1.5 rounded-b-3xl shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0"
-                >
-                   {activeTimerSecs !== null ? (
-                     <Timer className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-                   ) : (
-                     <Clock className="w-3.5 h-3.5 text-green-400 animate-pulse" />
-                   )}
-                   <span className={activeTimerSecs !== null ? "text-blue-300" : "text-green-300"}>
-                     {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
-                   </span>
-                </div>
-              )}
-            </div>
+            {/* ACTIVE TIMER/STOPWATCH PILL FOR BOTH DESKTOP & MOBILE */}
+            {(activeTimerSecs !== null || activeStopwatchSecs !== null) && (
+              <div
+                onClick={() => {
+                  if (activeTimerSecs !== null) {
+                    useDashboardStore.getState().toggleTimer();
+                  } else if (activeStopwatchSecs !== null) {
+                    useDashboardStore.getState().toggleStopwatch();
+                  }
+                }}
+                className="flex items-center gap-1.5 text-[12px] md:text-sm font-bold tracking-widest bg-black/80 border border-blue-500/40 text-blue-200 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0 hover:bg-black/90"
+              >
+                {activeTimerSecs !== null ? (
+                  <Timer className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-400 animate-pulse" />
+                ) : (
+                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-400 animate-pulse" />
+                )}
+                <span className={activeTimerSecs !== null ? "text-blue-300" : "text-green-300"}>
+                  {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
+                </span>
+              </div>
+            )}
           </div>
-        );
-
-        return isMobile && typeof document !== 'undefined' 
-          ? createPortal(mobilePills, document.body) 
-          : desktopPill;
-      })()}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
