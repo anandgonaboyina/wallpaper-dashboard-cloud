@@ -26,6 +26,11 @@ export default function BigClock() {
   const [activeTimerSecs, setActiveTimerSecs] = useState<number | null>(null);
   const [activeStopwatchSecs, setActiveStopwatchSecs] = useState<number | null>(null);
 
+  const baseHideConfig = useDashboardStore((state) => state.hideConfig);
+  const mobileHideConfig = useDashboardStore((state) => state.mobileHideConfig);
+  const isHidden = useDashboardStore((state) => state.isHidden);
+  const hideConfig = isMobile ? mobileHideConfig : baseHideConfig;
+
   // Detect mobile viewport size
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');
@@ -151,9 +156,13 @@ export default function BigClock() {
   const minsLeft = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
   const timeLeftText = hrsLeft > 0 ? `${hrsLeft}h left` : `${minsLeft}m left`;
 
+  const clockVisible = showClock && !isMobile && (!isHidden || !hideConfig.clock);
+  const focusPillVisible = showTodayWork && (!isHidden || !hideConfig.todayFocusPill);
+  const timerPillVisible = (!isHidden || !hideConfig.timerPill);
+
   return (
     <div className={`flex flex-col w-fit h-fit justify-center pointer-events-none transition-all duration-700 items-center select-none`}>
-      {showClock && !isMobile && (
+      {clockVisible && (
         <>
           <div
             onClick={toggle24HourClock}
@@ -175,7 +184,7 @@ export default function BigClock() {
           <div className="flex flex-row items-start  justify-center gap-2 px-2 max-w-full">
 
             {/* Focus Pill for BOTH Desktop & Mobile */}
-            {showTodayWork && (
+            {focusPillVisible && (
               <div
                 onClick={toggleHide}
                 title="Toggle Hidden Mode (Ctrl+H)"
@@ -193,7 +202,7 @@ export default function BigClock() {
             )}
 
             {/* ACTIVE TIMER/STOPWATCH PILL FOR BOTH DESKTOP & MOBILE */}
-            {(activeTimerSecs !== null || activeStopwatchSecs !== null) && (
+            {timerPillVisible && (activeTimerSecs !== null || activeStopwatchSecs !== null) && (
               <div
                 onClick={() => {
                   if (activeTimerSecs !== null) {

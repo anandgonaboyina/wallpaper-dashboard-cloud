@@ -1108,6 +1108,7 @@ export default function SettingsModal() {
                         countdowns: 'Countdowns', tasks: 'Tasks', notes: 'Quick Notes',
                         calendar: 'Calendar', timetable: 'Timetable', health: 'Health Rings',
                         timer: 'Session Timer', dock: 'Bottom Dock', clock: 'Big Clock',
+                        todayFocusPill: 'Focus Pill', timerPill: 'Timer Pill',
                         deadlineAlerts: 'Alerts', bgSwitcher: 'Bg Switcher', stopwatch: 'Stopwatch',
                         settingsBtn: 'Settings Btn', videoControls: 'Video Ctrl'
                       }).map(([key, label]) => {

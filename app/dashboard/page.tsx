@@ -223,7 +223,7 @@ export default function Dashboard() {
           )}
 
           {/* BigClock */}
-          {(!isHidden || !hideConfig.clock) && (showClock || showTodayWork) && (
+          {(showClock || showTodayWork || showTimer || showStopwatch) && (
             <div
               style={{ zIndex: widgetZIndices.clock || 50 }}
               className={`absolute pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isTimetableOpen
