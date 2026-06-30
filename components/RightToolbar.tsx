@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock, Timer as TimerIcon, Calendar, EyeOff } from 'lucide-react';
-import DraggableWidget from './DraggableWidget';
 
 export default function RightToolbar() {
   const isHidden = useDashboardStore((state) => state.isHidden);
@@ -37,6 +36,30 @@ export default function RightToolbar() {
   const baseHideConfig = useDashboardStore((state) => state.hideConfig);
   const mobileHideConfig = useDashboardStore((state) => state.mobileHideConfig);
   const [isMobile, setIsMobile] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const startX = useRef(0);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+      startX.current = e.clientX;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+      const deltaX = e.clientX - startX.current;
+      if (deltaX > 30) {
+          setIsExpanded(false);
+      }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+      startX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+      const deltaX = e.changedTouches[0].clientX - startX.current;
+      if (deltaX > 30) {
+          setIsExpanded(false);
+      }
+  };
 
   useEffect(() => {
     setIsMobile(window.innerWidth <= 768);
@@ -76,8 +99,17 @@ export default function RightToolbar() {
   };
 
     return (
-      <DraggableWidget id="toolbar">
-        <div className="flex flex-col gap-2 md:gap-3 pointer-events-auto">
+      <div 
+        className={`flex flex-col gap-2 md:gap-3 pointer-events-auto transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+            isExpanded ? 'translate-x-0' : 'translate-x-[calc(100%-12px)] md:translate-x-[calc(100%-16px)] opacity-60 hover:opacity-100 cursor-pointer'
+        }`}
+        onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className={`flex flex-col gap-2 md:gap-3 ${!isExpanded ? 'pointer-events-none' : ''}`}>
         {/* Panic Button - Mobile Only */}
         <button
           onClick={handlePanic}
@@ -175,6 +207,6 @@ export default function RightToolbar() {
           </button>
         )}
         </div>
-      </DraggableWidget>
+      </div>
     );
 }

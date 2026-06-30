@@ -1,7 +1,7 @@
 'use client';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { Droplet, Activity, BookOpen, ActivitySquare, GraduationCap, MessageCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getLocalDateString } from '@/utils/date';
 
 const TARGETS = {
@@ -15,6 +15,8 @@ const TARGETS = {
 export default function HealthRings() {
     const { healthData, updateHealth, toggleHealthModal, fetchHealthData } = useDashboardStore();
     const [todayKey, setTodayKey] = useState('');
+    const [isExpanded, setIsExpanded] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const updateDate = () => setTodayKey(getLocalDateString());
@@ -23,6 +25,20 @@ export default function HealthRings() {
         const interval = setInterval(updateDate, 60000); // Check every minute for midnight reset
         return () => clearInterval(interval);
     }, [fetchHealthData]);
+
+    const handleExpand = () => {
+        setIsExpanded(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+            setIsExpanded(false);
+        }, 8000);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
     if (!todayKey) return null;
 
@@ -44,9 +60,15 @@ export default function HealthRings() {
     const getCircumference = (radius: number) => 2 * Math.PI * radius;
 
     return (
-        <div className="relative group pointer-events-auto select-none">
+        <div 
+            className={`relative group pointer-events-auto select-none transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                isExpanded ? 'translate-x-0' : 'translate-x-[calc(-100%+40px)] md:translate-x-[calc(-100%-24px)] cursor-pointer'
+            }`}
+            onClick={!isExpanded ? handleExpand : undefined}
+            onMouseEnter={isExpanded ? handleExpand : undefined}
+        >
             {/* Scaled down width, padding, and gap for mobile */}
-            <div className="bg-black/20 backdrop-blur-3xl border border-white/10 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-2xl flex flex-col items-center gap-2 md:gap-4 transition-colors duration-300 hover:bg-black/30 w-[240px] md:w-[300px]">
+            <div className={`bg-black/20 backdrop-blur-3xl border border-white/10 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-2xl flex flex-col items-center gap-2 md:gap-4 transition-all duration-300 hover:bg-black/30 w-[240px] md:w-[300px] ${!isExpanded ? 'opacity-60 hover:opacity-100' : 'opacity-100'}`}>
 
                 {/* Rings Container: Scaled down from w-36 to w-24 on mobile */}
                 <div className="relative w-24 h-24 md:w-36 md:h-36 cursor-pointer" onClick={toggleHealthModal} title="View Health History">

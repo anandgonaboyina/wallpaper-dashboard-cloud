@@ -572,6 +572,7 @@ many widgets can be controlled using swipe gestures instead of buttons for a fas
 - **Calendar**: Swipe left or right near top-left edge on screen to show or hide calendar quickly without calender button you can hide it from settings if you want.
 - **Task Manager**: Swipe left or right near top-right edge on screen to show or hide the tasks quickly without calender button you can hide it from settings if you want.
 - **Menus & Modals**: You can use mouse click and drag (or swipe on touch screens) to close or navigate the Settings side menu and the Health & Habits modal.
+- **Edge Panels**: The Health Rings (bottom-left) and Right Toolbar hide at the screen edges. Click or hover the exposed edge to expand them. Swipe right on the Toolbar to hide it, while the Health Rings will auto-hide after 8 seconds.
 
 ---
 
