@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDashboardStore, setAuthTransition } from '@/store/dashboardStore';
-import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react';
+import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft, Info } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 export default function ConnectTab() {
@@ -28,6 +28,9 @@ export default function ConnectTab() {
   const [friends, setFriends] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
   const [pendingRequests, setPendingRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
   const [sentRequests, setSentRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
+
+  // Info Modal state for Leaderboard
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Broadcasts state
   const [broadcasts, setBroadcasts] = useState<{ id: string, title: string, content: string, type: string, createdAt: string }[]>([]);
@@ -1005,6 +1008,9 @@ export default function ConnectTab() {
           <div className="flex items-center justify-between mb-1 md:mb-2 border-b border-white/10 pb-2 md:pb-4 min-w-0 w-full">
             <h4 className="text-sm md:text-xl font-bold flex items-center gap-1.5 md:gap-2 truncate">
               <Trophy className="text-yellow-400 w-4 h-4 md:w-6 md:h-6 shrink-0" /> <span className="truncate">Global Leaderboard</span>
+              <button onClick={() => setShowInfoModal(true)} className="ml-1 p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors shrink-0">
+                <Info className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </button>
             </h4>
             <button
               onClick={fetchLeaderboard}
@@ -1131,6 +1137,47 @@ export default function ConnectTab() {
       )}
 
 
+
+      {/* Leaderboard Info Modal */}
+      {showInfoModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                <Info className="w-4 h-4 text-blue-400" />
+                Leaderboard & Badges
+              </h3>
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className="text-white/50 hover:text-white p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto arrow-scrollbar">
+              <div className="space-y-3 text-sm text-white/80 pb-2">
+                <p className="text-[11px] leading-relaxed">The global leaderboard tracks your total accumulated focus time via the Timer and ranks you against all other users.</p>
+                <h4 className="font-bold text-white text-[13px] mt-2">Badges & Achievements</h4>
+                <p className="text-[11px] leading-relaxed">As you accumulate focused work hours, you can earn dynamic badges that appear next to your name. Badges are awarded automatically to the <strong>#1 top user on the leaderboard</strong> who also meets the strict minimum hour requirements for that timeframe:</p>
+                <ul className="list-disc pl-4 space-y-1 text-[11px] mt-1">
+                  <li><strong>Daily Badge (🏆):</strong> Must be Rank #1 today AND have a minimum of <strong>6 hours</strong> of focus time.</li>
+                  <li><strong>Weekly Badge (🌟):</strong> Must be Rank #1 this week AND have a minimum of <strong>42 hours</strong> of focus time over the last 7 days.</li>
+                  <li><strong>Monthly Badge (👑):</strong> Must be Rank #1 this month AND have a minimum of <strong>180 hours</strong> of focus time over the last 30 days.</li>
+                </ul>
+                <p className="text-[10px] leading-relaxed italic text-white/50 mt-2">Note: Badges are incrementable! If you win the daily top spot with 6+ hours multiple times, your badge count will increase (e.g., "🏆 2 Day").</p>
+              </div>
+            </div>
+            <div className="p-3 border-t border-white/5 bg-black/20">
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white text-xs font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

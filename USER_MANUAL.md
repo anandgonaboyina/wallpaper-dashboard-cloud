@@ -344,10 +344,10 @@ Click the 🗑️ trash icon next to any friend → confirm.
 - Click any user row to expand and see their stats breakdown.
 
 ### Badges & Achievements
-As you accumulate focused work hours, you can earn dynamic badges that appear next to your name on the leaderboard. Badges are awarded automatically to the top user who meets the strict minimum requirements:
-- **Daily Badge (🏆)**: Requires a minimum of **6 hours** of focus time in a single day.
-- **Weekly Badge (🌟)**: Requires a minimum of **42 hours** of focus time over the last 7 days.
-- **Monthly Badge (👑)**: Requires a minimum of **180 hours** of focus time over the last 30 days.
+As you accumulate focused work hours, you can earn dynamic badges that appear next to your name on the leaderboard. Badges are awarded automatically to the **#1 top user on the leaderboard** who also meets the strict minimum hour requirements for that timeframe:
+- **Daily Badge (🏆)**: Must be Rank #1 today AND have a minimum of **6 hours** of focus time in a single day.
+- **Weekly Badge (🌟)**: Must be Rank #1 this week AND have a minimum of **42 hours** of focus time over the last 7 days.
+- **Monthly Badge (👑)**: Must be Rank #1 this month AND have a minimum of **180 hours** of focus time over the last 30 days.
 
 *Note: Badges are incrementable! If you win the daily top spot with 6+ hours multiple times, your badge count will increase (e.g., "🏆 2 Day").*
 
@@ -489,18 +489,10 @@ A widget showing a list of upcoming target events with day countdowns.
 - Click a wallpaper thumbnail to make it active immediately.
 
 ### Custom Wallpapers via URL
-- Add up to **4 custom wallpapers for Desktop** and **4 for Mobile** by pasting an image URL.
-- The app stores separate wallpaper sets for desktop and mobile — so your phone gets an appropriately sized background.
-
-### Slideshow Mode
-- Toggle **Slideshow** on to have the wallpaper auto-cycle through your active wallpapers.
-- Set the **interval in minutes** — e.g. 30 minutes to switch wallpaper every half hour.
-
-### Locking & Hiding Wallpapers
-| Option | What it does |
-|---|---|
-| **Lock** | Slideshow skips this wallpaper — it stays as the permanent background until unlocked |
-| **Hide** | Removes the wallpaper from slideshow rotation without deleting it |
+- You can add your own custom images or video loops (like `.mp4` or `.webm`) by pasting a direct URL to the file.
+- The app stores up to **4 custom wallpapers specifically for Desktop**, and **4 completely separate ones for Mobile**. 
+- This ensures your phone gets appropriately sized vertical backgrounds while your PC gets widescreen ones.
+- Click the trash can icon on any custom wallpaper thumbnail to delete it and free up one of your slots.
 
 ---
 
@@ -599,7 +591,6 @@ View your submission status:
 | View a friend's stats | Friends tab → 📊 icon next to their name |
 | Backup your data | Settings → Data & Backup → Export |
 | Change wallpaper | Settings → Wallpapers |
-| Enable slideshow wallpapers | Settings → Wallpapers → Slideshow toggle |
 | Hide/show widgets | Settings → Preferences → Widget Visibility |
 | Lock widgets in place | Settings → Preferences → Widget Drag Locking |
 | Reset widget positions | Settings → Preferences → Reset Default Positions |

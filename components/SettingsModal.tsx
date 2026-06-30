@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { X, Upload, BookOpen, Trash2, Image as ImageIcon, Settings as SettingsIcon, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, ChevronLeft, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug } from 'lucide-react';
+import { X, Upload, BookOpen, Trash2, Image as ImageIcon, Settings as SettingsIcon, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, ChevronLeft, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug, Info } from 'lucide-react';
 import ConnectTab from './ConnectTab';
 import UserManualModal from './UserManualModal';
 import ScrollableWithArrows from './ScrollableWithArrows';
@@ -21,6 +21,118 @@ export default function SettingsModal() {
   // Mobile specific drill-down state
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
   const [isUserManualOpen, setIsUserManualOpen] = useState(false);
+
+  const [infoModalKey, setInfoModalKey] = useState<string | null>(null);
+
+  const SETTINGS_INFO: Record<string, { title: string, content: React.ReactNode }> = {
+    preferences: {
+      title: 'General Preferences',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <h4 className="font-bold text-white text-[13px]">Widget Visibility</h4>
+          <p className="text-[11px] leading-relaxed">Customize your workspace by toggling any widget on or off. Hidden widgets are completely removed from the dashboard, giving you a cleaner view when you want fewer distractions.</p>
+          <h4 className="font-bold text-white text-[13px]">Widget Drag Locking</h4>
+          <p className="text-[11px] leading-relaxed">When unlocked, all widgets can be freely dragged anywhere on the screen. Toggle the lock for specific widgets to freeze them in place so they aren't accidentally moved. If your layout gets messy, use the 'Reset Default Positions' button to snap everything back to their original layout.</p>
+          <h4 className="font-bold text-white text-[13px]">Display Options</h4>
+          <p className="text-[11px] leading-relaxed mb-1"><strong>24-Hour Clock:</strong> Toggle the big dashboard clock between a standard 12-hour AM/PM format and a 24-hour military time format.</p>
+          <p className="text-[11px] leading-relaxed"><strong>Deadline Alert Days:</strong> Configure how many days in advance the dashboard should warn you about an upcoming deadline on your calendar. If a deadline falls within this threshold, a prominent red warning banner will appear automatically when you open the app.</p>
+        </div>
+      )
+    },
+    sound: {
+      title: 'Sound Settings',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <p className="text-[11px] leading-relaxed">Configure the behavior of alarms when your Focus Timer finishes its countdown.</p>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>Enable Alarm Sound:</strong> Triggers your selected audio ringtone when the timer finishes.</li>
+            <li><strong>Enable Device Vibrate:</strong> Specifically for mobile devices, physically vibrates the phone when the timer ends.</li>
+            <li><strong>Auto Stop Timer:</strong> A slider that controls how long the alarm is allowed to ring before it automatically silences itself (ranging from 5 seconds to 2 minutes).</li>
+            <li><strong>Select Alarm Sound:</strong> Pick from a list of curated ringtone options.</li>
+          </ul>
+          <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg mt-4">
+            <h4 className="font-bold text-blue-300 mb-1 text-[12px]">Background Alarm via MacroDroid (Android)</h4>
+            <p className="text-[10px] mb-2 leading-relaxed">Because mobile operating systems aggressively suspend background web apps, your browser may fail to continuously play a looping alarm sound if you lock your screen or minimize the app. To bypass this and guarantee a full, blaring alarm, you can use the free automation app <strong>MacroDroid</strong> to intercept the app's push notification and trigger a native alarm.</p>
+            <p className="text-[10px] mb-1 font-bold text-white">MacroDroid "Notification Present" Triggers to watch for:</p>
+            <ul className="list-disc pl-4 text-[10px] space-y-1.5 font-mono">
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_RING_VIBRATE <span className="font-sans text-white/60 block mt-0.5">Use this exact text if you have BOTH sound and vibration enabled in these settings.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_RING <span className="font-sans text-white/60 block mt-0.5">Use this exact text if you ONLY have sound enabled.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_VIBRATE <span className="font-sans text-white/60 block mt-0.5">Use this exact text if you ONLY have vibration enabled.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_TRIGGER <span className="font-sans text-white/60 block mt-0.5">A fallback title just in case.</span></li>
+            </ul>
+          </div>
+        </div>
+      )
+    },
+    panic: {
+      title: 'Focus / Panic Mode',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <p className="text-[11px] leading-relaxed">Configure shortcuts to instantly hide your dashboard or specific widgets.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Focus Mode</h4>
+          <p className="text-[11px] leading-relaxed">Focus Mode is designed to eliminate distractions while you work. By pressing your configured shortcut key, the app will instantly hide all the widgets you selected in the "Focus Specific Setup" section. Press the shortcut again to restore them.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Panic Mode</h4>
+          <p className="text-[11px] leading-relaxed">Panic Mode is designed for privacy. It instantly hides ALL widgets regardless of your Focus settings. You can trigger this via your configured keyboard shortcut on Desktop, or by tapping the Eye icon on the right side of the screen on Mobile.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Panic Actions</h4>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>Redirect:</strong> The browser immediately navigates away to a random neutral website, completely hiding the fact that you were on the dashboard. To return, just press "Back" in your browser.</li>
+            <li><strong>Hide UI:</strong> Makes all widgets instantly disappear and the screen goes completely blank. Tap the eye icon again to bring everything back.</li>
+          </ul>
+        </div>
+      )
+    },
+    wallpapers: {
+      title: 'Wallpapers',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <h4 className="font-bold text-white text-[13px]">Built-in Wallpapers</h4>
+          <p className="text-[11px] leading-relaxed">Choose from a curated selection of static images and animated video backgrounds. Click any thumbnail to apply it instantly.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Custom URL Wallpapers</h4>
+          <p className="text-[11px] leading-relaxed">You can add your own custom images or video loops (like .mp4 or .webm) by pasting a direct URL to the file.</p>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>Desktop vs Mobile:</strong> The app stores up to 4 custom wallpapers specifically for your Desktop, and 4 completely separate ones for your Mobile device. This ensures your phone gets appropriately sized vertical backgrounds while your PC gets widescreen ones.</li>
+            <li><strong>Selection:</strong> The currently active custom wallpaper will have a checkmark on it.</li>
+            <li><strong>Removal:</strong> Click the trash can icon on any custom wallpaper to delete it and free up one of your 4 slots.</li>
+          </ul>
+        </div>
+      )
+    },
+    backup: {
+      title: 'Data & Backup',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <p className="text-[11px] leading-relaxed">Your data automatically syncs to the cloud in real-time, but you can manage your local browser storage directly here.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Export Data</h4>
+          <p className="text-[11px] leading-relaxed">Downloads a full <code>.json</code> backup file containing your entire history, tasks, roadmap, calendar deadlines, and notes. Requires being logged in.</p>
+          <h4 className="font-bold text-white text-[13px] mt-2">Import Data</h4>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>Merge:</strong> Upload a backup file and safely combine it with your existing data. No existing data is lost.</li>
+            <li><strong>Overwrite:</strong> WARNING: This entirely replaces your current dashboard data with the contents of the uploaded backup file.</li>
+          </ul>
+          <h4 className="font-bold text-white text-[13px] mt-2">Data Clearing</h4>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>Clear Old Data:</strong> Safely deletes only old focus history entries (older than 30, 60, or 90 days) to speed up load times.</li>
+            <li><strong>Clear All Data:</strong> Wipes all local browser storage completely. (If you are logged in, logging in again will re-download it from the cloud).</li>
+          </ul>
+        </div>
+      )
+    },
+    feedback: {
+      title: 'Feedback & Bugs',
+      content: (
+        <div className="space-y-3 text-sm text-white/80 pb-2">
+          <p className="text-[11px] leading-relaxed">Communicate directly with the developer from inside the app.</p>
+          <ul className="list-disc pl-4 space-y-1 text-[11px]">
+            <li><strong>💡 Feature request:</strong> Suggest a new tool or widget you'd like to see.</li>
+            <li><strong>🐛 Bug report:</strong> Describe something that isn't working correctly.</li>
+            <li><strong>💬 General feedback:</strong> Any other comments or messages.</li>
+          </ul>
+          <h4 className="font-bold text-white text-[13px] mt-2">Submission Status</h4>
+          <p className="text-[11px] leading-relaxed">Track the progress of your tickets right here. The status will update from "Reviewing" (not yet looked at), to "Reviewed" (seen by developer), to "✓ Roadmap!" when a feature is accepted and planned for a future update.</p>
+        </div>
+      )
+    }
+  };
 
   const handleShortcutCapture = (e: React.KeyboardEvent<HTMLInputElement>, setter: (val: string) => void) => {
     const key = e.key.toLowerCase();
@@ -474,9 +586,14 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'preferences' && (
                 <div className="flex flex-col gap-3 md:gap-4">
-                  <div>
-                    <h3 className="hidden md:block text-base font-semibold">General Preferences</h3>
-                    <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Customize how your dashboard looks and feels.</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="hidden md:block text-base font-semibold">General Preferences</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Customize how your dashboard looks and feels.</p>
+                    </div>
+                    <button onClick={() => setInfoModalKey('preferences')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                      <Info className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <div className="flex flex-col gap-1.5 md:gap-2">
@@ -647,11 +764,14 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'sound' && (
                 <div className="flex flex-col gap-3 md:gap-4">
-                  <div>
-                    <h3 className="hidden md:flex text-base font-semibold items-center gap-2">
-                      <Bell className="text-blue-400 w-5 h-5" /> Sound Settings
-                    </h3>
-                    <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Manage notification sounds and timers.</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="hidden md:block text-base font-semibold">Sound Settings</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Configure audio for alarms and timers.</p>
+                    </div>
+                    <button onClick={() => setInfoModalKey('sound')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                      <Info className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <div className="bg-white/5 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col gap-4 md:gap-6">
@@ -728,12 +848,15 @@ export default function SettingsModal() {
               )}
 
               {settingsActiveTab === 'feedback' && (
-                <div className="flex flex-col gap-3 md:gap-4 h-full pb-4">
-                  <div>
-                    <h3 className="hidden md:flex text-base font-semibold items-center gap-2">
-                      <Bug className="text-orange-400 w-5 h-5" /> Feedback & Bugs
-                    </h3>
-                    <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Submit feature requests or report issues.</p>
+                <div className="flex flex-col gap-3 md:gap-4 min-h-[60vh]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="hidden md:block text-base font-semibold">Feedback & Bugs</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Help us improve the dashboard.</p>
+                    </div>
+                    <button onClick={() => setInfoModalKey('feedback')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                      <Info className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <div className="bg-white/5 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 flex flex-col gap-2.5 md:gap-3">
@@ -823,11 +946,14 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'wallpaper' && (
                 <div className="flex flex-col gap-4 md:gap-6 h-full pb-4">
-                  <div>
-                    <h3 className="hidden md:flex text-base font-semibold items-center gap-2">
-                      <ImageIcon className="text-purple-400 w-5 h-5" /> Custom Wallpapers
-                    </h3>
-                    <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Provide external image URLs. Max 4 per device type.</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="hidden md:block text-base font-semibold">Custom Wallpapers</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Provide external image URLs.</p>
+                    </div>
+                    <button onClick={() => setInfoModalKey('wallpapers')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                      <Info className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-4">
@@ -977,9 +1103,14 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'focus' && (
                 <div className="flex flex-col gap-3 md:gap-4">
-                  <div>
-                    <h3 className="hidden md:flex text-base font-semibold items-center gap-2"><EyeOff className="text-red-400 w-5 h-5" /> Focus & Panic Mode</h3>
-                    <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Configure screen visibility and shortcuts.</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="hidden md:block text-base font-semibold">Focus & Panic Mode</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Configure visibility shortcuts.</p>
+                    </div>
+                    <button onClick={() => setInfoModalKey('panic')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                      <Info className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <div className="flex flex-col p-2.5 md:p-3 rounded-lg md:rounded-xl bg-black/20 border border-white/5 gap-2 md:gap-3">
@@ -1141,9 +1272,14 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'data' && (
                 <div className="flex flex-col gap-3 md:gap-4">
-                  <div>
-                    <h3 className="hidden md:block text-base font-semibold">Data & Backup</h3>
-                    <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Export, import, or backup data.</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="hidden md:block text-base font-semibold">Data & Backup</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Manage local data.</p>
+                    </div>
+                    <button onClick={() => setInfoModalKey('backup')} className="flex p-1 md:p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                      <Info className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <div className="p-2.5 md:p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg md:rounded-xl">
@@ -1443,6 +1579,37 @@ export default function SettingsModal() {
       </div>
 
       <UserManualModal isOpen={isUserManualOpen} onClose={() => setIsUserManualOpen(false)} />
+      {/* Info Modal */}
+      {infoModalKey && SETTINGS_INFO[infoModalKey] && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                <Info className="w-4 h-4 text-blue-400" />
+                {SETTINGS_INFO[infoModalKey].title}
+              </h3>
+              <button
+                onClick={() => setInfoModalKey(null)}
+                className="text-white/50 hover:text-white p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto arrow-scrollbar">
+              {SETTINGS_INFO[infoModalKey].content}
+            </div>
+            <div className="p-3 border-t border-white/5 bg-black/20">
+              <button
+                onClick={() => setInfoModalKey(null)}
+                className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white text-xs font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
