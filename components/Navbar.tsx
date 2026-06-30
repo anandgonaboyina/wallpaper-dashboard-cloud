@@ -1,5 +1,5 @@
 'use client';
-import { Globe, StickyNote, Sparkles, MessageCircle, Send } from 'lucide-react';
+import { Globe, StickyNote, Sparkles, MessageCircle, Send, Phone } from 'lucide-react';
 
 interface DockProps {
     onOpenNotes: () => void;
@@ -35,7 +35,18 @@ export default function Dock({ onOpenNotes }: DockProps) {
                 <StickyNote size={28} className="group-hover:scale-150 transition-transform duration-300" />
             </button>
 
-            {/* Gemini */}
+            {/* Dialer (Mobile Only) */}
+            <button
+                onClick={() => {
+                    window.location.href = 'tel:';
+                }}
+                className="group relative flex sm:hidden items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-700 text-white shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
+                title="Phone / Dialer"
+            >
+                <Phone size={28} className="group-hover:scale-150 transition-transform duration-300" />
+            </button>
+
+            {/* Gemini (Desktop Only) */}
             <button
                 onClick={() => {
                     const isAndroid = /Android/i.test(navigator.userAgent);
@@ -46,7 +57,7 @@ export default function Dock({ onOpenNotes }: DockProps) {
                         window.open('https://gemini.google.com', '_blank');
                     }
                 }}
-                className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-black text-transparent shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
+                className="group relative hidden sm:flex items-center justify-center w-14 h-14 rounded-2xl bg-black text-transparent shadow-lg transition-all duration-300 hover:scale-[1.2] hover:-translate-y-2 hover:shadow-2xl"
                 title="Google Gemini"
             >
                 <svg className="group-hover:scale-150 transition-transform duration-300 w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
