@@ -4,29 +4,58 @@ import { useState, useRef, useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 
 export default function DraggableWidget({ id, children }: { id: string, children: React.ReactNode }) {
-  const { currentBgSrc, widgetOffsets, updateWidgetOffset, lockedWidgets, widgetZIndices, bringToFront } = useDashboardStore();
+  const { 
+    widgetOffsets, 
+    updateWidgetOffset, 
+    lockedWidgets, 
+    widgetZIndices, 
+    bringToFront,
+    customDesktopWallpapers, 
+    activeDesktopCustomIndex, 
+    customMobileWallpapers, 
+    activeMobileCustomIndex 
+  } = useDashboardStore();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
   const latestPos = useRef({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
+  const [activeBgSrc, setActiveBgSrc] = useState<string>('');
 
   useEffect(() => {
-    setIsMobile(window.innerWidth <= 768);
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const media = window.matchMedia('(max-width: 768px)');
+    const checkMobile = () => {
+      if (typeof navigator !== 'undefined') {
+        const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (uaMobile) return true;
+      }
+      return media.matches;
+    };
+    setIsMobile(checkMobile());
+    const listener = () => setIsMobile(checkMobile());
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
   }, []);
+
+  useEffect(() => {
+    let bgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp";
+    if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
+      bgSrc = customMobileWallpapers[activeMobileCustomIndex];
+    } else if (!isMobile && activeDesktopCustomIndex !== null && customDesktopWallpapers[activeDesktopCustomIndex]) {
+      bgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
+    }
+    setActiveBgSrc(bgSrc);
+  }, [isMobile, activeMobileCustomIndex, customMobileWallpapers, activeDesktopCustomIndex, customDesktopWallpapers]);
 
   // Sync with store when background changes
   useEffect(() => {
-    if (currentBgSrc && widgetOffsets[currentBgSrc]?.[id]) {
-      setPosition(widgetOffsets[currentBgSrc][id]);
+    if (activeBgSrc && widgetOffsets[activeBgSrc]?.[id]) {
+      setPosition(widgetOffsets[activeBgSrc][id]);
     } else {
       setPosition({ x: 0, y: 0 });
     }
-  }, [currentBgSrc, widgetOffsets, id]);
+  }, [activeBgSrc, widgetOffsets, id]);
 
   const isLocked = lockedWidgets.includes(id) || (isMobile && id === 'countdowns');
 
@@ -51,6 +80,7 @@ export default function DraggableWidget({ id, children }: { id: string, children
     setIsDragging(true);
     startPos.current = { x: e.clientX, y: e.clientY };
     startOffset.current = { ...position };
+    latestPos.current = { ...position }; // Ensure latestPos matches current position if they just click without moving
     target.setPointerCapture(e.pointerId);
     console.log(`[DraggableWidget] Started dragging widget: ${id}`);
   };
@@ -76,8 +106,8 @@ export default function DraggableWidget({ id, children }: { id: string, children
 
     // Save to store
     // Save to store using the guaranteed latest position
-    if (currentBgSrc) {
-      updateWidgetOffset(currentBgSrc, id, latestPos.current.x, latestPos.current.y);
+    if (activeBgSrc) {
+      updateWidgetOffset(activeBgSrc, id, latestPos.current.x, latestPos.current.y);
     }
   };
 

@@ -4,31 +4,61 @@ import { useState, useRef, useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 
 export default function DraggableClock({ children }: { children: React.ReactNode }) {
-  const { currentBgSrc, clockOffsets, updateClockOffset, resetClockOffset, lockedWidgets, isTimetableOpen, widgetZIndices, bringToFront } = useDashboardStore();
+  const { 
+    clockOffsets, 
+    updateClockOffset, 
+    resetClockOffset, 
+    lockedWidgets, 
+    isTimetableOpen, 
+    widgetZIndices, 
+    bringToFront,
+    customDesktopWallpapers, 
+    activeDesktopCustomIndex, 
+    customMobileWallpapers, 
+    activeMobileCustomIndex 
+  } = useDashboardStore();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
   const latestPos = useRef({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
+  const [activeBgSrc, setActiveBgSrc] = useState<string>('');
 
   // Detect mobile viewport size
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');
-    setIsMobile(media.matches);
-    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    const checkMobile = () => {
+      if (typeof navigator !== 'undefined') {
+        const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (uaMobile) return true;
+      }
+      return media.matches;
+    };
+    setIsMobile(checkMobile());
+    const listener = () => setIsMobile(checkMobile());
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
   }, []);
 
+  useEffect(() => {
+    let bgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp";
+    if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
+      bgSrc = customMobileWallpapers[activeMobileCustomIndex];
+    } else if (!isMobile && activeDesktopCustomIndex !== null && customDesktopWallpapers[activeDesktopCustomIndex]) {
+      bgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
+    }
+    setActiveBgSrc(bgSrc);
+  }, [isMobile, activeMobileCustomIndex, customMobileWallpapers, activeDesktopCustomIndex, customDesktopWallpapers]);
+
   // Sync with store when background changes
   useEffect(() => {
-    if (currentBgSrc && clockOffsets[currentBgSrc]) {
-      setPosition(clockOffsets[currentBgSrc]);
+    if (activeBgSrc && clockOffsets[activeBgSrc]) {
+      setPosition(clockOffsets[activeBgSrc]);
     } else {
       setPosition({ x: 0, y: 0 });
     }
-  }, [currentBgSrc, clockOffsets]);
+  }, [activeBgSrc, clockOffsets]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     bringToFront('clock');
@@ -44,6 +74,7 @@ export default function DraggableClock({ children }: { children: React.ReactNode
     setIsDragging(true);
     startPos.current = { x: e.clientX, y: e.clientY };
     startOffset.current = { ...position };
+    latestPos.current = { ...position }; // Ensure latestPos matches current position if they just click without moving
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
@@ -68,15 +99,15 @@ export default function DraggableClock({ children }: { children: React.ReactNode
 
     // Save to store
     // Save to store using the guaranteed latest position
-    if (currentBgSrc) {
-      updateClockOffset(currentBgSrc, latestPos.current.x, latestPos.current.y);
+    if (activeBgSrc) {
+      updateClockOffset(activeBgSrc, latestPos.current.x, latestPos.current.y);
     }
   };
 
   const handleDoubleClick = () => {
     if (isMobile) return;
-    if (currentBgSrc) {
-      resetClockOffset(currentBgSrc);
+    if (activeBgSrc) {
+      resetClockOffset(activeBgSrc);
       setPosition({ x: 0, y: 0 });
     }
   };
