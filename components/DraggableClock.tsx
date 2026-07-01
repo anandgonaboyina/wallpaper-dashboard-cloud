@@ -28,15 +28,8 @@ export default function DraggableClock({ children }: { children: React.ReactNode
   // Detect mobile viewport size
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');
-    const checkMobile = () => {
-      if (typeof navigator !== 'undefined') {
-        const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (uaMobile) return true;
-      }
-      return media.matches;
-    };
-    setIsMobile(checkMobile());
-    const listener = () => setIsMobile(checkMobile());
+    setIsMobile(media.matches);
+    const listener = () => setIsMobile(media.matches);
     media.addEventListener('change', listener);
     return () => media.removeEventListener('change', listener);
   }, []);

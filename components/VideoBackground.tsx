@@ -14,13 +14,7 @@ export default function VideoBackground() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      if (typeof navigator !== 'undefined') {
-        const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (uaMobile) return true;
-      }
-      return window.innerWidth <= 768;
-    };
+    const checkMobile = () => window.innerWidth <= 768;
 
     setIsMobile(checkMobile());
     const handleResize = () => setIsMobile(checkMobile());

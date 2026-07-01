@@ -75,15 +75,15 @@ export default function SettingsModal() {
       )
     },
     panic: {
-      title: 'Focus / Panic Mode',
+      title: 'Focus / Peek Mode',
       content: (
-        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/80 pb-2">
           <p className="text-[11px] leading-relaxed">Configure how to instantly hide your dashboard or specific widgets.</p>
           <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Desktop Controls</h4>
-          <p className="text-[11px] leading-relaxed">On Desktop, there is no Eye icon. Instead, you use Keyboard Shortcuts (configured below) or simply click on the <strong>Today Focus top pill</strong> to toggle your hidden state. You can set separate shortcuts for <strong>Focus Mode</strong> (hides only selected widgets) and <strong>Panic Mode</strong> (hides everything).</p>
+          <p className="text-[11px] leading-relaxed">On Desktop, there is no Eye icon. Instead, you use Keyboard Shortcuts (configured below) or simply click on the <strong>Today Focus top pill</strong> to toggle your hidden state. You can set separate shortcuts for <strong>Focus Mode</strong> (hides only selected widgets) and <strong>Peek Mode</strong> (hides everything).</p>
           <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Mobile Controls</h4>
-          <p className="text-[11px] leading-relaxed">On Mobile, use the <strong>👁️ Eye icon</strong> on the right side of the screen. Tap 👁️ Eye icon on right side of screen to hide all and click on same place to get back all that icon becomes invisible on peak mode but remains on same place to toggle back, You can configure this icon below to act as either a Panic button (hide all) or a Focus button (hide selected).</p>
-          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Panic Actions</h4>
+          <p className="text-[11px] leading-relaxed">On Mobile, use the <strong>👁️ Eye icon</strong> on the right side of the screen. Tap 👁️ Eye icon on right side of screen to hide all and click on same place to get back all that icon becomes invisible on peak mode but remains on same place to toggle back, You can configure this icon below to act as either a Peek button (hide all) or a Focus button (hide selected).</p>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Peek Actions</h4>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Redirect:</strong> The browser immediately navigates away to a random neutral website. Press "Back" in your browser to return.</li>
             <li><strong>Hide UI:</strong> Makes all widgets instantly disappear, leaving a blank screen.</li>
@@ -587,7 +587,7 @@ export default function SettingsModal() {
                 onClick={() => handleTabClick('focus')}
                 className={`flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs md:text-xs font-medium ${settingsActiveTab === 'focus' && !isMobileDetailView ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'text-white/60 hover:bg-white/5 hover:text-white border border-transparent bg-black/40 md:bg-transparent'}`}
               >
-                <EyeOff className="w-4 h-4" /> Focus / Panic
+                <EyeOff className="w-4 h-4" /> Focus / Peek
               </button>
               <button
                 onClick={() => handleTabClick('data')}
@@ -1231,7 +1231,7 @@ export default function SettingsModal() {
                 <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm md:text-base font-semibold">Focus & Panic Mode</h3>
+                      <h3 className="text-sm md:text-base font-semibold">Focus & Peek Mode</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Configure visibility shortcuts.</p>
                     </div>
                     <button onClick={() => setInfoModalKey('panic')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
@@ -1244,7 +1244,7 @@ export default function SettingsModal() {
 
                     <div className="flex items-center justify-between p-2 md:p-2.5 rounded-md bg-white/5">
                       <div className="flex flex-col pr-1 min-w-0">
-                        <span className="text-[10px] md:text-[11px] font-medium leading-tight whitespace-nowrap">Panic Action</span>
+                        <span className="text-[10px] md:text-[11px] font-medium leading-tight whitespace-nowrap">Peek Action</span>
                         <p className="text-[8px] md:text-[9px] text-white/50 mt-0.5 leading-tight truncate">Action on clicking eye icon.</p>
                       </div>
                       <div className="flex bg-black/40 p-0.5 rounded border border-white/10 shrink-0">
@@ -1265,13 +1265,13 @@ export default function SettingsModal() {
 
                     <div className="p-2 md:p-2 rounded-md bg-red-500/10 border border-red-500/20 flex flex-col gap-1">
                       <p className="text-[8px] md:text-[9px] text-red-300 leading-relaxed">
-                        <strong className="text-red-400">Mobile Panic:</strong> Tap the <strong className="text-white">Eye Icon</strong> right side to trigger!
+                        <strong className="text-red-400">Mobile Peek:</strong> Tap the <strong className="text-white">Eye Icon</strong> right side to trigger!
                       </p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-white/5 p-2 md:p-2.5 rounded-md">
                       <div>
-                        <p className="text-[10px] md:text-[11px] font-bold text-red-400">Panic Mode</p>
+                        <p className="text-[10px] md:text-[11px] font-bold text-red-400">Peek Mode</p>
                         <p className="text-[8px] md:text-[9px] text-white/50 mt-0.5">Hide all widgets instantly.</p>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
@@ -1298,7 +1298,7 @@ export default function SettingsModal() {
                       <div className="flex items-center gap-2 min-w-0 pr-1">
                         <ImageIcon className="text-red-400 w-3.5 h-3.5 shrink-0" />
                         <div className="min-w-0">
-                          <span className="text-[9px] md:text-[11px] font-medium block leading-tight truncate">Switch Wallpaper on Panic</span>
+                          <span className="text-[9px] md:text-[11px] font-medium block leading-tight truncate">Switch Wallpaper on Peek</span>
                         </div>
                       </div>
                       <button onClick={() => setPanicWallpaperSwitch(!panicWallpaperSwitch)} className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors shrink-0 ${panicWallpaperSwitch ? 'bg-red-500' : 'bg-white/20'}`}>
