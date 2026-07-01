@@ -18,6 +18,12 @@ export default function BigClock() {
   const showTodayWork = useDashboardStore((state) => state.showTodayWork);
 
   const timerEndAt = useDashboardStore((state) => state.timerEndAt);
+  const deadlines = useDashboardStore((state) => state.deadlines);
+  const deadlineAlertDays = useDashboardStore((state) => state.deadlineAlertDays);
+  const dismissedDeadlineAlerts = useDashboardStore((state) => state.dismissedDeadlineAlerts);
+  const isDeadlinesCollapsed = useDashboardStore((state) => state.isDeadlinesCollapsed);
+  const setIsDeadlinesCollapsed = useDashboardStore((state) => state.setIsDeadlinesCollapsed);
+  const theme = useDashboardStore((state) => state.theme);
   const timerPausedLeft = useDashboardStore((state) => state.timerPausedLeft);
   const stopwatchStartTime = useDashboardStore((state) => state.stopwatchStartTime);
 
@@ -168,6 +174,18 @@ export default function BigClock() {
   const focusPillVisible = showTodayWork && (!isHidden || !hideConfig.todayFocusPill);
   const timerPillVisible = (!isHidden || !hideConfig.timerPill);
 
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const hasAlerts = deadlines.filter((d) => {
+    const deadlineDate = new Date(d.date);
+    deadlineDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((deadlineDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isToday = diffDays === 0;
+    const alertKey = `${d.id}-${isToday ? 'today' : 'preview'}`;
+    if (dismissedDeadlineAlerts.includes(alertKey)) return false;
+    return diffDays === 0 || (diffDays > 0 && diffDays <= deadlineAlertDays);
+  }).length > 0;
+
   return (
     <div className={`flex flex-col w-fit h-fit justify-center pointer-events-none transition-all duration-700 items-center select-none`}>
       {clockVisible && (
@@ -188,9 +206,9 @@ export default function BigClock() {
 
       {/* Top Floating Pills (Global Focus + Global Timer) */}
       {typeof document !== 'undefined' && createPortal(
-        <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 w-full pointer-events-none mt-2 md:mt-3">
+        <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 pointer-events-none mt-2 md:mt-3">
           <div 
-            className="flex flex-row items-start justify-center gap-2 px-2 max-w-full"
+            className="flex flex-row items-start justify-center gap-1.5 md:gap-2 px-2 max-w-full w-full md:w-auto"
             onTouchStart={handlePillTouchStart}
             onTouchMove={handlePillTouchMove}
             onTouchEnd={handlePillTouchEnd}
@@ -199,6 +217,22 @@ export default function BigClock() {
             onMouseUp={handlePillTouchEnd}
             onMouseLeave={handlePillTouchEnd}
           >
+
+            {/* 3 Dots for Mobile ONLY */}
+            {isMobile && hasAlerts && isDeadlinesCollapsed && (
+              <div 
+                className={`flex md:hidden flex-row gap-1.5 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1.5 rounded-full border backdrop-blur-md shadow-lg shrink-0 ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeadlinesCollapsed(false);
+                }}
+                title="Show Deadline Alerts"
+              >
+                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" />
+                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '150ms' }} />
+                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '300ms' }} />
+              </div>
+            )}
 
             {/* Focus Pill for BOTH Desktop & Mobile */}
             {focusPillVisible && (
@@ -211,7 +245,7 @@ export default function BigClock() {
                   toggleHide();
                 }}
                 title="Toggle Hidden Mode (Ctrl+H)"
-                className="flex items-center gap-1.5  md:gap-2 text-[11px] md:text-[13px] px-4 py-1.5 shadow-[0_5px_20px_rgba(59,130,246,0.3)] rounded-full bg-black/80 backdrop-blur-xl text-white border border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95 hover:bg-black/90"
+                className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-[13px] px-4 py-1.5 shadow-[0_5px_20px_rgba(59,130,246,0.3)] rounded-full bg-black/80 backdrop-blur-xl text-white border border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95 hover:bg-black/90"
               >
                 <div className="flex items-center justify-center bg-orange-500/20 w-5 h-5 md:w-6 md:h-6 rounded-full border-blue-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
                   <Flame className="text-orange-400 w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" />
@@ -238,7 +272,7 @@ export default function BigClock() {
                     useDashboardStore.getState().toggleStopwatch();
                   }
                 }}
-                className={`flex items-center gap-1.5 text-[12px] md:text-sm font-bold tracking-widest bg-black/80 border border-blue-500/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0 hover:bg-black/90 ${activeTimerSecs !== null ? 'text-timer-pill' : 'text-stopwatch-pill'}`}
+                className={`relative flex items-center gap-1.5 text-[12px] md:text-sm font-bold tracking-widest bg-black/80 border border-blue-500/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0 hover:bg-black/90 ${activeTimerSecs !== null ? 'text-timer-pill' : 'text-stopwatch-pill'}`}
               >
                 {activeTimerSecs !== null ? (
                   <Timer className="w-3.5 h-3.5 md:w-4 md:h-4 icon-timer-pill animate-pulse" />

@@ -12,10 +12,12 @@ export default function DraggableClock({ children }: { children: React.ReactNode
     isTimetableOpen, 
     widgetZIndices, 
     bringToFront,
-    customDesktopWallpapers, 
-    activeDesktopCustomIndex, 
-    customMobileWallpapers, 
-    activeMobileCustomIndex 
+    wallpaper,
+    currentBgSrc,
+    customDesktopWallpapers,
+    activeDesktopCustomIndex,
+    customMobileWallpapers,
+    activeMobileCustomIndex
   } = useDashboardStore();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -23,7 +25,14 @@ export default function DraggableClock({ children }: { children: React.ReactNode
   const startOffset = useRef({ x: 0, y: 0 });
   const latestPos = useRef({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  const [activeBgSrc, setActiveBgSrc] = useState<string>('');
+
+  // Match VideoBackground logic perfectly for active source
+  let activeBgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : (currentBgSrc || wallpaper || "/wallpapers/naruto.webp");
+  if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
+    activeBgSrc = customMobileWallpapers[activeMobileCustomIndex];
+  } else if (!isMobile && activeDesktopCustomIndex !== null && customDesktopWallpapers[activeDesktopCustomIndex]) {
+    activeBgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
+  }
 
   // Detect mobile viewport size
   useEffect(() => {
@@ -34,22 +43,14 @@ export default function DraggableClock({ children }: { children: React.ReactNode
     return () => media.removeEventListener('change', listener);
   }, []);
 
-  useEffect(() => {
-    let bgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp";
-    if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
-      bgSrc = customMobileWallpapers[activeMobileCustomIndex];
-    } else if (!isMobile && activeDesktopCustomIndex !== null && customDesktopWallpapers[activeDesktopCustomIndex]) {
-      bgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
-    }
-    setActiveBgSrc(bgSrc);
-  }, [isMobile, activeMobileCustomIndex, customMobileWallpapers, activeDesktopCustomIndex, customDesktopWallpapers]);
-
   // Sync with store when background changes
   useEffect(() => {
     if (activeBgSrc && clockOffsets[activeBgSrc]) {
       setPosition(clockOffsets[activeBgSrc]);
+      latestPos.current = clockOffsets[activeBgSrc];
     } else {
       setPosition({ x: 0, y: 0 });
+      latestPos.current = { x: 0, y: 0 };
     }
   }, [activeBgSrc, clockOffsets]);
 

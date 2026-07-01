@@ -150,6 +150,7 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (isCalendarOpen) {
       if (isCalendarBusy) {
         if (calendarTimeoutRef.current) clearTimeout(calendarTimeoutRef.current);
@@ -166,6 +167,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     const initialTimer = setTimeout(async () => {
       const q = await fetchQuote();
       showQuotePopup(q);

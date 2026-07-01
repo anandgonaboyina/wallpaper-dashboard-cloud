@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useDashboardStore } from "@/store/dashboardStore";
+import { useWallpaperUrl } from "@/hooks/useWallpaperUrl";
 
 export default function VideoBackground() {
   const isPanicHidden = useDashboardStore((state) => state.isPanicHidden);
@@ -31,14 +32,16 @@ export default function VideoBackground() {
     bgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
   }
 
-  const isVideo = bgSrc.toLowerCase().endsWith('.mp4') || bgSrc.toLowerCase().endsWith('.webm');
+  const { resolvedUrl, isVideo } = useWallpaperUrl(bgSrc);
+
+  if (!resolvedUrl) return null;
 
   return (
     <>
       {isVideo ? (
         <video
-          key={bgSrc}
-          src={bgSrc}
+          key={resolvedUrl}
+          src={resolvedUrl}
           autoPlay
           muted
           loop
@@ -47,8 +50,8 @@ export default function VideoBackground() {
         />
       ) : (
         <img
-          key={bgSrc}
-          src={bgSrc}
+          key={resolvedUrl}
+          src={resolvedUrl}
           alt="Wallpaper"
           className="fixed inset-0 w-full h-full object-cover -z-20 transition-opacity duration-1000 opacity-100"
         />

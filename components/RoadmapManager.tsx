@@ -340,8 +340,14 @@ export default function RoadmapManager() {
   };
 
   const handleDeleteNode = (node: RoadmapItem) => {
-    const input = prompt(`Type "DELETE" to remove "${node.title}":`);
-    if (input !== "DELETE") return;
+    const isRootNode = activeRoadmap.nodes.some(n => n.id === node.id);
+    
+    if (isRootNode) {
+      const input = prompt(`Type "DELETE" to remove main topic "${node.title}":`);
+      if (input !== "DELETE") return;
+    } else {
+      if (!confirm(`Remove subtopic "${node.title}"?`)) return;
+    }
 
     const deleteGlobalNode = (nodes: RoadmapItem[]): RoadmapItem[] => {
       return nodes

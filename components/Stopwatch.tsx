@@ -14,10 +14,42 @@ export default function Stopwatch() {
   const [addToStats, setAddToStats] = useState(true);
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
 
+  const updateInteraction = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('stopwatch_last_active', Date.now().toString());
+    }
+  };
+
   useEffect(() => {
+    const pausedSecs = typeof window !== 'undefined' ? localStorage.getItem('stopwatch_paused_secs') : null;
+
     if (stopwatchStartTime) {
-      setIsRunning(true);
-      setElapsedSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
+      const now = Date.now();
+      const storedLastActive = typeof window !== 'undefined' ? localStorage.getItem('stopwatch_last_active') : null;
+      const lastActive = storedLastActive ? parseInt(storedLastActive) : now;
+      
+      const timeSinceActive = Math.floor((now - lastActive) / 1000);
+      
+      if (timeSinceActive >= 7200) {
+        const cappedElapsed = Math.floor((lastActive + 7200000 - stopwatchStartTime) / 1000);
+        setIsRunning(false);
+        setElapsedSecs(cappedElapsed);
+        setShowContinuePrompt(true);
+        useDashboardStore.getState().setIsAlarmPlaying(true);
+        useDashboardStore.setState({ isStopwatchOpen: true });
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('stopwatch_paused_secs', cappedElapsed.toString());
+        }
+        setStopwatchStartTime(null);
+      } else {
+        setIsRunning(true);
+        setElapsedSecs(Math.floor((now - stopwatchStartTime) / 1000));
+        // We do NOT update interaction here, otherwise just opening the tab keeps it alive.
+      }
+    } else if (pausedSecs) {
+      setIsRunning(false);
+      setElapsedSecs(parseInt(pausedSecs));
     } else {
       setIsRunning(false);
       setElapsedSecs(0);
@@ -30,18 +62,26 @@ export default function Stopwatch() {
       interval = setInterval(() => {
         setElapsedSecs(prev => {
           const now = Date.now();
-          const secs = Math.floor((now - stopwatchStartTime) / 1000);
-          const currentPeriod = Math.floor(secs / 7200);
-          const lastPeriod = Math.floor(prev / 7200);
+          const stored = typeof window !== 'undefined' ? localStorage.getItem('stopwatch_last_active') : null;
+          const lastActive = stored ? parseInt(stored) : now;
+          const timeSinceActive = Math.floor((now - lastActive) / 1000);
           
-          if (currentPeriod > lastPeriod && currentPeriod > 0) {
+          if (timeSinceActive >= 7200) {
             setIsRunning(false);
             useDashboardStore.getState().setIsAlarmPlaying(true);
             useDashboardStore.setState({ isStopwatchOpen: true });
             setShowContinuePrompt(true);
-            return currentPeriod * 7200;
+            updateInteraction();
+            
+            const cappedElapsed = Math.floor((lastActive + 7200000 - stopwatchStartTime) / 1000);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('stopwatch_paused_secs', cappedElapsed.toString());
+            }
+            setStopwatchStartTime(null);
+            
+            return cappedElapsed;
           }
-          return secs;
+          return Math.floor((now - stopwatchStartTime) / 1000);
         });
       }, 250); 
     }
@@ -53,6 +93,10 @@ export default function Stopwatch() {
     if (!isRunning) {
       setStopwatchStartTime(Date.now() - elapsedSecs * 1000);
       setIsRunning(true);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('stopwatch_paused_secs');
+      }
+      updateInteraction();
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         setTimeout(() => {
           useDashboardStore.setState({ isStopwatchOpen: false });
@@ -65,6 +109,10 @@ export default function Stopwatch() {
     e?.stopPropagation();
     if (isRunning) {
       setIsRunning(false);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('stopwatch_paused_secs', elapsedSecs.toString());
+      }
+      setStopwatchStartTime(null);
     }
   };
 
@@ -76,6 +124,10 @@ export default function Stopwatch() {
     setIsRunning(false);
     setElapsedSecs(0);
     setStopwatchStartTime(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('stopwatch_paused_secs');
+      localStorage.removeItem('stopwatch_last_active');
+    }
     setTaskTitle('');
   };
 
@@ -96,7 +148,11 @@ export default function Stopwatch() {
 
   return (
     <DraggableWidget id="stopwatch">
-      <div className={`relative pointer-events-auto select-none ${isStopwatchOpen ? '' : 'hidden'}`} onClick={(e) => e.stopPropagation()}>
+      <div 
+        className={`relative pointer-events-auto select-none ${isStopwatchOpen ? '' : 'hidden'}`} 
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={updateInteraction}
+      >
         <div className="w-56 rounded-3xl glass-panel p-3 text-white flex flex-col gap-2 min-h-[120px]">
           
           {viewingHistory ? (
@@ -166,54 +222,92 @@ export default function Stopwatch() {
                 </button>
               </div>
 
-              {/* Time Display */}
-              <div className="text-center min-h-[50px] flex flex-col items-center justify-center relative">
-                <div className="flex items-center justify-center w-full relative">
-                  <div className={`text-4xl font-light tracking-tighter tabular-nums drop-shadow-md transition-opacity ${isRunning ? 'opacity-100' : 'opacity-90'}`}>
-                    {formatTime(elapsedSecs)}
+              {showContinuePrompt ? (
+                <div className="flex flex-col items-center gap-3 w-full py-2">
+                  <p className="text-[11px] font-semibold text-blue-300">Are you still working?</p>
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowContinuePrompt(false);
+                        useDashboardStore.getState().setIsAlarmPlaying(false);
+                        
+                        // Clear paused secs and resume
+                        if (typeof window !== 'undefined') {
+                          localStorage.removeItem('stopwatch_paused_secs');
+                        }
+                        updateInteraction();
+                        setStopwatchStartTime(Date.now() - elapsedSecs * 1000);
+                        setIsRunning(true);
+                      }}
+                      className="flex-1 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-[10px] font-bold transition-colors"
+                    >
+                      Continue
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowContinuePrompt(false);
+                        useDashboardStore.getState().setIsAlarmPlaying(false);
+                      }}
+                      className="flex-1 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold transition-colors"
+                    >
+                      Stop
+                    </button>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Time Display */}
+                  <div className="text-center min-h-[50px] flex flex-col items-center justify-center relative">
+                    <div className="flex items-center justify-center w-full relative">
+                      <div className={`text-4xl font-light tracking-tighter tabular-nums drop-shadow-md transition-opacity ${isRunning ? 'opacity-100' : 'opacity-90'}`}>
+                        {formatTime(elapsedSecs)}
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Add to Stats Toggle */}
-              <div 
-                className="flex items-center justify-center gap-1.5 cursor-pointer opacity-70 hover:opacity-100 transition-opacity mb-1"
-                onClick={toggleStatsCheckbox}
-              >
-                <div className={`w-3 h-3 rounded-[3px] border flex items-center justify-center transition-colors ${addToStats ? 'bg-blue-500 border-blue-400' : 'border-white/40'}`}>
-                  {addToStats && <Check size={8} className="text-white" />}
-                </div>
-                <span className="text-[9px] uppercase tracking-wider font-bold">Add to Today's Focus</span>
-              </div>
+                  {/* Add to Stats Toggle */}
+                  <div 
+                    className="flex items-center justify-center gap-1.5 cursor-pointer opacity-70 hover:opacity-100 transition-opacity mb-1"
+                    onClick={toggleStatsCheckbox}
+                  >
+                    <div className={`w-3 h-3 rounded-[3px] border flex items-center justify-center transition-colors ${addToStats ? 'bg-blue-500 border-blue-400' : 'border-white/40'}`}>
+                      {addToStats && <Check size={8} className="text-white" />}
+                    </div>
+                    <span className="text-[9px] uppercase tracking-wider font-bold">Add to Today's Focus</span>
+                  </div>
 
-              {/* Controls */}
-              <div className="flex justify-center items-center gap-2 mt-1">
-                {!isRunning ? (
-                  <button 
-                    onClick={handleStart} 
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg transition-all hover:scale-105 active:scale-95"
-                    title="Start Stopwatch"
-                  >
-                    <Play fill="currentColor" size={14} className="ml-0.5" />
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handlePause} 
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg transition-all hover:scale-105 active:scale-95"
-                    title="Pause Stopwatch"
-                  >
-                    <Pause fill="currentColor" size={14} />
-                  </button>
-                )}
-                <button 
-                  onClick={handleStop} 
-                  disabled={elapsedSecs === 0}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
-                  title="Stop & Save"
-                >
-                  <Square fill="currentColor" size={12} />
-                </button>
-              </div>
+                  {/* Controls */}
+                  <div className="flex justify-center items-center gap-2 mt-1">
+                    {!isRunning ? (
+                      <button 
+                        onClick={handleStart} 
+                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                        title="Start Stopwatch"
+                      >
+                        <Play fill="currentColor" size={14} className="ml-0.5" />
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handlePause} 
+                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                        title="Pause Stopwatch"
+                      >
+                        <Pause fill="currentColor" size={14} />
+                      </button>
+                    )}
+                    <button 
+                      onClick={handleStop} 
+                      disabled={elapsedSecs === 0}
+                      className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                      title="Stop & Save"
+                    >
+                      <Square fill="currentColor" size={12} />
+                    </button>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

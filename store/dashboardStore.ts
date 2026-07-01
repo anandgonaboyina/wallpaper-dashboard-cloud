@@ -192,6 +192,8 @@ interface DashboardState {
   setDeadlineAlertDays: (days: number) => void;
   dismissedDeadlineAlerts: string[];
   dismissDeadlineAlert: (id: string) => void;
+  isDeadlinesCollapsed: boolean;
+  setIsDeadlinesCollapsed: (collapsed: boolean) => void;
 
   // Timetable
   timetableGrid: TimetableGrid;
@@ -367,13 +369,44 @@ const performSave = async () => {
   let success = false;
   try {
     const lastModified = getSyncLastModified();
+    let modifiedCollections: string[] = [];
+    if (lastSavedValue) {
+      const oldState = JSON.parse(lastSavedValue).state || {};
+      const newState = JSON.parse(valueToSave).state || {};
+      
+      const TASK_KEYS = ['tasks', 'countdowns', 'deadlines', 'syntheticDeadlines', 'deadlineAlertDays', 'dismissedDeadlineAlerts', 'plans'];
+      const STATS_KEYS = ['history', 'stopwatchSessions', 'healthData'];
+      const NOTES_KEYS = ['notes'];
+      const ROADMAPS_KEYS = ['roadmaps'];
+      
+      Object.keys(newState).forEach(key => {
+        if (JSON.stringify(newState[key]) !== JSON.stringify(oldState[key])) {
+          if (TASK_KEYS.includes(key)) modifiedCollections.push('Tasks');
+          else if (STATS_KEYS.includes(key)) modifiedCollections.push('Stats');
+          else if (NOTES_KEYS.includes(key)) modifiedCollections.push('Notes');
+          else if (ROADMAPS_KEYS.includes(key)) modifiedCollections.push('Roadmaps');
+          else if (!key.startsWith('is') && !key.startsWith('show')) modifiedCollections.push('Settings');
+        }
+      });
+      modifiedCollections = [...new Set(modifiedCollections)];
+      
+      // If we literally changed nothing persistent, just cancel the save!
+      if (modifiedCollections.length === 0) {
+        isSaving = false;
+        hasUnsavedChanges = false;
+        pendingValue = null;
+        saveTimeout = null;
+        return;
+      }
+    }
+
     const res = await fetch('/api/store', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getSyncToken()}`
       },
-      body: JSON.stringify({ data: JSON.parse(valueToSave), lastModified }),
+      body: JSON.stringify({ data: JSON.parse(valueToSave), lastModified, modifiedCollections }),
     });
 
     if (res.status === 409) {
@@ -461,7 +494,7 @@ const fileStorage = createJSONStorage(() => ({
         break;
       }
       try {
-        const res = await fetch('/api/store', {
+        const res = await fetch(`/api/store?t=${Date.now()}`, {
           headers: { 'Authorization': `Bearer ${token}` },
           cache: 'no-store'
         });
@@ -514,7 +547,10 @@ const fileStorage = createJSONStorage(() => ({
 
     console.warn("Failed to fetch store from DB after retries or no token, falling back to localStorage.");
     const localData = localStorage.getItem('dashboard-storage');
-    if (!localData && !token) {
+    // If we have no local cache and we couldn't fetch from DB, we are hydrating defaults.
+    // We MUST set failedToLoadDB to true to permanently disable cloud saves for this session,
+    // otherwise these defaults will overwrite the user's cloud database!
+    if (!localData) {
       failedToLoadDB = true;
     }
     lastSavedValue = localData;
@@ -523,9 +559,20 @@ const fileStorage = createJSONStorage(() => ({
   setItem: async (_name: string, value: string): Promise<void> => {
     if (typeof window === 'undefined' || isSyncingFromCloud || isAuthTransition) return;
     if (value === lastSavedValue) return; // Prevent overwriting DB with unchanged hydration state
+    
+    // Safety check: NEVER save to DB if hydration hasn't finished, to prevent overwriting with initial defaults!
+    if (useDashboardStore.getState && !useDashboardStore.getState()._hasHydrated) {
+      console.warn("Blocked save attempt before hydration!");
+      return;
+    }
 
     // ALWAYS save locally first so offline restarts have immediate latest data!
-    localStorage.setItem('dashboard-storage', value);
+    try {
+      localStorage.setItem('dashboard-storage', value);
+    } catch (e) {
+      console.warn("Failed to save to localStorage, likely due to massive base64 strings exceeding 5MB quota:", e);
+      // We do NOT return here, so that pendingValue is still updated and cloud sync still fires!
+    }
     const newTime = Math.max(Date.now(), getSyncLastModified() + 1);
     setSyncLastModified(newTime); // Mark local as newest immediately!
 
@@ -538,18 +585,7 @@ const fileStorage = createJSONStorage(() => ({
   },
   removeItem: async (_name: string): Promise<void> => {
     if (typeof window === 'undefined') return;
-    try {
-      await fetch('/api/store', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getSyncToken()}`
-        },
-        body: JSON.stringify({ data: null, lastModified: Date.now() }),
-      });
-    } catch {
-      localStorage.removeItem('dashboard-storage');
-    }
+    localStorage.removeItem('dashboard-storage');
   },
 }));
 
@@ -803,9 +839,6 @@ export const useDashboardStore = create<DashboardState>()(
       addStopwatchSession: (title, secs, addToStats) => set((state) => {
         const mins = Math.floor(secs / 60);
 
-        // Don't save to history if it's strictly less than a minute
-        if (mins === 0) return state;
-
         const today = getLocalDateString();
 
         let newHistory = state.history;
@@ -906,6 +939,9 @@ export const useDashboardStore = create<DashboardState>()(
       dismissDeadlineAlert: (id) => set((state) => ({
         dismissedDeadlineAlerts: Array.from(new Set([...(state.dismissedDeadlineAlerts || []), id]))
       })),
+
+      isDeadlinesCollapsed: false,
+      setIsDeadlinesCollapsed: (collapsed) => set({ isDeadlinesCollapsed: collapsed }),
 
       // Timetable
       timetableGrid: {
@@ -1309,8 +1345,11 @@ export const useDashboardStore = create<DashboardState>()(
           await fetch(`/api/health?action=deleteAll`, { method: 'DELETE', headers });
           await fetch('/api/store', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: null })
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ clearAll: true })
           });
           localStorage.removeItem('dashboard-storage');
           window.location.reload();

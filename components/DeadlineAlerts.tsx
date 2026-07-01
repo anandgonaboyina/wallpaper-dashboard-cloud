@@ -1,12 +1,21 @@
 'use client';
 
 import { useDashboardStore } from '@/store/dashboardStore';
-import { X, CalendarClock } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CalendarClock, ChevronDown, ChevronUp } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function DeadlineAlerts() {
-  const { deadlines, deadlineAlertDays, dismissedDeadlineAlerts, dismissDeadlineAlert } = useDashboardStore();
+  const { deadlines, deadlineAlertDays, dismissedDeadlineAlerts, dismissDeadlineAlert, isDeadlinesCollapsed, setIsDeadlinesCollapsed, theme } = useDashboardStore();
   const [activeAlerts, setActiveAlerts] = useState<typeof deadlines>([]);
+  const [isStackExpanded, setIsStackExpanded] = useState(false);
+  
+  const startY = useRef<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const today = new Date();
@@ -27,57 +36,158 @@ export default function DeadlineAlerts() {
       return diffDays === 0 || (diffDays > 0 && diffDays <= deadlineAlertDays);
     });
 
+    alerts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setActiveAlerts(alerts);
   }, [deadlines, deadlineAlertDays, dismissedDeadlineAlerts]);
 
-  if (activeAlerts.length === 0) return null;
+  if (!mounted || activeAlerts.length === 0) return null;
+
+  if (isDeadlinesCollapsed) {
+    return (
+      <div 
+        className={`hidden md:flex fixed top-3 left-3 z-[100000] flex-row gap-1.5 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1.5 rounded-full border backdrop-blur-md shadow-lg ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
+        onClick={() => setIsDeadlinesCollapsed(false)}
+        title="Show Deadline Alerts"
+      >
+        <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" />
+        <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '150ms' }} />
+        <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '300ms' }} />
+      </div>
+    );
+  }
+
+  const handleDragStart = (clientY: number) => {
+    startY.current = clientY;
+  };
+
+  const handleDragEnd = (clientY: number) => {
+    if (startY.current !== null) {
+      const deltaY = startY.current - clientY;
+      if (deltaY > 30) {
+        setIsDeadlinesCollapsed(true);
+      }
+      startY.current = null;
+    }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    handleDragStart(e.clientY);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    handleDragEnd(e.clientY);
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  };
 
   return (
-    <div className="fixed left-1/2 -translate-x-1/2 top-4 md:top-1/2 md:-translate-y-1/2 z-[10000] flex flex-col gap-1.5 md:gap-3 pointer-events-none w-[90vw] max-w-[260px] md:max-w-[360px] items-center">
-      {activeAlerts.map((alert) => {
-        const deadlineDate = new Date(alert.date);
-        deadlineDate.setHours(0, 0, 0, 0);
-        const diffDays = Math.ceil((deadlineDate.getTime() - new Date().setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
-        const daysText = diffDays === 0 ? 'Today!' : diffDays === 1 ? 'Tomorrow!' : `In ${diffDays} days`;
+    <div 
+      className="fixed left-1/2 -translate-x-1/2 top-16 md:top-16 z-[10000] flex flex-col gap-1.5 pointer-events-auto items-center cursor-grab active:cursor-grabbing touch-none"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => startY.current = null}
+      onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
+      onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientY)}
+      onTouchCancel={() => startY.current = null}
+    >
+      <div className="relative flex flex-col items-center w-[290px]" style={{ height: isStackExpanded || activeAlerts.length === 1 ? 'auto' : '65px' }}>
+        {activeAlerts.map((alert, index) => {
+          const deadlineDate = new Date(alert.date);
+          deadlineDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((deadlineDate.getTime() - new Date().setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
+          const daysText = diffDays === 0 ? 'Today!' : diffDays === 1 ? 'Tomorrow!' : `In ${diffDays} days`;
 
-        return (
-          <div key={alert.id} className="bg-black/85 md:bg-black/95 backdrop-blur-xl border border-yellow-500/20 md:border-yellow-500/30 rounded-xl md:rounded-2xl p-2 md:p-4 shadow-xl shadow-yellow-500/5 md:shadow-2xl md:shadow-yellow-500/10 w-full flex gap-2 md:gap-3 animate-in fade-in zoom-in slide-in-from-top-4 md:slide-in-from-bottom-4 duration-400 pointer-events-auto">
+          const isStacked = !isStackExpanded && activeAlerts.length > 1;
+          const isTop = index === 0;
+          
+          if (isStacked && index > 2) return null;
 
-            {/* Compact Icon */}
-            <div className="p-1.5 md:p-2.5 bg-gradient-to-br from-yellow-400/20 to-orange-500/10 rounded-lg md:rounded-xl h-fit border border-yellow-500/20 shrink-0 shadow-inner">
-              <CalendarClock className="text-yellow-400 w-3.5 h-3.5 md:w-5 md:h-5 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
-            </div>
+          let transform = 'none';
+          let opacity = '1';
+          let zIndex = 100 - index;
+          
+          if (isStacked) {
+            if (index === 1) {
+              transform = 'translateY(8px) scale(0.96)';
+              opacity = '0.8';
+            } else if (index === 2) {
+              transform = 'translateY(16px) scale(0.92)';
+              opacity = '0.5';
+            }
+          }
 
-            {/* Content Area */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-1.5 md:gap-2">
-                <div className="flex flex-col">
-                  <h3 className="text-[11px] md:text-sm font-bold text-white/95 leading-none">
-                    Deadline Alert
-                  </h3>
-                  <span className="text-yellow-400 font-semibold text-[9px] md:text-xs mt-0.5 md:mt-1 tracking-wide">{daysText}</span>
+          return (
+            <div
+              key={alert.id}
+              onClick={() => {
+                if (isStacked) setIsStackExpanded(true);
+              }}
+              className={`w-full ${isStacked ? 'absolute top-0' : 'relative mb-2'} ${isStacked && !isTop ? 'cursor-pointer' : ''} pointer-events-auto ${theme === 'light' ? 'bg-white/80 border-slate-200 text-slate-800' : 'bg-[#0f0f13]/95 border-white/10 text-white'} backdrop-blur-xl border rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.6)] overflow-hidden flex transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]`}
+              style={{
+                transform,
+                opacity,
+                zIndex
+              }}
+            >
+              <div className="w-[3px] bg-gradient-to-b from-yellow-400 to-orange-500 shrink-0 shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+
+              <div className="py-1.5 px-2 flex-1 flex flex-col gap-1 min-w-0">
+                <div className="flex justify-between items-center gap-1.5">
+                  <div className={`flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/20 px-1 py-[2px] rounded text-yellow-400 shadow-inner`}>
+                    <CalendarClock className="w-2.5 h-2.5 drop-shadow-md" />
+                    <span className="text-[8px] font-bold uppercase tracking-wider leading-none">{daysText}</span>
+                  </div>
+                  
+                  {/* Dismiss Button */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dismissDeadlineAlert(`${alert.id}-${diffDays === 0 ? 'today' : 'preview'}`);
+                      }}
+                      className={`p-1 hover:bg-black/10 ${theme === 'light' ? 'text-slate-400 hover:text-slate-800' : 'text-white/40 hover:text-white'} rounded shrink-0 transition-colors active:scale-90 flex items-center justify-center`}
+                      title="Dismiss alert"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => dismissDeadlineAlert(`${alert.id}-${diffDays === 0 ? 'today' : 'preview'}`)}
-                  className="p-0.5 md:p-1 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors rounded-full shrink-0 -mt-0.5 md:-mt-1 -mr-0.5 md:-mr-1"
-                  title="Dismiss alert"
-                >
-                  <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                </button>
-              </div>
 
-              {/* Text & Date combined to save space */}
-              <div className="mt-1 md:mt-1.5">
-                <p className="text-white/80 text-[10px] md:text-sm leading-snug line-clamp-2 md:line-clamp-none">{alert.text}</p>
-                <p className="text-white/40 text-[8px] md:text-[11px] mt-1 md:mt-1.5 uppercase font-semibold tracking-wider">
-                  Due: {deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                <p className={`${theme === 'light' ? 'text-slate-800' : 'text-white/90'} text-[10px] leading-tight font-medium line-clamp-2 break-words`}>
+                  {alert.text}
                 </p>
+
+                <div className="mt-px flex items-center justify-between">
+                  <span className={`${theme === 'light' ? 'text-slate-500' : 'text-white/40'} text-[8px] font-semibold tracking-wide uppercase leading-none`}>
+                    Due: {deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  
+                  {isTop && isStacked && activeAlerts.length > 1 && (
+                     <button className={`${theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-white/40 hover:text-white'} text-[9px] font-semibold flex items-center gap-0.5`}>
+                       +{activeAlerts.length - 1} <ChevronDown className="w-3 h-3" />
+                     </button>
+                  )}
+                  {isTop && !isStacked && activeAlerts.length > 1 && (
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); setIsStackExpanded(false); }} 
+                        className={`${theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-white/40 hover:text-white'} text-[9px] font-semibold flex items-center gap-0.5 px-1 py-0.5 rounded hover:bg-black/10 transition-colors`}
+                     >
+                       Collapse <ChevronUp className="w-3 h-3" />
+                     </button>
+                  )}
+                </div>
               </div>
             </div>
-
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      
+      <div 
+        className="text-[9px] text-white/40 flex items-center gap-1 font-medium bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 pointer-events-auto cursor-pointer mt-1 hover:text-white transition-colors" 
+        onClick={() => setIsDeadlinesCollapsed(true)}
+      >
+        <ChevronUp className="w-3 h-3" /> Swipe up to collapse
+      </div>
     </div>
   );
 }

@@ -36,7 +36,20 @@ export default function Timer() {
   const [editHours, setEditHours] = useState('00');
   const [editMins, setEditMins] = useState('25');
   
-  const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
+  const [lastInteractionTime, setLastInteractionTime] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('timer_last_active');
+      return stored ? parseInt(stored) : Date.now();
+    }
+    return Date.now();
+  });
+  
+  const updateInteraction = () => {
+    const now = Date.now();
+    setLastInteractionTime(now);
+    localStorage.setItem('timer_last_active', now.toString());
+  };
+
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
 
   // Ensure local time immediately reflects store changes
@@ -105,12 +118,17 @@ export default function Timer() {
         const elapsedSinceInteraction = Math.floor((now - lastInteractionTime) / 1000);
         if (elapsedSinceInteraction >= 7200) {
            // Idle for 2 hours while running, auto pause!
-           setTimerPausedLeft(remaining);
-           setTimerEndAt(null);
-           playAlarm();
-           setShowContinuePrompt(true);
-           setLastInteractionTime(now);
-           return;
+           const intendedPauseTime = lastInteractionTime + 7200000;
+           // Only pause if the timer wouldn't have finished naturally before the pause time
+           if (intendedPauseTime < timerEndAt) {
+             const actualRemaining = Math.max(0, Math.floor((timerEndAt - intendedPauseTime) / 1000));
+             setTimerPausedLeft(actualRemaining);
+             setTimerEndAt(null);
+             playAlarm();
+             setShowContinuePrompt(true);
+             updateInteraction();
+             return;
+           }
         }
 
         if (remaining <= 0) {
@@ -181,12 +199,10 @@ export default function Timer() {
     if (isAlarmPlaying && enableAlarmVibration) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
-          if (!navigator.userActivation || navigator.userActivation.hasBeenActive) {
-            navigator.vibrate([500, 500, 500, 500, 500]);
-            vibeInterval = setInterval(() => {
-              try { navigator.vibrate([500, 500, 500, 500, 500]); } catch (e) { }
-            }, 2500);
-          }
+          navigator.vibrate([500, 500, 500, 500, 500]);
+          vibeInterval = setInterval(() => {
+            try { navigator.vibrate([500, 500, 500, 500, 500]); } catch (e) { }
+          }, 2500);
         } catch (e) { }
       }
     } else {
@@ -206,7 +222,8 @@ export default function Timer() {
   useEffect(() => {
     if (audioRef.current) {
       if (isAlarmPlaying && enableAlarmSound) {
-        audioRef.current.volume = (alarmVolume ?? 100) / 100;
+        const vol = alarmVolume !== undefined ? alarmVolume : 1;
+        audioRef.current.volume = vol > 1 ? vol / 100 : vol;
         audioRef.current.play().catch(e => console.error('Failed to play alarm:', e));
       } else {
         audioRef.current.pause();
@@ -281,6 +298,7 @@ export default function Timer() {
     setTimerEndAt(Date.now() + seconds * 1000);
     setTimerLastSavedChunks(0);
     stopAlarm();
+    updateInteraction();
 
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       setTimeout(() => {
@@ -291,7 +309,8 @@ export default function Timer() {
     // Unlock audio for mobile browsers during this user interaction
     // We allow a brief audible "blip" which acts as start feedback and securely unlocks audio on strict mobile browsers
     if (audioRef.current && enableAlarmSound) {
-      audioRef.current.volume = (alarmVolume ?? 100) / 100;
+      const vol = alarmVolume !== undefined ? alarmVolume : 1;
+      audioRef.current.volume = vol > 1 ? vol / 100 : vol;
       audioRef.current.play().then(() => {
         setTimeout(() => {
           if (audioRef.current) {
@@ -425,7 +444,7 @@ export default function Timer() {
   return (
     <DraggableWidget id="timer">
       <div 
-        onPointerDown={() => setLastInteractionTime(Date.now())}
+        onPointerDown={updateInteraction}
         className={`relative pointer-events-auto select-none ${isTimerOpen || isAlarmPlaying ? '' : 'hidden'}`}
       >
         <div className="w-64 rounded-3xl glass-panel p-3 text-white flex flex-col gap-2">
@@ -512,6 +531,7 @@ export default function Timer() {
                       if (timerPausedLeft !== null) {
                         setTimerEndAt(Date.now() + timerPausedLeft * 1000);
                         setTimerPausedLeft(null);
+                        updateInteraction();
                       }
                     }}
                     className="flex-1 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-xs font-bold transition-colors"

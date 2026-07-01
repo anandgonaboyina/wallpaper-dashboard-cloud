@@ -23,7 +23,7 @@ export default function LoadingScreen() {
           <div className="flex flex-col items-center animate-in fade-in duration-700 w-full">
             <div className="relative w-24 h-24 md:w-32 md:h-32 mb-6 rounded-full overflow-hidden ring-4 ring-white/5 shadow-2xl shadow-blue-500/20 profile-flip opacity-0">
               <img
-                src="/branding/author.jpeg"
+                src="/icon-512x512.png"
                 alt="Creator Profile"
                 className="w-full h-full object-cover"
                 onError={(e) => { e.currentTarget.src = '/icon-192x192.png' }}

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import clientPromise from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
@@ -30,32 +31,117 @@ export async function GET(request: Request) {
     const client = await clientPromise;
     const db = client.db();
     
-    const record = await db.collection('DashboardStorage').findOne({ userId: user.userId });
+    const existing = await db.collection('DashboardStorage').findOne({ userId: user.userId });
+    const notesRecord = await db.collection('Notes').findOne({ userId: user.userId });
+    const settingsRecord = await db.collection('Settings').findOne({ userId: user.userId });
+    const tasksRecord = await db.collection('Tasks').findOne({ userId: user.userId });
+    const roadmapsRecord = await db.collection('Roadmaps').findOne({ userId: user.userId });
+    const statsRecord = await db.collection('Stats').findOne({ userId: user.userId });
     
-    if (!record) {
+    if (!existing && !notesRecord && !settingsRecord && !tasksRecord && !roadmapsRecord && !statsRecord) {
       return NextResponse.json({ data: null, lastModified: 0 });
     }
+
+    const SETTING_ARRAY_KEYS = [
+      'customDesktopWallpapers', 'customMobileWallpapers', 'hiddenWallpapers', 
+      'timetableGrid', 'timetableColors', 'widgetOffsets', 'clockOffsets', 'lockedWidgets',
+      'panicWallpaperSwitch', 'enableAlarmSound', 'enableAlarmVibration', 'enablePanicButton'
+    ];
     
-    let returnedData;
+    const TASK_KEYS = ['tasks', 'countdowns', 'plans', 'deadlines', 'syntheticDeadlines', 'deadlineAlertDays', 'dismissedDeadlineAlerts'];
+    const STATS_KEYS = ['history', 'stopwatchSessions', 'healthData'];
+
+    let returnedData: any = null;
     // Backwards compatibility for old stringified format
-    if (record.data && typeof record.data === 'string') {
-      returnedData = JSON.parse(record.data);
-    } else {
-      const { _id, userId, lastModified, updatedAt, version, displaySettings, generalSettings, ...coreData } = record;
+    if (existing && existing.data && typeof existing.data === 'string') {
+      returnedData = JSON.parse(existing.data);
+      returnedData.state = returnedData.state || {};
+      if (notesRecord && notesRecord.notes) {
+        returnedData.state.notes = notesRecord.notes;
+      }
+      if (settingsRecord) {
+        returnedData.state = {
+          ...returnedData.state,
+          ...(settingsRecord.displaySettings || {}),
+          ...(settingsRecord.generalSettings || {})
+        };
+        SETTING_ARRAY_KEYS.forEach(key => {
+          if (settingsRecord[key] !== undefined) returnedData.state[key] = settingsRecord[key];
+        });
+      }
+      if (tasksRecord) {
+        TASK_KEYS.forEach(key => {
+          if (tasksRecord[key] !== undefined) returnedData.state[key] = tasksRecord[key];
+        });
+      }
+      if (roadmapsRecord && roadmapsRecord.roadmaps) {
+        returnedData.state.roadmaps = roadmapsRecord.roadmaps;
+      }
+      if (statsRecord) {
+        STATS_KEYS.forEach(key => {
+          if (statsRecord[key] !== undefined) returnedData.state[key] = statsRecord[key];
+        });
+      }
+    } else if (existing || settingsRecord || tasksRecord || roadmapsRecord || statsRecord) {
+      const { _id, userId, lastModified, updatedAt, version, displaySettings: legacyDS, generalSettings: legacyGS, ...coreData } = (existing || {}) as any;
       const reconstructedState = {
         ...coreData,
-        ...(displaySettings || {}),
-        ...(generalSettings || {})
+        ...(settingsRecord?.displaySettings || legacyDS || {}),
+        ...(settingsRecord?.generalSettings || legacyGS || {})
       };
+      
+      SETTING_ARRAY_KEYS.forEach(key => {
+        if (settingsRecord && settingsRecord[key] !== undefined) {
+          reconstructedState[key] = settingsRecord[key];
+        }
+      });
+
+      TASK_KEYS.forEach(key => {
+        if (tasksRecord && tasksRecord[key] !== undefined) {
+          reconstructedState[key] = tasksRecord[key];
+        }
+      });
+
+      STATS_KEYS.forEach(key => {
+        if (statsRecord && statsRecord[key] !== undefined) {
+          reconstructedState[key] = statsRecord[key];
+        }
+      });
+      
+      if (notesRecord && notesRecord.notes) {
+        reconstructedState.notes = notesRecord.notes;
+      }
+
+      if (roadmapsRecord && roadmapsRecord.roadmaps) {
+        reconstructedState.roadmaps = roadmapsRecord.roadmaps;
+      }
+      
       returnedData = {
         state: reconstructedState,
         version: version || 2
       };
+    } else {
+      returnedData = { state: { notes: notesRecord?.notes || [] }, version: 2 };
     }
     
+    const cloudLastModified = Math.max(
+      existing?.lastModified ? Number(existing.lastModified) : 0,
+      notesRecord?.lastModified ? Number(notesRecord.lastModified) : 0,
+      settingsRecord?.lastModified ? Number(settingsRecord.lastModified) : 0,
+      tasksRecord?.lastModified ? Number(tasksRecord.lastModified) : 0,
+      roadmapsRecord?.lastModified ? Number(roadmapsRecord.lastModified) : 0,
+      statsRecord?.lastModified ? Number(statsRecord.lastModified) : 0
+    );
+
+    console.log('GET /api/store returning for user', user.userId, ':', { 
+      hasExisting: !!existing, 
+      hasSettings: !!settingsRecord,
+      hasTasks: !!tasksRecord,
+      hitElseBlock: !(existing || settingsRecord || tasksRecord || roadmapsRecord || statsRecord)
+    });
     return NextResponse.json({ 
       data: returnedData,
-      lastModified: record.lastModified ? Number(record.lastModified) : 0
+      lastModified: cloudLastModified
     });
   } catch (error) {
     console.error('Error reading store from DB:', error);
@@ -77,33 +163,160 @@ export async function POST(request: Request) {
     const db = client.db();
 
     const existing = await db.collection('DashboardStorage').findOne({ userId: user.userId });
+    const existingNotes = await db.collection('Notes').findOne({ userId: user.userId });
+    const existingSettings = await db.collection('Settings').findOne({ userId: user.userId });
+    const existingTasks = await db.collection('Tasks').findOne({ userId: user.userId });
+    const existingRoadmaps = await db.collection('Roadmaps').findOne({ userId: user.userId });
+    const existingStats = await db.collection('Stats').findOne({ userId: user.userId });
 
-    let existingCloudData = null;
-    if (existing) {
-      if (existing.data && typeof existing.data === 'string') {
+    const SETTING_ARRAY_KEYS = [
+      'customDesktopWallpapers', 'customMobileWallpapers', 'hiddenWallpapers', 
+      'timetableGrid', 'timetableColors', 'widgetOffsets', 'clockOffsets', 'lockedWidgets',
+      'panicWallpaperSwitch', 'enableAlarmSound', 'enableAlarmVibration', 'enablePanicButton'
+    ];
+    
+    const TASK_KEYS = ['tasks', 'countdowns', 'plans', 'deadlines', 'syntheticDeadlines', 'deadlineAlertDays', 'dismissedDeadlineAlerts'];
+    const STATS_KEYS = ['history', 'stopwatchSessions', 'healthData'];
+
+    let existingCloudData: any = null;
+    if (existing || existingNotes || existingSettings || existingTasks || existingRoadmaps || existingStats) {
+      if (existing && existing.data && typeof existing.data === 'string') {
         existingCloudData = JSON.parse(existing.data);
+        existingCloudData.state = existingCloudData.state || {};
+        if (existingNotes && existingNotes.notes) {
+          existingCloudData.state.notes = existingNotes.notes;
+        }
+        if (existingSettings) {
+          existingCloudData.state = {
+            ...existingCloudData.state,
+            ...(existingSettings.displaySettings || {}),
+            ...(existingSettings.generalSettings || {})
+          };
+          SETTING_ARRAY_KEYS.forEach(key => {
+            if (existingSettings[key] !== undefined) existingCloudData.state[key] = existingSettings[key];
+          });
+        }
+        if (existingRoadmaps && existingRoadmaps.roadmaps) {
+          existingCloudData.state.roadmaps = existingRoadmaps.roadmaps;
+        }
+        if (existingStats) {
+          STATS_KEYS.forEach(key => {
+            if (existingStats[key] !== undefined) existingCloudData.state[key] = existingStats[key];
+          });
+        }
       } else {
-        const { _id, userId, lastModified, updatedAt, version, displaySettings, generalSettings, ...coreData } = existing;
+        const { _id, userId, lastModified, updatedAt, version, displaySettings: legacyDS, generalSettings: legacyGS, ...coreData } = (existing || {}) as any;
         const reconstructedState = {
           ...coreData,
-          ...(displaySettings || {}),
-          ...(generalSettings || {})
+          ...(existingSettings?.displaySettings || legacyDS || {}),
+          ...(existingSettings?.generalSettings || legacyGS || {})
         };
+        
+        SETTING_ARRAY_KEYS.forEach(key => {
+          if (existingSettings && existingSettings[key] !== undefined) {
+            reconstructedState[key] = existingSettings[key];
+          }
+        });
+
+        TASK_KEYS.forEach(key => {
+          if (existingTasks && existingTasks[key] !== undefined) {
+            reconstructedState[key] = existingTasks[key];
+          }
+        });
+
+        STATS_KEYS.forEach(key => {
+          if (existingStats && existingStats[key] !== undefined) {
+            reconstructedState[key] = existingStats[key];
+          }
+        });
+
+        if (existingNotes && existingNotes.notes) {
+          reconstructedState.notes = existingNotes.notes;
+        }
+        if (existingRoadmaps && existingRoadmaps.roadmaps) {
+          reconstructedState.roadmaps = existingRoadmaps.roadmaps;
+        }
         existingCloudData = { state: reconstructedState, version: version || 2 };
       }
     }
 
-    if (existing && existing.lastModified && Number(existing.lastModified) > incomingLastModified && !body.forceSync) {
+    const cloudLastModified = Math.max(
+      existing?.lastModified ? Number(existing.lastModified) : 0,
+      existingNotes?.lastModified ? Number(existingNotes.lastModified) : 0,
+      existingSettings?.lastModified ? Number(existingSettings.lastModified) : 0,
+      existingTasks?.lastModified ? Number(existingTasks.lastModified) : 0,
+      existingRoadmaps?.lastModified ? Number(existingRoadmaps.lastModified) : 0,
+      existingStats?.lastModified ? Number(existingStats.lastModified) : 0
+    );
+
+    const modifiedCollections = body.modifiedCollections;
+    const isFullSync = !modifiedCollections || modifiedCollections.length === 0;
+
+    let hasConflict = false;
+    if (!body.forceSync) {
+      if (isFullSync) {
+        if (cloudLastModified > incomingLastModified && (existing || existingNotes || existingSettings || existingTasks || existingRoadmaps || existingStats)) {
+          hasConflict = true;
+        }
+      } else {
+        if (modifiedCollections.includes('Tasks') && existingTasks?.lastModified > incomingLastModified) hasConflict = true;
+        if (modifiedCollections.includes('Notes') && existingNotes?.lastModified > incomingLastModified) hasConflict = true;
+        if (modifiedCollections.includes('Roadmaps') && existingRoadmaps?.lastModified > incomingLastModified) hasConflict = true;
+        if (modifiedCollections.includes('Stats') && existingStats?.lastModified > incomingLastModified) hasConflict = true;
+        if (modifiedCollections.includes('Settings') && existingSettings?.lastModified > incomingLastModified) hasConflict = true;
+      }
+    }
+
+    if (hasConflict) {
       return NextResponse.json({ 
         conflict: true, 
         cloudData: existingCloudData,
-        cloudLastModified: Number(existing.lastModified)
+        cloudLastModified: cloudLastModified
       }, { status: 409 });
     }
     
-    // Group settings efficiently
-    const { state, version } = body.data || {};
+    if (body.clearAll === true) {
+      // Complete account reset requested (clearAllData)
+      await Promise.all([
+        db.collection('DashboardStorage').deleteOne({ userId: user.userId }),
+        db.collection('Settings').deleteOne({ userId: user.userId }),
+        db.collection('Notes').deleteOne({ userId: user.userId }),
+        db.collection('Tasks').deleteOne({ userId: user.userId }),
+        db.collection('Roadmaps').deleteOne({ userId: user.userId }),
+        db.collection('Stats').deleteOne({ userId: user.userId })
+      ]);
+      return NextResponse.json({ success: true, message: 'All data cleared' });
+    }
     
+    if (!body.data) {
+      return NextResponse.json({ error: 'No data provided' }, { status: 400 });
+    }
+
+    // Group settings efficiently
+    const { state, version } = body.data;
+    
+    const tasksSpecificData: Record<string, any> = {};
+    const unsetTasksKeys: Record<string, string> = {};
+
+    TASK_KEYS.forEach(key => {
+      if (state && state[key] !== undefined) {
+        tasksSpecificData[key] = state[key];
+        delete state[key]; // Extract from state BEFORE it hits generalSettings/coreData
+      }
+      unsetTasksKeys[key] = ""; // Ensure removed from monolithic
+    });
+
+    const statsSpecificData: Record<string, any> = {};
+    const unsetStatsKeys: Record<string, string> = {};
+
+    STATS_KEYS.forEach(key => {
+      if (state && state[key] !== undefined) {
+        statsSpecificData[key] = state[key];
+        delete state[key]; // Extract from state BEFORE it hits generalSettings/coreData
+      }
+      unsetStatsKeys[key] = ""; // Ensure removed from monolithic
+    });
+
     const displaySettings: Record<string, any> = {};
     const generalSettings: Record<string, any> = {};
     const coreData: Record<string, any> = {};
@@ -157,27 +370,117 @@ export async function POST(request: Request) {
       }
     }
 
-    const newLastModified = Date.now();
-    const updateDoc = {
-      version: version || 2,
-      username: user.username,
-      lastModified: newLastModified,
-      updatedAt: new Date(),
-      displaySettings,
-      generalSettings,
-      ...coreData
-    };
+    const { notes, roadmaps, ...restCoreData } = coreData;
 
-    // Use updateOne with $set to only mutate fields efficiently, keeping it perfectly decoupled
-    await db.collection('DashboardStorage').updateOne(
-      { userId: user.userId },
-      { 
-        $set: updateDoc,
-        $setOnInsert: { userId: user.userId }
-      },
-      { upsert: true }
-    );
+    const settingsSpecificData: Record<string, any> = {};
+    const unsetLegacyKeys: Record<string, string> = { notes: "", roadmaps: "", displaySettings: "", generalSettings: "", ...unsetTasksKeys, ...unsetStatsKeys };
+
+    SETTING_ARRAY_KEYS.forEach(key => {
+      if (restCoreData[key] !== undefined) {
+        settingsSpecificData[key] = restCoreData[key];
+        delete restCoreData[key]; // Extract from monolithic doc
+      }
+      unsetLegacyKeys[key] = ""; // Ensure removed from monolithic doc during migration
+    });
+
+    const newLastModified = Date.now();
     
+    // 1. Update Monolithic Document (Now much lighter)
+    if (isFullSync || modifiedCollections.includes('DashboardStorage') || modifiedCollections.includes('Settings')) {
+      const updateDoc = {
+        version: version || 2,
+        username: user.username,
+        lastModified: newLastModified,
+        updatedAt: new Date(),
+        ...restCoreData
+      };
+
+      await db.collection('DashboardStorage').updateOne(
+        { userId: user.userId },
+        { 
+          $set: updateDoc,
+          $unset: unsetLegacyKeys,
+          $setOnInsert: { userId: user.userId }
+        },
+        { upsert: true }
+      );
+    }
+
+    // 2. Save Settings to the isolated Settings collection
+    if (isFullSync || modifiedCollections.includes('Settings')) {
+      const settingsDoc = {
+        displaySettings,
+        generalSettings,
+        ...settingsSpecificData,
+        lastModified: newLastModified
+      };
+
+      await db.collection('Settings').updateOne(
+        { userId: user.userId },
+        { 
+          $set: settingsDoc,
+          $setOnInsert: { userId: user.userId }
+        },
+        { upsert: true }
+      );
+    }
+
+    // 3. Save Tasks to the isolated Tasks collection
+    if ((isFullSync || modifiedCollections.includes('Tasks')) && Object.keys(tasksSpecificData).length > 0) {
+      const tasksDoc = { ...tasksSpecificData, lastModified: newLastModified };
+      await db.collection('Tasks').updateOne(
+        { userId: user.userId },
+        { 
+          $set: tasksDoc,
+          $setOnInsert: { userId: user.userId }
+        },
+        { upsert: true }
+      );
+    }
+
+    // 4. Save Notes to the isolated Notes collection
+    if ((isFullSync || modifiedCollections.includes('Notes')) && notes !== undefined) {
+      await db.collection('Notes').updateOne(
+        { userId: user.userId },
+        { 
+          $set: { notes, lastModified: newLastModified },
+          $setOnInsert: { userId: user.userId }
+        },
+        { upsert: true }
+      );
+    }
+    
+    // 5. Save Roadmaps to the isolated Roadmaps collection
+    if ((isFullSync || modifiedCollections.includes('Roadmaps')) && roadmaps !== undefined) {
+      await db.collection('Roadmaps').updateOne(
+        { userId: user.userId },
+        { 
+          $set: { roadmaps, lastModified: newLastModified },
+          $setOnInsert: { userId: user.userId }
+        },
+        { upsert: true }
+      );
+    }
+    
+    // 6. Save Stats to the isolated Stats collection
+    if ((isFullSync || modifiedCollections.includes('Stats')) && Object.keys(statsSpecificData).length > 0) {
+      const statsDoc = { ...statsSpecificData, lastModified: newLastModified };
+      await db.collection('Stats').updateOne(
+        { userId: user.userId },
+        { 
+          $set: statsDoc,
+          $setOnInsert: { userId: user.userId }
+        },
+        { upsert: true }
+      );
+    }
+    
+    // Auto-update the active status in the Users collection
+    await db.collection('User').updateOne(
+      { _id: new ObjectId(user.userId) },
+      { $set: { lastActiveAt: new Date() } }
+    );
+
     // Trigger automatic badge distribution asynchronously without blocking response
     calculateAndAwardBadges().catch(console.error);
 

@@ -10,10 +10,12 @@ export default function DraggableWidget({ id, children }: { id: string, children
     lockedWidgets, 
     widgetZIndices, 
     bringToFront,
-    customDesktopWallpapers, 
-    activeDesktopCustomIndex, 
-    customMobileWallpapers, 
-    activeMobileCustomIndex 
+    wallpaper,
+    currentBgSrc,
+    customDesktopWallpapers,
+    activeDesktopCustomIndex,
+    customMobileWallpapers,
+    activeMobileCustomIndex
   } = useDashboardStore();
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -21,7 +23,14 @@ export default function DraggableWidget({ id, children }: { id: string, children
   const startOffset = useRef({ x: 0, y: 0 });
   const latestPos = useRef({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  const [activeBgSrc, setActiveBgSrc] = useState<string>('');
+  
+  // Match VideoBackground logic perfectly for active source
+  let activeBgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : (currentBgSrc || wallpaper || "/wallpapers/naruto.webp");
+  if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
+    activeBgSrc = customMobileWallpapers[activeMobileCustomIndex];
+  } else if (!isMobile && activeDesktopCustomIndex !== null && customDesktopWallpapers[activeDesktopCustomIndex]) {
+    activeBgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
+  }
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');
@@ -31,22 +40,14 @@ export default function DraggableWidget({ id, children }: { id: string, children
     return () => media.removeEventListener('change', listener);
   }, []);
 
-  useEffect(() => {
-    let bgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp";
-    if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
-      bgSrc = customMobileWallpapers[activeMobileCustomIndex];
-    } else if (!isMobile && activeDesktopCustomIndex !== null && customDesktopWallpapers[activeDesktopCustomIndex]) {
-      bgSrc = customDesktopWallpapers[activeDesktopCustomIndex];
-    }
-    setActiveBgSrc(bgSrc);
-  }, [isMobile, activeMobileCustomIndex, customMobileWallpapers, activeDesktopCustomIndex, customDesktopWallpapers]);
-
   // Sync with store when background changes
   useEffect(() => {
     if (activeBgSrc && widgetOffsets[activeBgSrc]?.[id]) {
       setPosition(widgetOffsets[activeBgSrc][id]);
+      latestPos.current = widgetOffsets[activeBgSrc][id];
     } else {
       setPosition({ x: 0, y: 0 });
+      latestPos.current = { x: 0, y: 0 };
     }
   }, [activeBgSrc, widgetOffsets, id]);
 

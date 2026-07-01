@@ -13,6 +13,59 @@ const DEFAULT_WALLPAPERS = [
   'kakashiChild.jpg', 'naruto.webp', 'RockLee.mp4', 'squa7.jpg', 'demonslayer1.mp4'
 ];
 
+import { useWallpaperUrl } from '@/hooks/useWallpaperUrl';
+import { saveWallpaperToDB, deleteWallpaperFromDB } from '@/lib/indexedDB';
+
+const CustomWallpaperPreview = ({ url, isActive, onClick, onDelete, label, aspectClass = "aspect-video" }: any) => {
+  const { resolvedUrl, isVideo } = useWallpaperUrl(url);
+  return (
+    <div className={`relative group ${aspectClass} rounded-md border overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-white/10 hover:border-white/40'}`}>
+      <div className="absolute inset-0 cursor-pointer bg-black/40" onClick={onClick}>
+        {resolvedUrl ? (
+          isVideo ? (
+            <video src={resolvedUrl} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" muted loop autoPlay playsInline />
+          ) : (
+            <img src={resolvedUrl} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="Custom wp" />
+          )
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xs text-white/40 bg-black/20">Loading...</div>
+        )}
+      </div>
+      <div className="absolute inset-0 flex flex-col justify-between p-1.5 pointer-events-none">
+        <div className="flex justify-end w-full">
+          {isActive && <div className="bg-purple-500/90 rounded-full p-0.5"><BadgeCheck className="text-white w-3 h-3" /></div>}
+        </div>
+        <div className="flex justify-between items-end w-full">
+          <div className="text-[8px] md:text-[8px] px-1 py-0.5 bg-black/70 backdrop-blur-md rounded border border-white/10 text-white/90 max-w-[70%] truncate">
+            {label}
+          </div>
+          <div className="flex gap-1 pointer-events-auto">
+            {!url.startsWith('custom-') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(url);
+                  alert('URL copied to clipboard!');
+                }}
+                className="p-1 bg-black/70 border border-white/10 text-white/80 hover:text-blue-400 rounded transition-colors"
+                title="Copy URL"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            )}
+            <button
+              onClick={onDelete}
+              className="p-1 bg-black/70 border border-white/10 text-white/80 hover:text-red-400 rounded transition-colors"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function SettingsModal() {
   const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, resetTimetable, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex, theme, setTheme } = useDashboardStore();
 
@@ -1088,61 +1141,64 @@ export default function SettingsModal() {
                       <h4 className="font-medium text-[10px] md:text-[11px] text-blue-300 border-b border-white/10 pb-1.5">Desktop Wallpapers</h4>
 
                       <div className="grid grid-cols-2 gap-2 md:gap-2.5">
-                        {customDesktopWallpapers.map((url, i) => {
-                          const isVideo = url.match(/\.(mp4|webm)$/i);
-                          return (
-                            <div key={`desktop-wp-${i}`} className={`relative group aspect-video rounded-md border overflow-hidden transition-all ${activeDesktopCustomIndex === i ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-white/10 hover:border-white/40'}`}>
-                              <div
-                                className="absolute inset-0 cursor-pointer bg-black/40"
-                                onClick={() => setActiveDesktopCustomIndex(i)}
-                              >
-                                {isVideo ? (
-                                  <video src={url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" muted loop autoPlay playsInline />
-                                ) : (
-                                  <img src={url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="Custom wp" />
-                                )}
-                              </div>
-                              <div className="absolute inset-0 flex flex-col justify-between p-1.5 pointer-events-none">
-                                <div className="flex justify-end w-full">
-                                  {activeDesktopCustomIndex === i && <div className="bg-purple-500/90 rounded-full p-0.5"><BadgeCheck className="text-white w-3 h-3" /></div>}
-                                </div>
-                                <div className="flex justify-between items-end w-full">
-                                  <div className="text-[8px] md:text-[8px] px-1 py-0.5 bg-black/70 backdrop-blur-md rounded border border-white/10 text-white/90 max-w-[70%] truncate">
-                                    {url.split('/').pop() || 'image'}
-                                  </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const newUrls = [...customDesktopWallpapers];
-                                      newUrls.splice(i, 1);
-                                      setCustomDesktopWallpapers(newUrls);
-                                      if (activeDesktopCustomIndex === i) setActiveDesktopCustomIndex(null);
-                                      else if (activeDesktopCustomIndex !== null && activeDesktopCustomIndex > i) setActiveDesktopCustomIndex(activeDesktopCustomIndex - 1);
-                                    }}
-                                    className="p-1 bg-black/70 border border-white/10 text-white/80 hover:text-red-400 rounded pointer-events-auto"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {customDesktopWallpapers.map((url, i) => (
+                          <CustomWallpaperPreview
+                            key={`desktop-wp-${i}`}
+                            url={url}
+                            isActive={activeDesktopCustomIndex === i}
+                            onClick={() => setActiveDesktopCustomIndex(i)}
+                            onDelete={async (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              if (!confirm("Are you sure you want to remove this wallpaper?")) return;
+                              const newUrls = [...customDesktopWallpapers];
+                              newUrls.splice(i, 1);
+                              setCustomDesktopWallpapers(newUrls);
+                              if (activeDesktopCustomIndex === i) setActiveDesktopCustomIndex(null);
+                              else if (activeDesktopCustomIndex !== null && activeDesktopCustomIndex > i) setActiveDesktopCustomIndex(activeDesktopCustomIndex - 1);
+                              if (url.startsWith('custom-')) await deleteWallpaperFromDB(url);
+                            }}
+                            label={url.startsWith('custom-') ? 'Local File' : (url.split('/').pop() || 'image')}
+                            aspectClass="aspect-video"
+                          />
+                        ))}
                       </div>
 
                       {customDesktopWallpapers.length < 4 && (
-                        <button
-                          onClick={() => {
-                            const url = prompt("Enter a direct image URL (https://...):");
-                            if (url && url.trim().startsWith('http')) {
-                              setCustomDesktopWallpapers([...customDesktopWallpapers, url.trim()]);
-                              if (activeDesktopCustomIndex === null) setActiveDesktopCustomIndex(customDesktopWallpapers.length);
-                            }
-                          }}
-                          className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded text-[9px] md:text-[10px] text-white/60 hover:text-white"
-                        >
-                          <Plus className="w-3 h-3" /> Add URL
-                        </button>
+                        <div className="flex gap-2 w-full">
+                          <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded text-[9px] md:text-[10px] text-white/60 hover:text-white cursor-pointer transition-colors">
+                            <Plus className="w-3 h-3" /> Upload File
+                            <input 
+                              type="file"
+                              accept="image/*,video/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 25 * 1024 * 1024) {
+                                  alert("File is too large! Maximum allowed is 25MB.");
+                                  return;
+                                }
+                                const id = `custom-desktop-${Date.now()}`;
+                                await saveWallpaperToDB(id, file);
+                                setCustomDesktopWallpapers([...customDesktopWallpapers, id]);
+                                if (activeDesktopCustomIndex === null) setActiveDesktopCustomIndex(customDesktopWallpapers.length);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={() => {
+                              const url = prompt("Enter a direct image URL (https://...):");
+                              if (url && url.trim().startsWith('http')) {
+                                setCustomDesktopWallpapers([...customDesktopWallpapers, url.trim()]);
+                                if (activeDesktopCustomIndex === null) setActiveDesktopCustomIndex(customDesktopWallpapers.length);
+                              }
+                            }}
+                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] md:text-[10px] text-white/60 hover:text-white transition-colors"
+                          >
+                            Add URL
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -1151,61 +1207,64 @@ export default function SettingsModal() {
                       <h4 className="font-medium text-[10px] md:text-[11px] text-pink-300 border-b border-white/10 pb-1.5">Mobile Wallpapers</h4>
 
                       <div className="grid grid-cols-2 gap-2 md:gap-2.5">
-                        {customMobileWallpapers.map((url, i) => {
-                          const isVideo = url.match(/\.(mp4|webm)$/i);
-                          return (
-                            <div key={`mobile-wp-${i}`} className={`relative group aspect-[9/16] rounded-md border overflow-hidden transition-all ${activeMobileCustomIndex === i ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-white/10 hover:border-white/40'}`}>
-                              <div
-                                className="absolute inset-0 cursor-pointer bg-black/40"
-                                onClick={() => setActiveMobileCustomIndex(i)}
-                              >
-                                {isVideo ? (
-                                  <video src={url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" muted loop autoPlay playsInline />
-                                ) : (
-                                  <img src={url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="Custom wp" />
-                                )}
-                              </div>
-                              <div className="absolute inset-0 flex flex-col justify-between p-1.5 pointer-events-none">
-                                <div className="flex justify-end w-full">
-                                  {activeMobileCustomIndex === i && <div className="bg-purple-500/90 rounded-full p-0.5"><BadgeCheck className="text-white w-3 h-3" /></div>}
-                                </div>
-                                <div className="flex justify-between items-end w-full">
-                                  <div className="text-[8px] md:text-[8px] px-1 py-0.5 bg-black/70 backdrop-blur-md rounded border border-white/10 text-white/90 max-w-[70%] truncate">
-                                    {url.split('/').pop() || 'image'}
-                                  </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const newUrls = [...customMobileWallpapers];
-                                      newUrls.splice(i, 1);
-                                      setCustomMobileWallpapers(newUrls);
-                                      if (activeMobileCustomIndex === i) setActiveMobileCustomIndex(null);
-                                      else if (activeMobileCustomIndex !== null && activeMobileCustomIndex > i) setActiveMobileCustomIndex(activeMobileCustomIndex - 1);
-                                    }}
-                                    className="p-1 bg-black/70 border border-white/10 text-white/80 hover:text-red-400 rounded pointer-events-auto"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {customMobileWallpapers.map((url, i) => (
+                          <CustomWallpaperPreview
+                            key={`mobile-wp-${i}`}
+                            url={url}
+                            isActive={activeMobileCustomIndex === i}
+                            onClick={() => setActiveMobileCustomIndex(i)}
+                            onDelete={async (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              if (!confirm("Are you sure you want to remove this wallpaper?")) return;
+                              const newUrls = [...customMobileWallpapers];
+                              newUrls.splice(i, 1);
+                              setCustomMobileWallpapers(newUrls);
+                              if (activeMobileCustomIndex === i) setActiveMobileCustomIndex(null);
+                              else if (activeMobileCustomIndex !== null && activeMobileCustomIndex > i) setActiveMobileCustomIndex(activeMobileCustomIndex - 1);
+                              if (url.startsWith('custom-')) await deleteWallpaperFromDB(url);
+                            }}
+                            label={url.startsWith('custom-') ? 'Local File' : (url.split('/').pop() || 'image')}
+                            aspectClass="aspect-[9/16]"
+                          />
+                        ))}
                       </div>
 
                       {customMobileWallpapers.length < 4 && (
-                        <button
-                          onClick={() => {
-                            const url = prompt("Enter a direct image URL (https://...):");
-                            if (url && url.trim().startsWith('http')) {
-                              setCustomMobileWallpapers([...customMobileWallpapers, url.trim()]);
-                              if (activeMobileCustomIndex === null) setActiveMobileCustomIndex(customMobileWallpapers.length);
-                            }
-                          }}
-                          className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded text-[9px] md:text-[10px] text-white/60 hover:text-white"
-                        >
-                          <Plus className="w-3 h-3" /> Add URL
-                        </button>
+                        <div className="flex gap-2 w-full">
+                          <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded text-[9px] md:text-[10px] text-white/60 hover:text-white cursor-pointer transition-colors">
+                            <Plus className="w-3 h-3" /> Upload File
+                            <input 
+                              type="file"
+                              accept="image/*,video/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 25 * 1024 * 1024) {
+                                  alert("File is too large! Maximum allowed is 25MB.");
+                                  return;
+                                }
+                                const id = `custom-mobile-${Date.now()}`;
+                                await saveWallpaperToDB(id, file);
+                                setCustomMobileWallpapers([...customMobileWallpapers, id]);
+                                if (activeMobileCustomIndex === null) setActiveMobileCustomIndex(customMobileWallpapers.length);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={() => {
+                              const url = prompt("Enter a direct image URL (https://...):");
+                              if (url && url.trim().startsWith('http')) {
+                                setCustomMobileWallpapers([...customMobileWallpapers, url.trim()]);
+                                if (activeMobileCustomIndex === null) setActiveMobileCustomIndex(customMobileWallpapers.length);
+                              }
+                            }}
+                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] md:text-[10px] text-white/60 hover:text-white transition-colors"
+                          >
+                            Add URL
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
