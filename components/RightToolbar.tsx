@@ -143,7 +143,7 @@ export default function RightToolbar() {
         {/* Panic Button - Mobile Only */}
         <button
           onClick={handlePanic}
-          className={`md:hidden p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-red-500/30 bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 shadow-xl shadow-red-500/10 transition-all backdrop-blur-xl ${isHidden && panicButtonMode === 'hide' ? 'opacity-0' : 'opacity-100'}`}
+          className={`lg:hidden p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-red-500/30 bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 shadow-xl shadow-red-500/10 transition-all backdrop-blur-xl ${isHidden && panicButtonMode === 'hide' ? 'opacity-0' : 'opacity-100'}`}
           title={isHidden ? "Unhide Interface" : (panicButtonMode === 'redirect' ? "Panic! Launch App" : "Panic! Hide Interface")}
         >
           <EyeOff size={20} className="sm:w-6 sm:h-6" />

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDashboardStore, setAuthTransition } from '@/store/dashboardStore';
-import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft, Info } from 'lucide-react';
+import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft, Info, Eye, EyeOff } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 
 export default function ConnectTab() {
@@ -21,6 +21,7 @@ export default function ConnectTab() {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authSuccessMsg, setAuthSuccessMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Friends state
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,6 +42,7 @@ export default function ConnectTab() {
   const [aliasLoading, setAliasLoading] = useState(false);
   const [isAliasUnlocked, setIsAliasUnlocked] = useState(false);
   const [aliasPassword, setAliasPassword] = useState('');
+  const [showAliasPassword, setShowAliasPassword] = useState(false);
   const [aliasUnlockLoading, setAliasUnlockLoading] = useState(false);
   const [aliasUnlockError, setAliasUnlockError] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
@@ -443,14 +445,23 @@ export default function ConnectTab() {
                       onChange={e => setAuthPin(e.target.value)}
                       className="bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 transition-colors tracking-widest text-center text-sm"
                     />
-                    <input
-                      type="password"
-                      placeholder="New Password"
-                      required
-                      value={authPassword}
-                      onChange={e => setAuthPassword(e.target.value)}
-                      className="bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 transition-colors text-sm"
-                    />
+                    <div className="relative w-full">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="New Password"
+                        required
+                        value={authPassword}
+                        onChange={e => setAuthPassword(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 transition-colors text-sm pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </>
                 )}
               </>
@@ -474,14 +485,23 @@ export default function ConnectTab() {
                   onChange={e => setAuthUsername(e.target.value)}
                   className="bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 transition-colors text-sm"
                 />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  required
-                  value={authPassword}
-                  onChange={e => setAuthPassword(e.target.value)}
-                  className="bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 transition-colors text-sm"
-                />
+                <div className="relative w-full">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    required
+                    value={authPassword}
+                    onChange={e => setAuthPassword(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-blue-500 transition-colors text-sm pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </>
             )}
 
@@ -679,9 +699,9 @@ export default function ConnectTab() {
             {!isAliasUnlocked ? (
               <div className="flex flex-col gap-1.5 w-full">
                 <p className="text-white/40 text-[9px] leading-tight">Enter your password to unlock alias settings and account deletion.</p>
-                <div className="flex gap-1.5 w-full mt-0.5">
+                <div className="flex gap-1.5 w-full mt-0.5 relative">
                   <input
-                    type="password"
+                    type={showAliasPassword ? "text" : "password"}
                     placeholder="Enter password..."
                     value={aliasPassword}
                     onChange={e => setAliasPassword(e.target.value)}
@@ -708,8 +728,15 @@ export default function ConnectTab() {
                         }
                       }
                     }}
-                    className="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:border-yellow-500 transition-colors text-[10px] md:text-xs text-white/90 placeholder:text-white/30"
+                    className="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:border-yellow-500 transition-colors text-[10px] md:text-xs text-white/90 placeholder:text-white/30 pr-8"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowAliasPassword(!showAliasPassword)}
+                    className="absolute right-[85px] top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                  >
+                    {showAliasPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                   <button
                     onClick={async () => {
                       setAliasUnlockLoading(true);

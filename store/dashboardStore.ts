@@ -1414,6 +1414,12 @@ export const useDashboardStore = create<DashboardState>()(
         if (persistedState.healthData && typeof persistedState.healthData === 'object') {
            safeState.healthData = { ...currentState.healthData, ...persistedState.healthData };
         }
+        if (persistedState.clockOffsets && typeof persistedState.clockOffsets === 'object') {
+           safeState.clockOffsets = { ...currentState.clockOffsets, ...persistedState.clockOffsets };
+        }
+        if (persistedState.widgetOffsets && typeof persistedState.widgetOffsets === 'object') {
+           safeState.widgetOffsets = { ...currentState.widgetOffsets, ...persistedState.widgetOffsets };
+        }
 
         return safeState;
       },

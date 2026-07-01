@@ -9,6 +9,7 @@ export default function DraggableWidget({ id, children }: { id: string, children
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
+  const latestPos = useRef({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -60,10 +61,12 @@ export default function DraggableWidget({ id, children }: { id: string, children
     const dx = e.clientX - startPos.current.x;
     const dy = e.clientY - startPos.current.y;
     
-    setPosition({
+    const newPos = {
       x: startOffset.current.x + dx,
       y: startOffset.current.y + dy
-    });
+    };
+    setPosition(newPos);
+    latestPos.current = newPos;
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -72,8 +75,9 @@ export default function DraggableWidget({ id, children }: { id: string, children
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
 
     // Save to store
+    // Save to store using the guaranteed latest position
     if (currentBgSrc) {
-      updateWidgetOffset(currentBgSrc, id, position.x, position.y);
+      updateWidgetOffset(currentBgSrc, id, latestPos.current.x, latestPos.current.y);
     }
   };
 
