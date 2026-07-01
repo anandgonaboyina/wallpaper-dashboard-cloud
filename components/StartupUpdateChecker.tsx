@@ -11,13 +11,13 @@ export default function StartupUpdateChecker() {
     // (A manual right-click "Reload" will keep session storage, preventing annoyance)
     const hasChecked = sessionStorage.getItem('hasCheckedUpdateV2');
     if (hasChecked) return;
-    
+
     sessionStorage.setItem('hasCheckedUpdateV2', 'true');
 
     // Wait 8 seconds after dashboard loads before checking, so we don't slow down boot
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch('/api/update', { 
+        const res = await fetch('/api/update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'check' })
@@ -44,9 +44,9 @@ export default function StartupUpdateChecker() {
         <RefreshCw size={32} className="text-blue-400" />
       </div>
       <div className="flex flex-col gap-2 pr-8 w-full">
-        <h4 className="font-bold text-xl text-blue-100">Productive Dashboard Update</h4>
+        <h4 className="font-bold text-xl text-blue-100">Grind Board Update</h4>
         <p className="text-sm text-white/70 mb-2 leading-relaxed">{updateMsg}</p>
-        <button 
+        <button
           onClick={() => {
             setUpdateMsg('');
             // Ensure settings is open and switched to update tab
@@ -60,8 +60,8 @@ export default function StartupUpdateChecker() {
           View Update Details
         </button>
       </div>
-      <button 
-        onClick={() => setUpdateMsg('')} 
+      <button
+        onClick={() => setUpdateMsg('')}
         className="absolute top-4 right-4 p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
         title="Dismiss"
       >

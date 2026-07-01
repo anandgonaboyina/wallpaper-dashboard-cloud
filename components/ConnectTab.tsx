@@ -1085,7 +1085,7 @@ export default function ConnectTab() {
                             {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : user.displayName.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col min-w-0 overflow-hidden">
-                            <span className={`font-bold text-[10px] md:text-lg tracking-wide truncate w-full ${user.isMe ? 'text-blue-400' : 'text-white/90'}`}>
+                            <span className={`font-bold text-[10px] md:text-lg tracking-wide truncate w-full ${user.isMe ? 'text-blue-500 dark:text-blue-400' : 'text-gray-800 dark:text-white/90'}`}>
                               {user.displayName}
                             </span>
                             <div className="flex gap-1 md:gap-1.5 mt-0.5 md:mt-1 flex-wrap w-full min-w-0">
@@ -1097,13 +1097,13 @@ export default function ConnectTab() {
                         </div>
                         <div className="text-right flex items-center gap-1.5 md:gap-4 shrink-0">
                           <div className="flex flex-col items-end justify-center">
-                            <span className="font-mono font-bold text-[10px] md:text-2xl tracking-tighter text-white/90">{Math.floor(val / 60)}<span className="text-[8px] md:text-sm text-white/40 mr-0.5">h</span>{val % 60}<span className="text-[8px] md:text-sm text-white/40">m</span></span>
-                            <span className="text-[7px] md:text-[10px] text-white/40 uppercase tracking-widest font-semibold">Focus</span>
+                            <span className="font-mono font-bold text-[10px] md:text-2xl tracking-tighter text-gray-800 dark:text-white/90">{Math.floor(val / 60)}<span className="text-[8px] md:text-sm text-gray-500 dark:text-white/40 mr-0.5">h</span>{val % 60}<span className="text-[8px] md:text-sm text-gray-500 dark:text-white/40">m</span></span>
+                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/40 uppercase tracking-widest font-semibold">Focus</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setExpandedLeaderboardUserId(expandedLeaderboardUserId === user.id ? null : user.id)}
-                            className="p-1 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-transparent hover:border-white/20 text-white/50 shrink-0"
+                            className="p-1 bg-gray-200 hover:bg-gray-300 dark:bg-white/5 dark:hover:bg-white/10 rounded-full transition-colors border border-transparent hover:border-gray-300 dark:hover:border-white/20 text-gray-500 dark:text-white/50 shrink-0"
                           >
                             {expandedLeaderboardUserId === user.id ? <ChevronUp className="w-3.5 h-3.5 md:w-5 md:h-5" /> : <ChevronDown className="w-3.5 h-3.5 md:w-5 md:h-5" />}
                           </button>
@@ -1112,18 +1112,18 @@ export default function ConnectTab() {
 
                       {/* Expanded Stats */}
                       {expandedLeaderboardUserId === user.id && (
-                        <div className="w-full mt-1.5 md:mt-2 pt-2 md:pt-3 border-t border-white/10 grid grid-cols-3 gap-1.5 md:gap-3 text-center animate-fade-in min-w-0">
-                          <div className="flex flex-col bg-black/20 p-1.5 md:p-2 rounded border border-white/5 min-w-0">
-                            <span className="text-[7px] md:text-[10px] text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Today</span>
-                            <span className="font-mono text-[9px] md:text-base font-bold text-yellow-300 truncate">{Math.floor(user.todayFocused / 60)}h {user.todayFocused % 60}m</span>
+                        <div className="w-full mt-1.5 md:mt-2 pt-2 md:pt-3 border-t border-gray-300 dark:border-white/10 grid grid-cols-3 gap-1.5 md:gap-3 text-center animate-fade-in min-w-0">
+                          <div className="flex flex-col bg-gray-200/50 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
+                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Today</span>
+                            <span className="font-mono text-[9px] md:text-base font-bold text-yellow-600 dark:text-yellow-300 truncate">{Math.floor(user.todayFocused / 60)}h {user.todayFocused % 60}m</span>
                           </div>
-                          <div className="flex flex-col bg-black/20 p-1.5 md:p-2 rounded border border-white/5 min-w-0">
-                            <span className="text-[7px] md:text-[10px] text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Week</span>
-                            <span className="font-mono text-[9px] md:text-base font-bold text-purple-300 truncate">{Math.floor(user.last7DaysFocused / 60)}h {user.last7DaysFocused % 60}m</span>
+                          <div className="flex flex-col bg-gray-200/50 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
+                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Week</span>
+                            <span className="font-mono text-[9px] md:text-base font-bold text-purple-600 dark:text-purple-300 truncate">{Math.floor(user.last7DaysFocused / 60)}h {user.last7DaysFocused % 60}m</span>
                           </div>
-                          <div className="flex flex-col bg-black/20 p-1.5 md:p-2 rounded border border-white/5 min-w-0">
-                            <span className="text-[7px] md:text-[10px] text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Month</span>
-                            <span className="font-mono text-[9px] md:text-base font-bold text-emerald-300 truncate">{Math.floor(user.last30DaysFocused / 60)}h {user.last30DaysFocused % 60}m</span>
+                          <div className="flex flex-col bg-gray-200/50 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
+                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Month</span>
+                            <span className="font-mono text-[9px] md:text-base font-bold text-emerald-600 dark:text-emerald-300 truncate">{Math.floor(user.last30DaysFocused / 60)}h {user.last30DaysFocused % 60}m</span>
                           </div>
                         </div>
                       )}

@@ -12,6 +12,7 @@ export default function Stopwatch() {
   const [taskTitle, setTaskTitle] = useState('');
   const [viewingHistory, setViewingHistory] = useState(false);
   const [addToStats, setAddToStats] = useState(true);
+  const [showContinuePrompt, setShowContinuePrompt] = useState(false);
 
   useEffect(() => {
     if (stopwatchStartTime) {
@@ -27,20 +28,36 @@ export default function Stopwatch() {
     let interval: NodeJS.Timeout;
     if (isRunning && stopwatchStartTime) {
       interval = setInterval(() => {
-        setElapsedSecs(Math.floor((Date.now() - stopwatchStartTime) / 1000));
+        setElapsedSecs(prev => {
+          const now = Date.now();
+          const secs = Math.floor((now - stopwatchStartTime) / 1000);
+          const currentPeriod = Math.floor(secs / 7200);
+          const lastPeriod = Math.floor(prev / 7200);
+          
+          if (currentPeriod > lastPeriod && currentPeriod > 0) {
+            setIsRunning(false);
+            useDashboardStore.getState().setIsAlarmPlaying(true);
+            useDashboardStore.setState({ isStopwatchOpen: true });
+            setShowContinuePrompt(true);
+            return currentPeriod * 7200;
+          }
+          return secs;
+        });
       }, 250); 
     }
     return () => clearInterval(interval);
   }, [isRunning, stopwatchStartTime]);
-
-  // Always render to keep interval ticking, hide visually if closed
-  // if (!isStopwatchOpen) return null;
 
   const handleStart = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!isRunning) {
       setStopwatchStartTime(Date.now() - elapsedSecs * 1000);
       setIsRunning(true);
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setTimeout(() => {
+          useDashboardStore.setState({ isStopwatchOpen: false });
+        }, 3000);
+      }
     }
   };
 
@@ -80,7 +97,7 @@ export default function Stopwatch() {
   return (
     <DraggableWidget id="stopwatch">
       <div className={`relative pointer-events-auto select-none ${isStopwatchOpen ? '' : 'hidden'}`} onClick={(e) => e.stopPropagation()}>
-        <div className="w-56 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl p-3 text-white flex flex-col gap-2 min-h-[120px]">
+        <div className="w-56 rounded-3xl glass-panel p-3 text-white flex flex-col gap-2 min-h-[120px]">
           
           {viewingHistory ? (
             <div className="flex flex-col h-full gap-2 relative">

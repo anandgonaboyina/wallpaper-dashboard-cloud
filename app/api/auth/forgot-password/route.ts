@@ -46,14 +46,14 @@ export async function POST(request: Request) {
         'api-key': BREVO_API_KEY
       },
       body: JSON.stringify({
-        sender: { email: BREVO_SENDER_EMAIL, name: 'Productive Dashboard' },
+        sender: { email: BREVO_SENDER_EMAIL, name: 'Grind Board' },
         to: [{ email: user.email, name: user.username }],
-        subject: 'Your Productive Dashboard Password Reset Code',
+        subject: 'Your Grind Board Password Reset Code',
         htmlContent: `
           <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 32px; text-align: center; background-color: #09090b; color: #f4f4f5; border-radius: 16px; border: 1px solid #27272a; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
             <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin-top: 0; margin-bottom: 8px;">Reset your password</h2>
             <p style="color: #a1a1aa; font-size: 15px; line-height: 1.6; margin-bottom: 32px;">
-              You requested a password reset for your Productive Dashboard account (<b>${user.username}</b>).
+              You requested a password reset for your Grind Board account (<b>${user.username}</b>).
             </p>
             
             <div style="background-color: #18181b; padding: 24px; border-radius: 12px; border: 1px solid #3f3f46; margin-bottom: 32px;">

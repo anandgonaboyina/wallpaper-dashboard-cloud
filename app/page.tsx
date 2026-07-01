@@ -203,7 +203,7 @@ export default function CloudLogin() {
         <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-6 text-center">
           <div className="animate-slide-up delay-300">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 mb-1">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{isAdminMode ? 'Admin Access' : (isRegisterMode ? 'Create Account' : (isForgotMode ? 'Reset Password' : 'Productive Dashboard'))}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{isAdminMode ? 'Admin Access' : (isRegisterMode ? 'Create Account' : (isForgotMode ? 'Reset Password' : 'Grind Board'))}</h1>
             </div>
             <p className="text-white/70 text-xs sm:text-sm mt-1">
               {isAdminMode ? 'Sign in to access the Global Admin Panel.' : (isRegisterMode ? 'Register to sync your dashboard data.' : (isForgotMode ? 'Recover your account access.' : 'Sign in to sync your dashboard data.'))}

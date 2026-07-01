@@ -1,9 +1,9 @@
-# Productive Dashboard — User Manual
+# Grind Board — User Manual
 
 ## 0. Introduction
 
 **What is this app?**
-Productive Dashboard is a personal productivity web app that works on both desktop and mobile (installable as a PWA — Progressive Web App). It combines a focus timer, stopwatch, weekly timetable, task manager, roadmap planner, rich-text notes, health tracker, leaderboard, friends system, calendar with deadlines, countdown widgets, wallpaper system, and live quotes — all synced to the cloud so your data follows you everywhere.
+Grind Board is a personal productivity web app that works on both desktop and mobile (installable as a PWA — Progressive Web App). It combines a focus timer, stopwatch, weekly timetable, task manager, roadmap planner, rich-text notes, health tracker, leaderboard, friends system, calendar with deadlines, countdown widgets, wallpaper system, and live quotes — all synced to the cloud so your data follows you everywhere.
 
 ### Core Features
 - **Unified Workspace**: Eliminate distractions with a clean, centralized hub.
@@ -40,7 +40,7 @@ This app is a **PWA (Progressive Web App)** — it installs like a native app di
 4. The app opens in its own window (no browser tabs, no address bar) — feels like a desktop app.
 5. It also appears in your Start Menu / taskbar like any other installed app.
 
-> **Tip:** If you don't see the install icon in the address bar, try the three-dot menu (⋮) at the top-right → look for **"Install Productive Dashboard"** or **"Cast, save, and share → Install page as app"**.
+> **Tip:** If you don't see the install icon in the address bar, try the three-dot menu (⋮) at the top-right → look for **"Install Grind Board"** or **"Cast, save, and share → Install page as app"**.
 
 ---
 
@@ -569,7 +569,7 @@ View your submission status:
 many widgets can be controlled using swipe gestures instead of buttons for a faster experience:
 
 - **Countdowns**: Swipe left or right on the widget to switch between your countdowns. Swipe **UP** directly on the widget to close/hide it. You can also do a right or left swipe on the top Focus Pill to toggle the Countdowns widget open or closed.
-- **Calendar**: Swipe left or right near top-left edge on screen to show or hide calendar quickly without calender button you can hide it from settings if you want.
+- **Calendar**: The calendar rests hidden at the left edge of the screen. Hover or tap the edge to slide it open. It will automatically hide after 8 seconds of inactivity.
 - **Task Manager**: Swipe left or right near top-right edge on screen to show or hide the tasks quickly without calender button you can hide it from settings if you want.
 - **Menus & Modals**: You can use mouse click and drag (or swipe on touch screens) to close or navigate the Settings side menu and the Health & Habits modal.
 - **Edge Panels**: The Health Rings (bottom-left) and Right Toolbar hide at the screen edges. Click or hover the exposed edge to expand them. Swipe right on the Toolbar to hide it, while the Health Rings will auto-hide after 8 seconds.

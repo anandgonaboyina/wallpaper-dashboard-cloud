@@ -17,6 +17,43 @@ export default function HealthRings() {
     const [todayKey, setTodayKey] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const startX = useRef<number | null>(null);
+
+    useEffect(() => {
+        const handleGlobalMouseUp = (e: MouseEvent) => {
+            if (startX.current !== null) {
+                if (startX.current - e.clientX > 15) setIsExpanded(false);
+                startX.current = null;
+            }
+        };
+        const handleGlobalTouchEnd = (e: TouchEvent) => {
+            if (startX.current !== null) {
+                if (startX.current - e.changedTouches[0].clientX > 15) setIsExpanded(false);
+                startX.current = null;
+            }
+        };
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        window.addEventListener('touchend', handleGlobalTouchEnd);
+        return () => {
+            window.removeEventListener('mouseup', handleGlobalMouseUp);
+            window.removeEventListener('touchend', handleGlobalTouchEnd);
+        };
+    }, []);
+
+    const handleDragStart = (clientX: number) => {
+        startX.current = clientX;
+    };
+
+    const handleDragEnd = (clientX: number) => {
+        if (startX.current !== null) {
+            const deltaX = startX.current - clientX;
+            // Drag left to close (since it's on the left edge)
+            if (deltaX > 15) {
+                setIsExpanded(false);
+            }
+            startX.current = null;
+        }
+    };
 
     useEffect(() => {
         const updateDate = () => setTodayKey(getLocalDateString());
@@ -66,6 +103,12 @@ export default function HealthRings() {
             }`}
             onClick={!isExpanded ? handleExpand : undefined}
             onMouseEnter={isExpanded ? handleExpand : undefined}
+            onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+            onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
+            onTouchCancel={() => { startX.current = null; }}
+            onMouseDown={(e) => handleDragStart(e.clientX)}
+            onMouseUp={(e) => handleDragEnd(e.clientX)}
+            onMouseLeave={(e) => handleDragEnd(e.clientX)}
         >
             {/* Scaled down width, padding, and gap for mobile */}
             <div className={`bg-black/20 backdrop-blur-3xl border border-white/10 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-2xl flex flex-col items-center gap-2 md:gap-4 transition-all duration-300 hover:bg-black/30 w-[240px] md:w-[300px] ${!isExpanded ? 'opacity-60 hover:opacity-100' : 'opacity-100'}`}>

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash, ListTodo, X } from 'lucide-react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import ScrollableWithArrows from './ScrollableWithArrows';
@@ -10,7 +10,12 @@ export default function MiniCalendar() {
   const [showAllDeadlines, setShowAllDeadlines] = useState(false);
   const [editingDeadlineId, setEditingDeadlineId] = useState<string | null>(null);
 
-  const { deadlines, addDeadline, updateDeadline, deleteDeadline, deleteAllDeadlinesForDay, deleteAllDeadlines, toggleCalendar } = useDashboardStore();
+  const { deadlines, addDeadline, updateDeadline, deleteDeadline, deleteAllDeadlinesForDay, deleteAllDeadlines, toggleCalendar, setIsCalendarBusy } = useDashboardStore();
+
+  // Sync busy state so Dashboard doesn't auto-hide the calendar while editing
+  useEffect(() => {
+    setIsCalendarBusy(!!selectedDate || showAllDeadlines || !!editingDeadlineId);
+  }, [selectedDate, showAllDeadlines, editingDeadlineId, setIsCalendarBusy]);
 
   const handleCloseDate = () => {
     if (selectedDate) {

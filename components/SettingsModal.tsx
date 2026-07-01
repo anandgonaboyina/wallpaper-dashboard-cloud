@@ -14,7 +14,7 @@ const DEFAULT_WALLPAPERS = [
 ];
 
 export default function SettingsModal() {
-  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, resetTimetable, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex } = useDashboardStore();
+  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, resetTimetable, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex, theme, setTheme } = useDashboardStore();
 
   const [focusPlatform, setFocusPlatform] = useState<'desktop' | 'mobile'>('desktop');
 
@@ -28,16 +28,16 @@ export default function SettingsModal() {
     preferences: {
       title: 'General Preferences',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
-          <h4 className="font-bold text-white text-[13px]">Widget Visibility</h4>
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px]">Widget Visibility</h4>
           <p className="text-[11px] leading-relaxed">Customize your workspace by toggling any widget on or off. Hidden widgets are completely removed from the dashboard, giving you a cleaner view when you want fewer distractions.</p>
-          <h4 className="font-bold text-white text-[13px]">Widget Drag Locking</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px]">Widget Drag Locking</h4>
           <p className="text-[11px] leading-relaxed">When unlocked, all widgets can be freely dragged anywhere on the screen. Toggle the lock for specific widgets to freeze them in place so they aren't accidentally moved. If your layout gets messy, use the 'Reset Default Positions' button to snap everything back to their original layout.</p>
-          <h4 className="font-bold text-white text-[13px]">Display Options</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px]">Display Options</h4>
           <p className="text-[11px] leading-relaxed mb-1"><strong>24-Hour Clock:</strong> Toggle the big dashboard clock between a standard 12-hour AM/PM format and a 24-hour military time format.</p>
           <p className="text-[11px] leading-relaxed"><strong>Deadline Alert Days:</strong> Configure how many days in advance the dashboard should warn you about an upcoming deadline on your calendar. If a deadline falls within this threshold, a prominent red warning banner will appear automatically when you open the app.</p>
 
-          <h4 className="font-bold text-white text-[13px] mt-2">Widget Drag Controls</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Widget Drag Controls</h4>
           <p className="text-[11px] leading-relaxed">many widgets can be controlled using swipe gestures instead of buttons for a faster experience:</p>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Countdowns:</strong> Swipe left or right on the widget to switch between your countdowns. Swipe <strong>UP</strong> directly on the widget to close/hide it.  You can also do a right or left swipe on the top Focus Pill to toggle the Countdowns widget open or closed.</li>
@@ -52,7 +52,7 @@ export default function SettingsModal() {
     sound: {
       title: 'Sound Settings',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
           <p className="text-[11px] leading-relaxed">Configure the behavior of alarms when your Focus Timer finishes its countdown.</p>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Enable Alarm Sound:</strong> Triggers your selected audio ringtone when the timer finishes.</li>
@@ -63,12 +63,12 @@ export default function SettingsModal() {
           <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg mt-4">
             <h4 className="font-bold text-blue-300 mb-1 text-[12px]">Background Alarm via MacroDroid (Android)</h4>
             <p className="text-[10px] mb-2 leading-relaxed">Because mobile operating systems aggressively suspend background web apps, your browser may fail to continuously play a looping alarm sound if you lock your screen or minimize the app. To bypass this and guarantee a full, blaring alarm, you can use the free automation app <strong>MacroDroid</strong> to intercept the app's push notification and trigger a native alarm.</p>
-            <p className="text-[10px] mb-1 font-bold text-white">MacroDroid "Notification Present" Triggers to watch for:</p>
+            <p className="text-[10px] mb-1 font-bold text-gray-900 dark:text-white">MacroDroid "Notification Present" Triggers to watch for:</p>
             <ul className="list-disc pl-4 text-[10px] space-y-1.5 font-mono">
-              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_RING_VIBRATE <span className="font-sans text-white/60 block mt-0.5">Use this exact text if you have BOTH sound and vibration enabled in these settings.</span></li>
-              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_RING <span className="font-sans text-white/60 block mt-0.5">Use this exact text if you ONLY have sound enabled.</span></li>
-              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_VIBRATE <span className="font-sans text-white/60 block mt-0.5">Use this exact text if you ONLY have vibration enabled.</span></li>
-              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_TRIGGER <span className="font-sans text-white/60 block mt-0.5">A fallback title just in case.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_RING_VIBRATE <span className="font-sans text-gray-700 dark:text-white/ block mt-0.5">Use this exact text if you have BOTH sound and vibration enabled in these settings.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_RING <span className="font-sans text-gray-700 dark:text-white/ block mt-0.5">Use this exact text if you ONLY have sound enabled.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_VIBRATE <span className="font-sans text-gray-700 dark:text-white/ block mt-0.5">Use this exact text if you ONLY have vibration enabled.</span></li>
+              <li className="text-pink-300 break-words leading-tight">PWA_ALARM_TRIGGER <span className="font-sans text-gray-700 dark:text-white/ block mt-0.5">A fallback title just in case.</span></li>
             </ul>
           </div>
         </div>
@@ -77,13 +77,13 @@ export default function SettingsModal() {
     panic: {
       title: 'Focus / Panic Mode',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
           <p className="text-[11px] leading-relaxed">Configure how to instantly hide your dashboard or specific widgets.</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Desktop Controls</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Desktop Controls</h4>
           <p className="text-[11px] leading-relaxed">On Desktop, there is no Eye icon. Instead, you use Keyboard Shortcuts (configured below) or simply click on the <strong>Today Focus top pill</strong> to toggle your hidden state. You can set separate shortcuts for <strong>Focus Mode</strong> (hides only selected widgets) and <strong>Panic Mode</strong> (hides everything).</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Mobile Controls</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Mobile Controls</h4>
           <p className="text-[11px] leading-relaxed">On Mobile, use the <strong>👁️ Eye icon</strong> on the right side of the screen. Tap 👁️ Eye icon on right side of screen to hide all and click on same place to get back all that icon becomes invisible on peak mode but remains on same place to toggle back, You can configure this icon below to act as either a Panic button (hide all) or a Focus button (hide selected).</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Panic Actions</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Panic Actions</h4>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Redirect:</strong> The browser immediately navigates away to a random neutral website. Press "Back" in your browser to return.</li>
             <li><strong>Hide UI:</strong> Makes all widgets instantly disappear, leaving a blank screen.</li>
@@ -94,10 +94,10 @@ export default function SettingsModal() {
     wallpapers: {
       title: 'Wallpapers',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
-          <h4 className="font-bold text-white text-[13px]">Built-in Wallpapers</h4>
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px]">Built-in Wallpapers</h4>
           <p className="text-[11px] leading-relaxed">Choose from a curated selection of static images and animated video backgrounds. Click any thumbnail to apply it instantly.</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Custom URL Wallpapers</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Custom URL Wallpapers</h4>
           <p className="text-[11px] leading-relaxed">You can add your own custom images or video loops (like .mp4 or .webm) by pasting a direct URL to the file.</p>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Desktop vs Mobile:</strong> The app stores up to 4 custom wallpapers specifically for your Desktop, and 4 completely separate ones for your Mobile device. This ensures your phone gets appropriately sized vertical backgrounds while your PC gets widescreen ones.</li>
@@ -107,19 +107,46 @@ export default function SettingsModal() {
         </div>
       )
     },
+    liveWallpaper: {
+      title: 'Live Desktop Wallpaper',
+      content: (
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
+          <p className="text-[11px] leading-relaxed text-gray-700 dark:text-white/">You can run Grind Board directly as your interactive Windows desktop background instead of using it in a browser window!</p>
+          <ol className="list-decimal pl-4 space-y-2 text-[11px] text-gray-700 dark:text-white/">
+            <li>
+              Download and install Lively Wallpaper:
+              <ul className="list-disc pl-4 mt-1 space-y-1">
+                <li><a href="https://drive.google.com/file/d/1TJWAWPTtTbKNMaNVAwz2GwbSb04NO-J5/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-bold">Direct Download (Google Drive)</a> (Recommended)</li>
+                <li><a href="https://rocksdanister.github.io/lively/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-bold">Official Source</a> (Alternative)</li>
+              </ul>
+            </li>
+            <li>Open Lively Wallpaper and click <strong>"Add Wallpaper"</strong> (the + icon).</li>
+            <li>Under <strong>"Enter URL"</strong>, type the live URL of the Grind Board app <code className="bg-gray-200 dark:bg-white/ px-1 py-0.5 rounded text-[10px]">https://wallpaper-dashboard-cloud.vercel.app/</code> and press <strong>→</strong>.</li>
+            <li>Lively will load the webpage as your desktop background! You can click and interact with all the widgets directly on your desktop.</li>
+            <li>
+              <strong>Enable Auto Start:</strong>
+              <ul className="list-disc pl-4 mt-1 space-y-1">
+                <li>Open Lively Wallpaper Settings (⚙️) → <strong>General</strong> → Toggle <strong>"Start with Windows"</strong> ON.</li>
+                <li>Open Windows <strong>Task Manager</strong> (Ctrl+Shift+Esc) → Go to the <strong>Startup Apps</strong> tab → Right-click on <strong>Lively Wallpaper</strong> and select <strong>Enable</strong>.</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      )
+    },
     backup: {
       title: 'Data & Backup',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
           <p className="text-[11px] leading-relaxed">Your data automatically syncs to the cloud in real-time, but you can manage your local browser storage directly here.</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Export Data</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Export Data</h4>
           <p className="text-[11px] leading-relaxed">Downloads a full <code>.json</code> backup file containing your entire history, tasks, roadmap, calendar deadlines, and notes. Requires being logged in.</p>
-          <h4 className="font-bold text-white text-[13px] mt-2">Import Data</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Import Data</h4>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Merge:</strong> Upload a backup file and safely combine it with your existing data. No existing data is lost.</li>
             <li><strong>Overwrite:</strong> WARNING: This entirely replaces your current dashboard data with the contents of the uploaded backup file.</li>
           </ul>
-          <h4 className="font-bold text-white text-[13px] mt-2">Data Clearing</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Data Clearing</h4>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>Clear Old Data:</strong> Safely deletes only old focus history entries (older than 30, 60, or 90 days) to speed up load times.</li>
             <li><strong>Clear All Data:</strong> Wipes all local browser storage completely. (If you are logged in, logging in again will re-download it from the cloud).</li>
@@ -130,14 +157,14 @@ export default function SettingsModal() {
     feedback: {
       title: 'Feedback & Bugs',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
           <p className="text-[11px] leading-relaxed">Communicate directly with the developer from inside the app.</p>
           <ul className="list-disc pl-4 space-y-1 text-[11px]">
             <li><strong>💡 Feature request:</strong> Suggest a new tool or widget you'd like to see.</li>
             <li><strong>🐛 Bug report:</strong> Describe something that isn't working correctly.</li>
             <li><strong>💬 General feedback:</strong> Any other comments or messages.</li>
           </ul>
-          <h4 className="font-bold text-white text-[13px] mt-2">Submission Status</h4>
+          <h4 className="font-bold text-gray-900 dark:text-white text-[13px] mt-2">Submission Status</h4>
           <p className="text-[11px] leading-relaxed">Track the progress of your tickets right here. The status will update from "Reviewing" (not yet looked at), to "Reviewed" (seen by developer), to "✓ Roadmap!" when a feature is accepted and planned for a future update.</p>
         </div>
       )
@@ -145,7 +172,7 @@ export default function SettingsModal() {
     dragControls: {
       title: 'Widget Drag Controls',
       content: (
-        <div className="space-y-3 text-sm text-white/80 pb-2">
+        <div className="space-y-3 text-sm text-gray-700 dark:text-white/ pb-2">
           <p className="text-[11px] leading-relaxed">many widgets can be controlled using swipe gestures instead of buttons for a faster experience:</p>
           <ul className="list-disc pl-4 space-y-2 text-[11px]">
             <li><strong>Countdowns:</strong> Swipe left or right on the widget to switch between your countdowns. Swipe <strong>UP</strong> directly on the widget to close/hide it.  You can also do a right or left swipe on the top Focus Pill to toggle the Countdowns widget open or closed.</li>
@@ -330,15 +357,34 @@ export default function SettingsModal() {
     }
   };
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     try {
       const token = localStorage.getItem('dashboard_sync_token');
       if (!token) {
         alert('You must be logged in to export data. Please login via the Connect tab.');
         return;
       }
-      const exportUrl = `/api/export?token=${token}`;
-      window.open(exportUrl, '_blank');
+      
+      const res = await fetch(`/api/export?token=${token}`);
+      if (!res.ok) throw new Error('Export failed');
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Get filename from header if possible
+      const contentDisposition = res.headers.get('Content-Disposition');
+      let filename = 'dashboard-backup.json';
+      if (contentDisposition && contentDisposition.includes('filename="')) {
+        filename = contentDisposition.split('filename="')[1].split('"')[0];
+      }
+      a.download = filename;
+      
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (err) {
       console.error(err);
       alert('Failed to export data.');
@@ -366,6 +412,14 @@ export default function SettingsModal() {
         return;
       }
 
+      // Prevent cheating: Strip out stats/history from imported data so users cannot fake leaderboard times
+      if (parsed.state) {
+        delete parsed.state.history;
+        delete parsed.state.healthData;
+        delete parsed.state.stopwatchSessions;
+        delete parsed.state.timerLastSavedChunks;
+      }
+
       const isMerge = confirm('Do you want to MERGE this backup with your current data?\n\nClick OK to MERGE (Combine old and new data without losing existing settings).\nClick Cancel to OVERWRITE entirely (Wipe existing data and replace it with the backup).');
 
       let finalData = parsed;
@@ -381,7 +435,6 @@ export default function SettingsModal() {
             countdowns: [...(currentState.countdowns || []), ...(parsed.state.countdowns || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
             deadlines: [...(currentState.deadlines || []), ...(parsed.state.deadlines || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
             notes: [...(currentState.notes || []), ...(parsed.state.notes || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
-            stopwatchSessions: [...(currentState.stopwatchSessions || []), ...(parsed.state.stopwatchSessions || [])],
             roadmaps: [...(currentState.roadmaps || []), ...(parsed.state.roadmaps || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
           }
         };
@@ -638,6 +691,30 @@ export default function SettingsModal() {
                   </div>
 
                   <div className="flex flex-col gap-1.5 md:gap-2">
+                    {/* Theme Toggle */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl bg-black/20 border border-white/5 gap-1.5 sm:gap-3">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="p-1 md:p-1.5 bg-white/5 rounded-md shrink-0">
+                          <Layout className="text-purple-400 w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 pr-2">
+                          <h4 className="font-medium text-xs md:text-sm whitespace-nowrap">Dashboard Theme</h4>
+                          <p className="text-[9px] md:text-[10px] text-white/50 leading-tight">Auto switches based on day time (6 AM to 6 PM is light).</p>
+                        </div>
+                      </div>
+                      <div className="flex bg-black/40 border border-white/10 rounded-lg p-0.5 self-end sm:self-auto shrink-0">
+                        {(['dark', 'auto', 'light'] as const).map(t => (
+                          <button
+                            key={t}
+                            onClick={() => setTheme(t)}
+                            className={`px-3 py-1 text-[10px] md:text-xs font-medium rounded-md capitalize transition-all ${theme === t ? 'bg-purple-500 text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Toggle 24-hour clock */}
                     <div className="flex items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl bg-black/20 border border-white/5">
                       <div className="flex items-center gap-2 md:gap-3">
@@ -987,12 +1064,20 @@ export default function SettingsModal() {
 
               {settingsActiveTab === 'wallpaper' && (
                 <div className="flex flex-col gap-4 md:gap-6 h-full pb-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h3 className="text-sm md:text-base font-semibold">Custom Wallpapers</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Provide external image URLs.</p>
+                      
+                      <button 
+                        onClick={() => setInfoModalKey('liveWallpaper')} 
+                        className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 rounded border border-blue-500/30 text-[10px] transition-colors"
+                      >
+                        <MonitorPlay size={12} />
+                        Set Grind Board as Desktop Wallpaper
+                      </button>
                     </div>
-                    <button onClick={() => setInfoModalKey('wallpapers')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors mr-1">
+                    <button onClick={() => setInfoModalKey('wallpapers')} className="hidden md:flex p-1.5 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors shrink-0">
                       <Info className="w-4 h-4" />
                     </button>
                   </div>
@@ -1531,13 +1616,15 @@ export default function SettingsModal() {
                     </div>
 
                     <div className="flex flex-row items-center gap-3 md:gap-4 bg-white/5 p-2 md:p-2.5 rounded-lg md:rounded-xl border border-white/10 w-full sm:w-auto">
-                      <div className="bg-white p-1.5 md:p-2 rounded shadow-xl shrink-0">
+                      <div className="bg-[#ffffff] p-1.5 md:p-2 rounded shadow-xl shrink-0">
                         <QRCodeSVG
                           value={`upi://pay?pa=${upiId}&pn=Anand%20Kumar&cu=INR${donationAmount ? `&am=${donationAmount}` : ''}`}
                           size={70}
                           className="md:w-[90px] md:h-[90px]"
                           level="H"
                           includeMargin={false}
+                          bgColor="#ffffff"
+                          fgColor="#000000"
                         />
                       </div>
                       <div className="flex flex-col text-left gap-1 md:gap-2 min-w-0 pr-2">
@@ -1623,15 +1710,15 @@ export default function SettingsModal() {
       {/* Info Modal */}
       {infoModalKey && SETTINGS_INFO[infoModalKey] && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                <Info className="w-4 h-4 text-blue-400" />
+          <div className="bg-slate-50 dark:bg-[#1a1a1a] border border-gray-300 dark:border-white/10 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-4 border-b border-gray-300 dark:border-white/5 bg-gray-200/50 dark:bg-black/20">
+              <h3 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                <Info className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 {SETTINGS_INFO[infoModalKey].title}
               </h3>
               <button
                 onClick={() => setInfoModalKey(null)}
-                className="text-white/50 hover:text-white p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                className="text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white p-1.5 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1639,10 +1726,10 @@ export default function SettingsModal() {
             <div className="p-4 max-h-[60vh] overflow-y-auto arrow-scrollbar">
               {SETTINGS_INFO[infoModalKey].content}
             </div>
-            <div className="p-3 border-t border-white/5 bg-black/20">
+            <div className="p-3 border-t border-gray-300 dark:border-white/5 bg-gray-200/50 dark:bg-black/20">
               <button
                 onClick={() => setInfoModalKey(null)}
-                className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-xl text-white text-xs font-semibold transition-colors"
+                className="w-full py-2 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 rounded-xl text-gray-900 dark:text-white text-xs font-semibold transition-colors"
               >
                 Close
               </button>
@@ -1654,3 +1741,4 @@ export default function SettingsModal() {
     </div>
   );
 }
+

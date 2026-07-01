@@ -37,28 +37,42 @@ export default function RightToolbar() {
   const mobileHideConfig = useDashboardStore((state) => state.mobileHideConfig);
   const [isMobile, setIsMobile] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const startX = useRef(0);
+  const startX = useRef<number | null>(null);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-      startX.current = e.clientX;
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-      const deltaX = e.clientX - startX.current;
-      if (deltaX > 30) {
-          setIsExpanded(false);
+  useEffect(() => {
+    const handleGlobalMouseUp = (e: MouseEvent) => {
+      if (startX.current !== null) {
+        if (e.clientX - startX.current > 2) setIsExpanded(false);
+        startX.current = null;
       }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-      startX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-      const deltaX = e.changedTouches[0].clientX - startX.current;
-      if (deltaX > 30) {
-          setIsExpanded(false);
+    };
+    const handleGlobalTouchEnd = (e: TouchEvent) => {
+      if (startX.current !== null) {
+        if (e.changedTouches[0].clientX - startX.current > 15) setIsExpanded(false);
+        startX.current = null;
       }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalTouchEnd);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalTouchEnd);
+    };
+  }, []);
+
+  const handleDragStart = (clientX: number) => {
+    startX.current = clientX;
+  };
+
+  const handleDragEnd = (clientX: number) => {
+    if (startX.current !== null) {
+      const deltaX = clientX - startX.current;
+      // Drag right to close (since it's on the right edge)
+      if (deltaX > 15) {
+        setIsExpanded(false);
+      }
+      startX.current = null;
+    }
   };
 
   useEffect(() => {
@@ -98,18 +112,34 @@ export default function RightToolbar() {
     }
   };
 
-    return (
-      <div 
-        className={`flex flex-col gap-2 md:gap-3 pointer-events-auto transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-            isExpanded ? 'translate-x-0' : 'translate-x-[calc(100%-12px)] md:translate-x-[calc(100%-16px)] opacity-60 hover:opacity-100 cursor-pointer'
+  return (
+    <div
+      className={`relative flex flex-col gap-2 md:gap-3 pointer-events-auto transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isExpanded ? 'translate-x-0' : 'translate-x-[calc(100%-12px)] md:translate-x-[calc(100%-16px)] opacity-90 md:opacity-100 hover:opacity-100 cursor-pointer drop-shadow-md'
         }`}
-        onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+      onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
+    >
+      {/* Invisible drag handle to the left of the toolbar for easier swipe-to-close on desktop */}
+      {isExpanded && (
+        <div 
+          className="absolute right-full top-0 w-24 md:w-48 h-full cursor-e-resize z-10"
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+          onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
+          onTouchCancel={() => { startX.current = null; }}
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseUp={(e) => handleDragEnd(e.clientX)}
+          onMouseLeave={(e) => handleDragEnd(e.clientX)}
+        />
+      )}
+
+      <div 
+        className={`relative z-20 flex flex-col gap-2 md:gap-3 ${!isExpanded ? 'pointer-events-none' : ''}`}
+        onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+        onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
+        onTouchCancel={() => { startX.current = null; }}
+        onMouseDown={(e) => handleDragStart(e.clientX)}
+        onMouseUp={(e) => handleDragEnd(e.clientX)}
+        onMouseLeave={(e) => handleDragEnd(e.clientX)}
       >
-        <div className={`flex flex-col gap-2 md:gap-3 ${!isExpanded ? 'pointer-events-none' : ''}`}>
         {/* Panic Button - Mobile Only */}
         <button
           onClick={handlePanic}
@@ -123,7 +153,7 @@ export default function RightToolbar() {
         {showPlans && (
           <button
             onClick={togglePlans}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isPlansOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.plans ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isPlansOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.plans ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Roadmap & Plans"
           >
             <Map size={20} className="sm:w-6 sm:h-6" />
@@ -134,7 +164,7 @@ export default function RightToolbar() {
         {showCalendar && (
           <button
             onClick={toggleCalendar}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isCalendarOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.calendar ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isCalendarOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.calendar ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Calendar"
           >
             <Calendar size={20} className="sm:w-6 sm:h-6" />
@@ -145,7 +175,7 @@ export default function RightToolbar() {
         {showTasks && (
           <button
             onClick={toggleTaskManager}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTaskManagerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.tasks ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTaskManagerOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.tasks ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Toggle Tasks"
           >
             <ListTodo size={20} className="sm:w-6 sm:h-6" />
@@ -156,7 +186,7 @@ export default function RightToolbar() {
         {showStats && (
           <button
             onClick={toggleStats}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStatsOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.stats ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStatsOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.stats ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Focus History"
           >
             <BarChart2 size={20} className="sm:w-6 sm:h-6" />
@@ -167,7 +197,7 @@ export default function RightToolbar() {
         {showStopwatch && (
           <button
             onClick={toggleStopwatch}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStopwatchOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.stopwatch ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isStopwatchOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.stopwatch ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Stopwatch"
           >
             <Clock size={20} className="sm:w-6 sm:h-6" />
@@ -178,7 +208,7 @@ export default function RightToolbar() {
         {showTimer && (
           <button
             onClick={toggleTimer}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTimerOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.timer ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isTimerOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.timer ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Session Timer"
           >
             <TimerIcon size={20} className="sm:w-6 sm:h-6" />
@@ -189,7 +219,7 @@ export default function RightToolbar() {
         {showNotes && (
           <button
             onClick={toggleNotes}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isNotesOpen ? 'bg-white/30 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl'} ${isHidden && hideConfig.notes ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all ${isNotesOpen ? 'glass-btn-active' : 'glass-btn'} ${isHidden && hideConfig.notes ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Quick Notes"
           >
             <StickyNote size={20} className="sm:w-6 sm:h-6" />
@@ -200,13 +230,13 @@ export default function RightToolbar() {
         {showSettingsBtn && (
           <button
             onClick={toggleSettings}
-            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white backdrop-blur-xl ${isHidden && hideConfig.settingsBtn ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-white/20 shadow-xl transition-all glass-btn ${isHidden && hideConfig.settingsBtn ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             title="Settings"
           >
             <Settings size={20} className="sm:w-6 sm:h-6" />
           </button>
         )}
-        </div>
       </div>
-    );
+    </div>
+  );
 }

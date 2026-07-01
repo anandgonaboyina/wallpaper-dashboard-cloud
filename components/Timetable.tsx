@@ -1,23 +1,28 @@
 "use client";
 
 import { useDashboardStore } from "@/store/dashboardStore";
-import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock, ArrowUp, ArrowDown, X } from "lucide-react";
+import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock, ArrowUp, ArrowDown, X, Sun, Moon } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const WEEKENDS = ["Sat", "Sun"];
 
-// Upgraded to a richer, softer, more modern color palette
+// Exact sizing to guarantee perfect alignment across columns
+const CELL_HEIGHT = 32; // Tighter 32px per block height for ultra-compact views
+const CELL_GAP = 4;     // 4px gap between blocks
+const TOTAL_HEIGHT = CELL_HEIGHT + CELL_GAP;
+
+// Upgraded to a richer palette with explicit Light and Dark mode variants
 export const CELL_COLORS = [
-  { name: 'default', bg: 'bg-white/5', active: 'bg-violet-500/30', text: 'text-gray-300', solidBg: 'bg-white/40' },
-  { name: 'red', bg: 'bg-rose-500/15', active: 'bg-rose-500/30', text: 'text-rose-300', solidBg: 'bg-rose-500/80' },
-  { name: 'blue', bg: 'bg-sky-500/15', active: 'bg-sky-500/30', text: 'text-sky-300', solidBg: 'bg-sky-500/80' },
-  { name: 'green', bg: 'bg-emerald-500/15', active: 'bg-emerald-500/30', text: 'text-emerald-300', solidBg: 'bg-emerald-500/80' },
-  { name: 'yellow', bg: 'bg-amber-500/15', active: 'bg-amber-500/30', text: 'text-amber-300', solidBg: 'bg-amber-500/80' },
-  { name: 'purple', bg: 'bg-violet-500/15', active: 'bg-violet-500/30', text: 'text-violet-300', solidBg: 'bg-violet-500/80' },
-  { name: 'orange', bg: 'bg-orange-500/15', active: 'bg-orange-500/30', text: 'text-orange-300', solidBg: 'bg-orange-500/80' },
-  { name: 'cyan', bg: 'bg-cyan-500/15', active: 'bg-cyan-500/30', text: 'text-cyan-300', solidBg: 'bg-cyan-500/80' },
-  { name: 'pink', bg: 'bg-fuchsia-500/15', active: 'bg-fuchsia-500/30', text: 'text-fuchsia-300', solidBg: 'bg-fuchsia-500/80' },
+  { name: 'default', bg: 'bg-white/5', lightBg: 'bg-black/5', active: 'bg-violet-500/30', lightActive: 'bg-violet-500/20', text: 'text-gray-300', lightText: 'text-slate-600', solidBg: 'bg-white/40', lightSolidBg: 'bg-black/20' },
+  { name: 'red', bg: 'bg-rose-500/15', lightBg: 'bg-rose-500/20', active: 'bg-rose-500/30', lightActive: 'bg-rose-500/30', text: 'text-rose-300', lightText: 'text-rose-700', solidBg: 'bg-rose-500/80', lightSolidBg: 'bg-rose-500' },
+  { name: 'blue', bg: 'bg-sky-500/15', lightBg: 'bg-sky-500/20', active: 'bg-sky-500/30', lightActive: 'bg-sky-500/30', text: 'text-sky-300', lightText: 'text-sky-700', solidBg: 'bg-sky-500/80', lightSolidBg: 'bg-sky-500' },
+  { name: 'green', bg: 'bg-emerald-500/15', lightBg: 'bg-emerald-500/20', active: 'bg-emerald-500/30', lightActive: 'bg-emerald-500/30', text: 'text-emerald-300', lightText: 'text-emerald-700', solidBg: 'bg-emerald-500/80', lightSolidBg: 'bg-emerald-500' },
+  { name: 'yellow', bg: 'bg-amber-500/15', lightBg: 'bg-amber-500/20', active: 'bg-amber-500/30', lightActive: 'bg-amber-500/30', text: 'text-amber-300', lightText: 'text-amber-700', solidBg: 'bg-amber-500/80', lightSolidBg: 'bg-amber-500' },
+  { name: 'purple', bg: 'bg-violet-500/15', lightBg: 'bg-violet-500/20', active: 'bg-violet-500/30', lightActive: 'bg-violet-500/30', text: 'text-violet-300', lightText: 'text-violet-700', solidBg: 'bg-violet-500/80', lightSolidBg: 'bg-violet-500' },
+  { name: 'orange', bg: 'bg-orange-500/15', lightBg: 'bg-orange-500/20', active: 'bg-orange-500/30', lightActive: 'bg-orange-500/30', text: 'text-orange-300', lightText: 'text-orange-700', solidBg: 'bg-orange-500/80', lightSolidBg: 'bg-orange-500' },
+  { name: 'cyan', bg: 'bg-cyan-500/15', lightBg: 'bg-cyan-500/20', active: 'bg-cyan-500/30', lightActive: 'bg-cyan-500/30', text: 'text-cyan-300', lightText: 'text-cyan-700', solidBg: 'bg-cyan-500/80', lightSolidBg: 'bg-cyan-500' },
+  { name: 'pink', bg: 'bg-fuchsia-500/15', lightBg: 'bg-fuchsia-500/20', active: 'bg-fuchsia-500/30', lightActive: 'bg-fuchsia-500/30', text: 'text-fuchsia-300', lightText: 'text-fuchsia-700', solidBg: 'bg-fuchsia-500/80', lightSolidBg: 'bg-fuchsia-500' },
 ];
 
 // Utility to format minutes into h:mm AM/PM
@@ -53,6 +58,9 @@ export default function Timetable() {
     useTimetableRange, toggleTimetableRange, renameTimetableKeys,
     viewingFriend, setViewingFriend
   } = useDashboardStore();
+
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const isDark = theme === 'dark';
 
   const timetableGrid = viewingFriend ? (viewingFriend.stats.timetableGrid || {}) : myTimetableGrid;
   const timetableColors = viewingFriend ? (viewingFriend.stats.timetableColors || {}) : myTimetableColors;
@@ -111,12 +119,21 @@ export default function Timetable() {
       const storedWeStart = localStorage.getItem('timetable_start_weekend');
       if (storedWdStart) setWeekdayStartTime(parseInt(storedWdStart));
       if (storedWeStart) setWeekendStartTime(parseInt(storedWeStart));
+
+      const storedTheme = localStorage.getItem('timetable_theme') as 'dark' | 'light';
+      if (storedTheme) setTheme(storedTheme);
     }
     const day = new Date().getDay();
     setCurrentDayIndex(day);
     if (day === 0 || day === 6) setViewMode("weekends");
     else setViewMode("weekdays");
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('timetable_theme', newTheme);
+  };
 
   const handleSetStartTime = (mins: number, skipRename = false) => {
     if (!skipRename) {
@@ -266,46 +283,59 @@ export default function Timetable() {
   };
 
   return (
-    <div suppressHydrationWarning className="bg-gradient-to-br from-[#12121a] to-[#0a0a0c] border border-white/10 rounded-3xl p-1.5 md:p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.4)] w-full max-w-[100vw] md:w-fit overflow-hidden md:overflow-visible relative">
+    <div suppressHydrationWarning className={`transition-colors duration-500 rounded-[20px] md:rounded-[24px] p-1.5 md:p-2.5 w-full max-w-[100vw] md:w-fit overflow-hidden md:overflow-visible relative mx-auto
+        ${isDark ? 'bg-gradient-to-br from-[#12121a] to-[#0a0a0c] border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)] text-white/90'
+        : 'bg-gradient-to-br from-slate-50 to-slate-100 border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.1)] text-slate-800'}`}>
+
       {/* Start Time Modal Overlay */}
       {isEditingStartTime && (
-        <StartTimeEditor currentMins={startTime} onSave={handleSetStartTime} onCancel={() => setIsEditingStartTime(false)} />
+        <StartTimeEditor currentMins={startTime} isDark={isDark} onSave={handleSetStartTime} onCancel={() => setIsEditingStartTime(false)} />
       )}
 
-      <div className="flex items-center justify-between text-white/90 mb-3 pb-2 border-b border-white/5 mt-1 px-2 min-w-0 md:min-w-[300px]">
-        <button
-          onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
-          className="p-1.5 hover:bg-white/10 active:scale-95 rounded-xl transition-all shrink-0 text-white/70 hover:text-white"
-          title="Previous view"
-        >
-          <ChevronLeft size={20} />
-        </button>
+      {/* Header Area */}
+      <div className={`flex items-center justify-between mb-1.5 md:mb-2 pb-1.5 border-b px-1 min-w-0 md:min-w-[300px] ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+        <div className="flex gap-1 items-center">
+          <button
+            onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
+            className={`p-1 active:scale-95 rounded-lg transition-all shrink-0 ${isDark ? 'hover:bg-white/10 text-white/70 hover:text-white' : 'hover:bg-black/5 text-slate-500 hover:text-slate-800'}`}
+            title="Previous view"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={toggleTheme}
+            className={`p-1 active:scale-95 rounded-lg transition-all shrink-0 ${isDark ? 'hover:bg-white/10 text-white/50 hover:text-white' : 'hover:bg-black/5 text-slate-400 hover:text-slate-800'}`}
+            title="Toggle Theme"
+          >
+            {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        </div>
 
-        <div className="flex items-center gap-1.5 md:gap-2 relative" ref={settingsRef}>
-          <CalendarDays size={18} className="text-violet-400 md:w-5 md:h-5" />
-          <span className="font-bold tracking-widest uppercase text-sm md:text-base text-center truncate text-gray-100">
+        <div className="flex items-center gap-1 md:gap-1.5 relative" ref={settingsRef}>
+          <CalendarDays className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isDark ? 'text-violet-400' : 'text-violet-600'}`} />
+          <span className={`font-bold tracking-widest uppercase text-[10px] md:text-[11px] text-center truncate ${isDark ? 'text-gray-100' : 'text-slate-800'}`}>
             {viewMode === "weekdays" ? "Weekly Schedule" : "Weekend Schedule"}
           </span>
           {!viewingFriend && (
-            <button onClick={() => setShowSettings(!showSettings)} className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-all hover:rotate-90 ml-1 shrink-0">
-              <Settings size={14} />
+            <button onClick={() => setShowSettings(!showSettings)} className={`p-0.5 md:p-1 rounded-md transition-all hover:rotate-90 ml-0.5 shrink-0 ${isDark ? 'hover:bg-white/10 text-white/50 hover:text-white' : 'hover:bg-black/5 text-slate-500 hover:text-slate-900'}`}>
+              <Settings size={12} />
             </button>
           )}
 
           {showSettings && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-1.5 z-50 flex flex-col min-w-[200px] animate-in slide-in-from-top-2 fade-in duration-200">
-              <div className="px-3 py-1.5 text-[10px] text-white/40 uppercase tracking-wider font-bold border-b border-white/5 mb-1">Row Management</div>
-              <button onClick={handleAddTopRow} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center justify-between transition-colors w-full text-left">
-                <span className="flex items-center gap-2"><ArrowUp size={14} className="text-emerald-400" /> Add Top Row</span>
+            <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 rounded-xl shadow-2xl py-1 z-50 flex flex-col min-w-[160px] animate-in slide-in-from-top-2 fade-in duration-200 backdrop-blur-xl border ${isDark ? 'bg-gray-900/95 border-white/10' : 'bg-white/95 border-black/10'}`}>
+              <div className={`px-2 py-1 text-[8px] uppercase tracking-wider font-bold border-b mb-0.5 ${isDark ? 'text-white/40 border-white/5' : 'text-slate-400 border-black/5'}`}>Row Management</div>
+              <button onClick={handleAddTopRow} className={`px-2 py-1.5 text-[10px] flex items-center justify-between transition-colors w-full text-left ${isDark ? 'hover:bg-white/10 text-white/80' : 'hover:bg-black/5 text-slate-700'}`}>
+                <span className="flex items-center gap-1.5"><ArrowUp size={12} className={isDark ? "text-emerald-400" : "text-emerald-600"} /> Add Top Row</span>
               </button>
-              <button onClick={() => { addTimetableRow(isWeekendMode); setShowSettings(false); }} className="px-3 py-2 hover:bg-white/10 text-xs text-white/80 flex items-center justify-between transition-colors w-full text-left border-b border-white/5 pb-3 mb-1">
-                <span className="flex items-center gap-2"><ArrowDown size={14} className="text-sky-400" /> Add Bottom Row</span>
+              <button onClick={() => { addTimetableRow(isWeekendMode); setShowSettings(false); }} className={`px-2 py-1.5 text-[10px] flex items-center justify-between transition-colors w-full text-left border-b pb-2 mb-0.5 ${isDark ? 'hover:bg-white/10 text-white/80 border-white/5' : 'hover:bg-black/5 text-slate-700 border-black/5'}`}>
+                <span className="flex items-center gap-1.5"><ArrowDown size={12} className={isDark ? "text-sky-400" : "text-sky-600"} /> Add Bottom Row</span>
               </button>
-              <button onClick={handleDeleteTopRow} className="px-3 py-2 hover:bg-rose-500/10 text-xs text-rose-400 flex items-center gap-2 transition-colors w-full text-left">
-                <Trash size={14} /> Delete Top Row
+              <button onClick={handleDeleteTopRow} className={`px-2 py-1.5 text-[10px] flex items-center gap-1.5 transition-colors w-full text-left ${isDark ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`}>
+                <Trash size={12} /> Delete Top Row
               </button>
-              <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className="px-3 py-2 hover:bg-rose-500/10 text-xs text-rose-400 flex items-center gap-2 transition-colors w-full text-left">
-                <Trash size={14} /> Delete Bottom Row
+              <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className={`px-2 py-1.5 text-[10px] flex items-center gap-1.5 transition-colors w-full text-left ${isDark ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`}>
+                <Trash size={12} /> Delete Bottom Row
               </button>
             </div>
           )}
@@ -313,25 +343,26 @@ export default function Timetable() {
 
         <button
           onClick={() => setViewMode(viewMode === "weekdays" ? "weekends" : "weekdays")}
-          className="p-1.5 hover:bg-white/10 active:scale-95 rounded-xl transition-all shrink-0 text-white/70 hover:text-white"
+          className={`p-1 active:scale-95 rounded-lg transition-all shrink-0 ${isDark ? 'hover:bg-white/10 text-white/70 hover:text-white' : 'hover:bg-black/5 text-slate-500 hover:text-slate-800'}`}
           title="Next view"
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={16} />
         </button>
       </div>
 
       {/* Compact Start Time Trigger */}
-      <div className="mb-2 mx-auto flex justify-center">
+      <div className="mb-2 flex justify-center">
         <button
           onClick={() => !viewingFriend && setIsEditingStartTime(true)}
-          className={`text-[9px] md:text-[10px] text-sky-300 bg-sky-500/10 px-2.5 py-1 rounded-full border border-sky-500/20 hover:bg-sky-500/20 transition-all flex items-center gap-1.5 font-semibold shadow-sm ${viewingFriend ? 'cursor-default' : 'active:scale-95 hover:shadow-[0_0_12px_rgba(14,165,233,0.15)]'}`}
+          className={`text-[8px] md:text-[9px] px-2 py-0.5 rounded-full border transition-all flex items-center gap-1 font-semibold shadow-sm ${viewingFriend ? 'cursor-default' : 'active:scale-95'} ${isDark ? 'text-sky-300 bg-sky-500/10 border-sky-500/20 hover:bg-sky-500/20 hover:shadow-[0_0_10px_rgba(14,165,233,0.15)]' : 'text-sky-700 bg-sky-100 border-sky-200 hover:bg-sky-200'}`}
         >
-          <Clock size={12} /> Day Starts: {formatTime(startTime)}
+          <Clock size={10} /> Day Starts: {formatTime(startTime)}
         </button>
       </div>
 
+      {/* Timetable Grid Area */}
       <div
-        className="relative overflow-auto custom-scrollbar pb-1 px-1 w-full max-h-[50vh] md:max-h-[60vh] cursor-grab active:cursor-grabbing"
+        className="relative overflow-auto custom-scrollbar pb-1 px-0.5 w-full max-h-[50vh] md:max-h-[60vh] cursor-grab active:cursor-grabbing"
         ref={scrollContainerRef}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
@@ -339,18 +370,19 @@ export default function Timetable() {
         onMouseMove={handleMouseMove}
       >
         <div
-          className={`grid gap-1.5 md:gap-2 ${viewMode === "weekdays" ? "min-w-[500px] md:min-w-[750px] grid-cols-[75px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)]" : "min-w-[280px] md:min-w-[400px] grid-cols-[75px_repeat(2,1fr)] md:grid-cols-[120px_repeat(2,1fr)]"}`}
+          className={`grid gap-x-1 ${viewMode === "weekdays" ? "min-w-[420px] md:min-w-[500px] grid-cols-[55px_repeat(5,1fr)] md:grid-cols-[100px_repeat(5,1fr)]" : "min-w-[200px] md:min-w-[260px] grid-cols-[55px_repeat(2,1fr)] md:grid-cols-[100px_repeat(2,1fr)]"}`}
         >
           {/* Time Column */}
-          <div className="sticky left-0 rounded-xl z-30 bg-[#0f0f13]/90 backdrop-blur-md flex flex-col shadow-[4px_0_15px_-3px_rgba(0,0,0,0.5)] pr-1">
-            <div className="text-center font-bold text-white/30 uppercase tracking-widest text-[9px] md:text-[10px] py-1.5 mb-3">Time</div>
+          <div className={`sticky left-0 z-40 md:min-w-[100px] backdrop-blur-md flex flex-col rounded-lg pr-0.5 md:pr-1 ${isDark ? 'bg-[#0f0f13]/90 shadow-[4px_0_10px_-3px_rgba(0,0,0,0.5)]' : 'bg-slate-50/90 shadow-[4px_0_10px_-3px_rgba(0,0,0,0.1)]'}`}>
+            <div className={`h-6 md:h-8 flex items-center justify-center text-center font-bold uppercase tracking-widest text-[8px] md:text-[9px] mb-1 ${isDark ? 'text-white/30' : 'text-slate-400'}`}>Time</div>
 
             {generatedTimes.map((block, index) => {
               return (
-                <div key={index} className="mb-[3px] relative">
+                <div key={index} style={{ height: `${CELL_HEIGHT}px`, marginBottom: `${CELL_GAP}px` }} className="relative w-full">
                   <DurationCell
                     block={block}
                     index={index}
+                    isDark={isDark}
                     onUpdate={(newDur) => handleUpdateDuration(index, newDur)}
                     isActive={activeTimeIndex === index}
                     isRange={useTimetableRange}
@@ -368,22 +400,27 @@ export default function Timetable() {
             const dayIndexMap: Record<string, number> = { "Sun": 0, "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6 };
             const isToday = currentDayIndex === dayIndexMap[day];
 
-            const colorMap: Record<string, string> = {
-              "Mon": "text-rose-300 border-rose-400/20 bg-rose-500/10",
-              "Tue": "text-orange-300 border-orange-400/20 bg-orange-500/10",
-              "Wed": "text-amber-300 border-amber-400/20 bg-amber-500/10",
-              "Thu": "text-emerald-300 border-emerald-400/20 bg-emerald-500/10",
-              "Fri": "text-sky-300 border-sky-400/20 bg-sky-500/10",
-              "Sat": "text-violet-300 border-violet-400/20 bg-violet-500/10",
-              "Sun": "text-fuchsia-300 border-fuchsia-400/20 bg-fuchsia-500/10"
+            const colorMap: Record<string, { dark: string, light: string }> = {
+              "Mon": { dark: "text-rose-300 border-rose-400/20 bg-rose-500/10", light: "text-rose-700 border-rose-400/30 bg-rose-500/20" },
+              "Tue": { dark: "text-orange-300 border-orange-400/20 bg-orange-500/10", light: "text-orange-700 border-orange-400/30 bg-orange-500/20" },
+              "Wed": { dark: "text-amber-300 border-amber-400/20 bg-amber-500/10", light: "text-amber-700 border-amber-400/30 bg-amber-500/20" },
+              "Thu": { dark: "text-emerald-300 border-emerald-400/20 bg-emerald-500/10", light: "text-emerald-700 border-emerald-400/30 bg-emerald-500/20" },
+              "Fri": { dark: "text-sky-300 border-sky-400/20 bg-sky-500/10", light: "text-sky-700 border-sky-400/30 bg-sky-500/20" },
+              "Sat": { dark: "text-violet-300 border-violet-400/20 bg-violet-500/10", light: "text-violet-700 border-violet-400/30 bg-violet-500/20" },
+              "Sun": { dark: "text-fuchsia-300 border-fuchsia-400/20 bg-fuchsia-500/10", light: "text-fuchsia-700 border-fuchsia-400/30 bg-fuchsia-500/20" }
             };
 
+            const headerStyle = isDark
+              ? (isToday ? 'bg-violet-500/20 text-violet-200 border-violet-500/30 shadow-[0_0_10px_rgba(139,92,246,0.15)]' : colorMap[day].dark)
+              : (isToday ? 'bg-violet-100 text-violet-800 border-violet-300 shadow-[0_0_10px_rgba(139,92,246,0.2)]' : colorMap[day].light);
+
             return (
-              <div key={day} className={`flex flex-col rounded-2xl p-1 transition-all duration-300 ${isToday ? 'bg-white/[0.08] border border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]' : ''}`}>
-                <div className={`text-center font-bold uppercase tracking-widest text-[10px] md:text-xs py-1.5 mb-1.5 rounded-xl border backdrop-blur-sm ${isToday ? 'bg-violet-500/20 text-violet-200 border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]' : colorMap[day]}`}>
+              <div key={day} className={`flex flex-col p-0.5 rounded-xl transition-all duration-300 ${isToday ? (isDark ? 'bg-white/[0.04] border border-white/5 shadow-[inset_0_0_15px_rgba(255,255,255,0.02)]' : 'bg-slate-200/50 border border-slate-300/50') : ''}`}>
+                <div className={`h-6 md:h-8 flex items-center justify-center text-center font-bold uppercase tracking-widest text-[9px] md:text-[10px] mb-1 rounded-lg border backdrop-blur-sm ${headerStyle}`}>
                   {day}
                 </div>
 
+                {/* We map the exact same height containers to ensure perfect alignment */}
                 {generatedTimes.map((block, index) => {
                   const gridKey = block.startStr;
                   const subject = timetableGrid?.[day]?.[gridKey] || "";
@@ -412,50 +449,71 @@ export default function Timetable() {
                   const isDayFocused = editingCell?.day === day;
                   const isActiveBlock = isToday && activeTimeIndex === index;
 
-                  let roundedClass = 'rounded-xl';
-                  if (!isDayFocused) {
-                    if (isContinuation && isContinuedByNext) roundedClass = 'rounded-none border-y-transparent';
-                    else if (isContinuation) roundedClass = 'rounded-b-xl rounded-t-[4px] border-t-transparent';
-                    else if (isContinuedByNext) roundedClass = 'rounded-t-xl rounded-b-[4px] border-b-transparent';
+                  let isSpanActive = false;
+                  if (!isContinuation && spanCount > 1) {
+                    for (let j = index; j < index + spanCount; j++) {
+                      if (isToday && activeTimeIndex === j) isSpanActive = true;
+                    }
                   }
 
-                  const isPartOfBlock = isContinuation || spanCount > 1;
-                  const isHiddenText = !isDayFocused && isPartOfBlock;
-
-                  const textClassFinal = isHiddenText ? 'text-transparent' : customColor.text;
-                  const borderClass = isActiveBlock
-                    ? 'border-violet-400/60 shadow-[0_0_12px_rgba(139,92,246,0.4)] z-20'
-                    : (customColor.name === 'default' ? 'border-white/5' : 'border-transparent');
-
-                  const bgClass = isActiveBlock ? customColor.active : customColor.bg;
-                  const marginBottom = (!isDayFocused && isContinuedByNext) ? 'mb-0' : 'mb-[3px]';
-
                   const showOverlay = !isContinuation && spanCount > 1 && !isDayFocused;
-                  const overlayHeightPx = spanCount * 43; // Adjusted for gap/margins
+                  const overlayHeightPx = spanCount * TOTAL_HEIGHT - CELL_GAP; // Perfect exact overlay size
+
+                  // If covered by overlay or we are the continuation cell under an overlay, we hide the actual cell contents
+                  let cellBgClass = isDark ? customColor.bg : customColor.lightBg;
+                  let cellBorderClass = customColor.name === 'default' ? (isDark ? 'border-white/5' : 'border-black/5') : 'border-transparent';
+                  let cellTextClass = isDark ? customColor.text : customColor.lightText;
+
+                  if (!isDayFocused && (showOverlay || isContinuation)) {
+                    cellBgClass = 'bg-transparent';
+                    cellBorderClass = 'border-transparent';
+                    cellTextClass = 'text-transparent';
+                  } else if (isActiveBlock && !isDayFocused) {
+                    cellBgClass = isDark ? customColor.active : customColor.lightActive;
+                    cellBorderClass = isDark ? 'border-violet-400/60 shadow-[0_0_10px_rgba(139,92,246,0.3)] z-20' : 'border-violet-500/60 shadow-[0_0_10px_rgba(139,92,246,0.2)] z-20';
+                  } else if (isDayFocused) {
+                    cellBorderClass = isDark ? 'border-white/10' : 'border-black/10';
+                  }
 
                   const isEditingThisCell = editingCell?.day === day && editingCell?.time === gridKey;
 
                   return (
                     <div
                       key={index}
+                      style={{ height: `${CELL_HEIGHT}px`, marginBottom: `${CELL_GAP}px` }}
                       onDoubleClick={() => !viewingFriend && setEditingCell({ day, time: gridKey })}
-                      className={`relative group h-10 ${marginBottom} flex items-center justify-center border transition-all duration-200 z-10 ${borderClass} ${roundedClass} ${!viewingFriend ? 'hover:brightness-125' : ''} ${isEditingThisCell ? 'ring-2 ring-violet-500 z-50 shadow-lg' : ''} ${bgClass}`}
+                      className={`relative group flex items-center justify-center border transition-all z-10 rounded-[6px] ${cellBorderClass} ${!viewingFriend && !isContinuation && !showOverlay ? (isDark ? 'hover:brightness-125' : 'hover:brightness-95') : ''} ${isEditingThisCell ? `ring-2 ring-violet-500 z-50 shadow-lg ${isDark ? 'bg-black/60' : 'bg-white/80'}` : cellBgClass}`}
                     >
-                      {showOverlay && !isEditingThisCell && (
-                        <div style={{ height: `${overlayHeightPx}px` }} className="absolute top-0 left-0 w-full pointer-events-none flex items-center justify-center z-30">
-                          <span className={`${isActiveBlock ? 'text-white font-bold scale-[1.02]' : (customColor.name !== 'default' ? customColor.text : 'text-gray-300')} font-medium px-1 md:px-2 text-center break-words transition-all duration-200 text-[10px] md:text-xs tracking-wide`}>{subject || "Free"}</span>
+                      {/* The Floating Overlay for Merged Cells */}
+                      {showOverlay && (
+                        <div
+                          style={{ height: `${overlayHeightPx}px` }}
+                          className={`absolute top-0 left-0 w-full pointer-events-none flex items-center justify-center z-30 rounded-[6px] border backdrop-blur-sm transition-all duration-200 ${isSpanActive
+                            ? (isDark ? 'bg-violet-600/40 border-violet-400/60 shadow-[0_0_12px_rgba(139,92,246,0.3)]' : 'bg-violet-400/30 border-violet-500/50 shadow-[0_0_12px_rgba(139,92,246,0.2)]')
+                            : `${isDark ? customColor.bg : customColor.lightBg} border-transparent`
+                            }`}
+                        >
+                          <span className={`px-1 text-center break-words text-[9px] md:text-[10px] font-semibold tracking-wide ${isSpanActive ? (isDark ? 'text-white scale-105 drop-shadow-md' : 'text-violet-900 scale-105') : (isDark ? customColor.text : customColor.lightText)}`}>
+                            {subject || "Free"}
+                          </span>
                         </div>
                       )}
 
-                      <div className={`w-full h-full flex items-center justify-center overflow-hidden break-words px-1 cursor-pointer select-none ${isEditingThisCell ? 'opacity-30' : ''}`}>
-                        <span className={`w-full text-center ${textClassFinal} text-[10px] md:text-xs leading-snug tracking-wide font-medium`}>{subject || (!isHiddenText ? "Free" : "")}</span>
+                      {/* Actual Cell Content (Hidden if under overlay, visible if single or editing) */}
+                      <div className={`w-full h-full flex items-center justify-center overflow-hidden break-words px-0.5 cursor-pointer select-none ${isEditingThisCell ? 'opacity-30' : ''}`}>
+                        <span className={`w-full text-center ${cellTextClass} text-[9px] md:text-[10px] font-medium leading-tight tracking-wide`}>
+                          {subject || ((showOverlay || isContinuation) && !isDayFocused ? "" : "Free")}
+                        </span>
                       </div>
 
-                      {!viewingFriend && !isEditingThisCell && <Edit2 size={10} className={`absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 pointer-events-none ${isHiddenText ? 'text-transparent' : customColor.text} z-20 transition-opacity`} />}
+                      {/* Edit Icon for single cells */}
+                      {!viewingFriend && !isEditingThisCell && !showOverlay && !isContinuation && (
+                        <Edit2 size={8} className={`absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 pointer-events-none ${cellTextClass} z-20 transition-opacity`} />
+                      )}
 
                       {/* Active indicator dot */}
-                      {isActiveBlock && (
-                        <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse shadow-[0_0_8px_rgba(139,92,246,1)]" />
+                      {isActiveBlock && !isEditingThisCell && (
+                        <div className="absolute top-1 right-1 w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-violet-400 animate-pulse shadow-[0_0_6px_rgba(139,92,246,1)] z-40" />
                       )}
                     </div>
                   );
@@ -463,19 +521,18 @@ export default function Timetable() {
               </div>
             );
           })}
-
         </div>
       </div>
 
       {/* Centered Cell Editor Modal */}
       {editingCell && (
-        <div className="fixed inset-4 z-[10000] flex items-center justify-center p-4  animate-in fade-in duration-200" onClick={() => setEditingCell(null)}>
-          <div className="bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-5 w-full max-w-[300px] flex flex-col gap-4 relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setEditingCell(null)} className="absolute top-3 right-3 p-1.5 text-white/40 hover:text-white transition-all rounded-full hover:bg-white/10 active:scale-95"><X size={16} /></button>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingCell(null)}>
+          <div className={`border rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-4 w-full max-w-[260px] flex flex-col gap-3 relative animate-in zoom-in-95 duration-200 ${isDark ? 'bg-gray-900/95 backdrop-blur-xl border-white/10' : 'bg-white/95 backdrop-blur-xl border-black/10'}`} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setEditingCell(null)} className={`absolute top-2.5 right-2.5 p-1 transition-all rounded-full active:scale-95 ${isDark ? 'text-white/40 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-800 hover:bg-black/5'}`}><X size={14} /></button>
 
             <div className="text-center mt-1">
-              <h3 className="font-bold text-gray-100 text-sm uppercase tracking-wider">{editingCell.day} <span className="text-white/30 mx-1">•</span> <span className="text-violet-300">{editingCell.time}</span></h3>
-              <p className="text-[10px] text-white/40 mt-1 uppercase font-semibold tracking-wide">Edit Subject & Color</p>
+              <h3 className={`font-bold text-xs uppercase tracking-wider ${isDark ? 'text-gray-100' : 'text-slate-800'}`}>{editingCell.day} <span className={isDark ? 'text-white/30 mx-1' : 'text-black/20 mx-1'}>•</span> <span className={isDark ? 'text-violet-300' : 'text-violet-600'}>{editingCell.time}</span></h3>
+              <p className={`text-[9px] mt-0.5 uppercase font-semibold tracking-wide ${isDark ? 'text-white/40' : 'text-slate-500'}`}>Edit Subject & Color</p>
             </div>
 
             <textarea
@@ -494,10 +551,10 @@ export default function Timetable() {
               rows={2}
               placeholder="e.g. Math, Free, Break..."
               spellCheck={false}
-              className="w-full text-center bg-black/20 border border-white/10 rounded-2xl outline-none text-white text-sm md:text-base leading-relaxed resize-none overflow-hidden break-words p-3 focus:bg-black/40 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all shadow-inner placeholder:text-white/20"
+              className={`w-full text-center rounded-xl outline-none text-xs leading-snug resize-none overflow-hidden break-words p-2.5 transition-all shadow-inner ${isDark ? 'bg-black/30 border border-white/10 text-white focus:bg-black/50 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 placeholder:text-white/20' : 'bg-slate-100 border border-black/10 text-slate-900 focus:bg-white focus:border-violet-400 focus:ring-1 focus:ring-violet-400 placeholder:text-slate-400'}`}
             />
 
-            <div className="flex flex-wrap gap-2.5 bg-white/20 rounded-md justify-center mx-auto mt-2 p-1">
+            <div className={`flex flex-wrap gap-1.5 rounded-lg justify-center mx-auto p-1.5 ${isDark ? 'bg-white/5 border border-white/5' : 'bg-slate-100 border border-black/5'}`}>
               {CELL_COLORS.map(c => {
                 const isActive = (timetableColors?.[editingCell.day]?.[editingCell.time] || 'default') === c.name;
                 return (
@@ -505,21 +562,20 @@ export default function Timetable() {
                     key={c.name}
                     onClick={() => updateTimetableColor(editingCell.day, editingCell.time, c.name)}
                     title={c.name}
-                    className={`w-7 h-7 md:w-8 md:h-8 rounded-full ${c.solidBg} ${isActive ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-900 scale-110 shadow-lg' : 'opacity-100 hover:scale-110'} transition-all duration-200 flex items-center justify-center shrink-0`}
+                    className={`w-6 h-6 rounded-full ${isDark ? c.solidBg : c.lightSolidBg} ${isActive ? `ring-2 ring-white ring-offset-1 scale-110 shadow-lg ${isDark ? 'ring-offset-[#111827]' : 'ring-offset-[#ffffff]'}` : 'opacity-80 hover:scale-110 hover:opacity-100'} transition-all duration-200 flex items-center justify-center shrink-0`}
                   >
-                    {isActive && <Check size={14} className="text-white drop-shadow-md" />}
+                    {isActive && <Check size={12} className="text-white drop-shadow-md" />}
                   </button>
                 );
               })}
             </div>
 
-            <button onClick={() => setEditingCell(null)} className="mt-2 w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold rounded-2xl transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] active:scale-95">
+            <button onClick={() => setEditingCell(null)} className="w-full py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.3)] active:scale-95">
               Save Changes
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
@@ -527,7 +583,7 @@ export default function Timetable() {
 // -------------------------------------------------------------
 // Component for editing Start Time (Modal Overlay)
 // -------------------------------------------------------------
-function StartTimeEditor({ currentMins, onSave, onCancel }: { currentMins: number, onSave: (mins: number) => void, onCancel: () => void }) {
+function StartTimeEditor({ currentMins, isDark, onSave, onCancel }: { currentMins: number, isDark: boolean, onSave: (mins: number) => void, onCancel: () => void }) {
   const initialH = Math.floor(currentMins / 60) % 24;
   const initialM = currentMins % 60;
 
@@ -547,35 +603,35 @@ function StartTimeEditor({ currentMins, onSave, onCancel }: { currentMins: numbe
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div
-        className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6 flex flex-col items-center gap-5 w-full max-w-[260px] animate-in zoom-in-95 duration-200"
+        className={`backdrop-blur-xl border rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.6)] p-5 flex flex-col items-center gap-4 w-full max-w-[220px] animate-in zoom-in-95 duration-200 ${isDark ? 'bg-gray-900/95 border-white/10' : 'bg-white/95 border-black/10'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center gap-1">
-          <div className="p-2 bg-sky-500/10 text-sky-400 rounded-full mb-1">
-            <Clock size={20} />
+          <div className="p-1.5 bg-sky-500/10 text-sky-400 rounded-full mb-0.5">
+            <Clock size={16} />
           </div>
-          <h3 className="text-gray-100 font-bold text-sm tracking-wide">Set Day Start Time</h3>
+          <h3 className={`font-bold text-xs tracking-wide ${isDark ? 'text-gray-100' : 'text-slate-800'}`}>Set Day Start Time</h3>
         </div>
 
         <input
           type="time"
           value={timeValue}
           onChange={e => setTimeValue(e.target.value)}
-          className="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3 text-white text-xl font-medium tracking-wider text-center outline-none focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all cursor-pointer [color-scheme:dark] shadow-inner"
+          className={`w-full rounded-xl px-3 py-2 text-lg font-medium tracking-wider text-center outline-none transition-all cursor-pointer shadow-inner ${isDark ? 'bg-black/30 border border-white/10 text-white focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 [color-scheme:dark]' : 'bg-slate-100 border border-black/10 text-slate-900 focus:border-sky-400 focus:ring-1 focus:ring-sky-400 [color-scheme:light]'}`}
         />
 
-        <div className="flex w-full gap-3 mt-2">
+        <div className="flex w-full gap-2 mt-1">
           <button
             onClick={(e) => { e.stopPropagation(); onCancel(); }}
-            className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold rounded-xl transition-all active:scale-95"
+            className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all active:scale-95 ${isDark ? 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white' : 'bg-black/5 hover:bg-black/10 text-slate-600 hover:text-slate-900'}`}
           >
             Cancel
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); save(); }}
-            className="flex-1 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all active:scale-95"
+            className="flex-1 py-2 bg-sky-500 hover:bg-sky-400 text-white text-[10px] font-bold rounded-lg shadow-[0_0_10px_rgba(14,165,233,0.3)] transition-all active:scale-95"
           >
             Save
           </button>
@@ -591,6 +647,7 @@ function StartTimeEditor({ currentMins, onSave, onCancel }: { currentMins: numbe
 function DurationCell({
   block,
   index,
+  isDark,
   onUpdate,
   isActive,
   isRange,
@@ -600,6 +657,7 @@ function DurationCell({
 }: {
   block: { startStr: string, endStr: string, duration: number },
   index: number,
+  isDark: boolean,
   onUpdate: (dur: number) => void,
   isActive?: boolean,
   isRange: boolean,
@@ -631,24 +689,24 @@ function DurationCell({
   };
 
   return (
-    <div className={`relative group h-10 flex items-center justify-center rounded-xl border transition-all duration-300 ${isActive ? 'bg-violet-600/20 border-violet-500/50 shadow-[inset_0_0_15px_rgba(139,92,246,0.15)] z-20' : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/5'}`}>
+    <div className={`relative group w-full h-full flex items-center justify-center rounded-[6px] border transition-all duration-300 ${isActive ? (isDark ? 'bg-violet-600/20 border-violet-500/50 shadow-[inset_0_0_10px_rgba(139,92,246,0.15)] z-20' : 'bg-violet-200 border-violet-400 z-20') : (isDark ? 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/5' : 'bg-slate-200/50 border-black/5 hover:border-black/10 hover:bg-slate-200')}`}>
       {isEditingOverride ? (
-        <div className="absolute inset-0 z-[60] bg-gray-900/95 backdrop-blur-md border border-violet-500/50 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center justify-center px-1 scale-[1.15] animate-in zoom-in-95 duration-150">
-          <div className="flex items-center gap-1.5 text-white">
+        <div className={`absolute inset-0 z-[60] backdrop-blur-md border rounded-[6px] shadow-[0_10px_20px_rgba(0,0,0,0.8)] flex items-center justify-center px-0.5 scale-[1.15] animate-in zoom-in-95 duration-150 ${isDark ? 'bg-gray-900/95 border-violet-500/50' : 'bg-white/95 border-violet-400'}`}>
+          <div className={`flex items-center gap-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
             <div className="flex flex-col items-center">
-              <button onClick={() => adjust(15)} className="hover:text-violet-400 p-0.5 transition-colors"><ChevronUp size={14} /></button>
-              <div className="flex items-baseline bg-black/40 px-1.5 rounded-md border border-white/5">
+              <button onClick={() => adjust(15)} className="hover:text-violet-500 p-px transition-colors"><ChevronUp size={10} /></button>
+              <div className={`flex items-baseline px-1 rounded border ${isDark ? 'bg-black/40 border-white/5' : 'bg-slate-100 border-black/10'}`}>
                 <input
                   value={durStr}
                   onChange={e => setDurStr(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && save()}
-                  className="w-7 md:w-9 text-center bg-transparent outline-none text-[10px] md:text-xs font-bold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-5 text-center bg-transparent outline-none text-[8px] font-bold tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-[8px] text-white/40 -ml-0.5">m</span>
+                <span className={`text-[7px] -ml-0.5 ${isDark ? 'text-white/40' : 'text-slate-500'}`}>m</span>
               </div>
-              <button onClick={() => adjust(-15)} className="hover:text-violet-400 p-0.5 transition-colors"><ChevronDown size={14} /></button>
+              <button onClick={() => adjust(-15)} className="hover:text-violet-500 p-px transition-colors"><ChevronDown size={10} /></button>
             </div>
-            <button onClick={save} className="ml-0.5 p-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg transition-all active:scale-90 shadow-md"><Check size={12} /></button>
+            <button onClick={save} className="p-1 bg-violet-600 hover:bg-violet-500 text-white rounded transition-all active:scale-90 shadow-sm"><Check size={10} /></button>
           </div>
         </div>
       ) : (
@@ -656,17 +714,17 @@ function DurationCell({
           onClick={() => setEditingOverride(true)}
           className="w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors leading-none"
         >
-          <div className="absolute top-1.5 flex flex-col md:flex-row items-center justify-center gap-[1px] md:gap-1 text-[9px] md:text-[10px] tracking-tight font-semibold font-mono select-none w-full px-1">
-            <span className="text-white/70 transition-colors group-hover:text-white">
+          <div className={`absolute top-1 flex flex-col md:flex-row items-center justify-center gap-[1px] md:gap-0.5 text-[7px] md:text-[8px] tracking-tight font-semibold font-mono select-none w-full px-0.5 ${isDark ? 'text-white/70' : 'text-slate-600'}`}>
+            <span className="transition-colors group-hover:text-violet-400">
               {block.startStr.replace(" AM", "AM").replace(" PM", "PM")}
             </span>
-            <span className="text-white/20 hidden md:inline">-</span>
-            <span className="text-white/40 transition-colors group-hover:text-white/80">
+            <span className={`hidden md:inline ${isDark ? 'text-white/20' : 'text-slate-400'}`}>-</span>
+            <span className={`transition-colors group-hover:text-violet-400 ${isDark ? 'text-white/40' : 'text-slate-500'}`}>
               {block.endStr.replace(" AM", "AM").replace(" PM", "PM")}
             </span>
           </div>
 
-          <span className="absolute bottom-[3px] text-[7px] md:text-[8px] text-violet-300/60 font-bold uppercase tracking-wider group-hover:text-violet-300/90 transition-colors">
+          <span className={`absolute bottom-[2px] text-[6px] md:text-[7px] font-bold uppercase tracking-wider group-hover:text-violet-500 transition-colors ${isDark ? 'text-violet-300/60' : 'text-violet-600/70'}`}>
             {block.duration > 60 ? Math.floor(block.duration / 60) + "hr " + block.duration % 60 + "m" : block.duration + "m"}
           </span>
         </div>

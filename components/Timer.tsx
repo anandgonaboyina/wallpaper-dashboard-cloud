@@ -25,6 +25,7 @@ export default function Timer() {
     isTimerOpen
   } = useDashboardStore();
 
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [customMins, setCustomMins] = useState('');
 
   // Local state for UI updates (does not spam DB)
@@ -34,6 +35,9 @@ export default function Timer() {
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [editHours, setEditHours] = useState('00');
   const [editMins, setEditMins] = useState('25');
+  
+  const [lastInteractionTime, setLastInteractionTime] = useState(Date.now());
+  const [showContinuePrompt, setShowContinuePrompt] = useState(false);
 
   // Ensure local time immediately reflects store changes
   useEffect(() => {
@@ -96,6 +100,17 @@ export default function Timer() {
               setTimerLastSavedChunks(chunks);
             }
           }
+        }
+        
+        const elapsedSinceInteraction = Math.floor((now - lastInteractionTime) / 1000);
+        if (elapsedSinceInteraction >= 7200) {
+           // Idle for 2 hours while running, auto pause!
+           setTimerPausedLeft(remaining);
+           setTimerEndAt(null);
+           playAlarm();
+           setShowContinuePrompt(true);
+           setLastInteractionTime(now);
+           return;
         }
 
         if (remaining <= 0) {
@@ -169,23 +184,36 @@ export default function Timer() {
           if (!navigator.userActivation || navigator.userActivation.hasBeenActive) {
             navigator.vibrate([500, 500, 500, 500, 500]);
             vibeInterval = setInterval(() => {
-              try { navigator.vibrate([500, 500, 500, 500, 500]); } catch(e) {}
+              try { navigator.vibrate([500, 500, 500, 500, 500]); } catch (e) { }
             }, 2500);
           }
-        } catch(e) {}
+        } catch (e) { }
       }
     } else {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(0); } catch(e) {}
+        try { navigator.vibrate(0); } catch (e) { }
       }
     }
     return () => {
       if (vibeInterval) clearInterval(vibeInterval);
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(0); } catch(e) {}
+        try { navigator.vibrate(0); } catch (e) { }
       }
     };
   }, [isAlarmPlaying, enableAlarmVibration]);
+
+  // Handle Audio playback reacting to isAlarmPlaying state
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isAlarmPlaying && enableAlarmSound) {
+        audioRef.current.volume = (alarmVolume ?? 100) / 100;
+        audioRef.current.play().catch(e => console.error('Failed to play alarm:', e));
+      } else {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [isAlarmPlaying, enableAlarmSound, alarmVolume]);
 
   const getAlarmTitle = () => {
     if (enableAlarmSound && enableAlarmVibration) return 'PWA_ALARM_RING_VIBRATE';
@@ -196,6 +224,7 @@ export default function Timer() {
 
   const playAlarm = async () => {
     setIsAlarmPlaying(true);
+    useDashboardStore.setState({ isTimerOpen: true });
     const durationSecs = useDashboardStore.getState().alarmDurationSecs || 60;
 
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
@@ -253,6 +282,26 @@ export default function Timer() {
     setTimerLastSavedChunks(0);
     stopAlarm();
 
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setTimeout(() => {
+        useDashboardStore.setState({ isTimerOpen: false });
+      }, 3000);
+    }
+
+    // Unlock audio for mobile browsers during this user interaction
+    // We allow a brief audible "blip" which acts as start feedback and securely unlocks audio on strict mobile browsers
+    if (audioRef.current && enableAlarmSound) {
+      audioRef.current.volume = (alarmVolume ?? 100) / 100;
+      audioRef.current.play().then(() => {
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+          }
+        }, 150); // 150ms audible blip
+      }).catch(e => console.log('Audio unlock failed:', e));
+    }
+
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission().then(permission => {
@@ -289,14 +338,14 @@ export default function Timer() {
       // Pause it
       setTimerPausedLeft(localTimeLeft);
       setTimerEndAt(null);
-      
+
       // Clear scheduled background notification
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(async (registration) => {
           try {
             const notifications = await registration.getNotifications({ tag: 'alarm-alert', includeTriggered: true } as any);
             notifications.forEach(n => n.close());
-          } catch(e) {}
+          } catch (e) { }
         });
       }
     } else if (timerPausedLeft !== null) {
@@ -304,7 +353,7 @@ export default function Timer() {
       const newEndAt = Date.now() + timerPausedLeft * 1000;
       setTimerEndAt(newEndAt);
       setTimerPausedLeft(null);
-      
+
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         scheduleNotification(newEndAt);
       }
@@ -320,9 +369,9 @@ export default function Timer() {
   };
 
   const handleCustomStart = () => {
-    const mins = parseInt(customMins);
+    let mins = parseInt(customMins);
     if (!isNaN(mins) && mins > 0) {
-      startTimer(mins * 60); // Fix: Custom input should be minutes, multiply by 60 for seconds
+      startTimer(mins * 60); 
       setCustomMins('');
     }
   };
@@ -347,8 +396,8 @@ export default function Timer() {
   };
 
   const saveEditor = () => {
-    const h = parseInt(editHours) || 0;
-    const m = parseInt(editMins) || 0;
+    let h = parseInt(editHours) || 0;
+    let m = parseInt(editMins) || 0;
     const newRemaining = h * 3600 + m * 60;
 
     if (timerInitialMins) {
@@ -375,135 +424,169 @@ export default function Timer() {
 
   return (
     <DraggableWidget id="timer">
-    <div className={`relative pointer-events-auto select-none ${isTimerOpen || isAlarmPlaying ? '' : 'hidden'}`}>
-      <div className="w-64 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl p-3 text-white flex flex-col gap-2">
-        {/* Timer Display / Editor */}
-        <div className="text-center min-h-[80px] flex flex-col items-center justify-center relative">
-          {activeTaskTitle && (
-            <div className="w-full max-w-[220px] mb-3 text-sm font-bold text-white flex items-center justify-center gap-2 bg-blue-600/50 backdrop-blur-md border border-blue-400/50 px-2 py-2 rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-              <span className="shrink-0 w-2 h-2 rounded-full bg-blue-200 animate-pulse mt-[5px] self-start"></span>
-              <span className="break-words whitespace-normal text-center leading-snug drop-shadow-md">{activeTaskTitle}</span>
-            </div>
-          )}
-          <div className="flex items-center justify-center w-full relative">
-            {/* Quick Presets Right */}
-            {!timerEndAt && !timerPausedLeft && localTimeLeft === 0 && !isEditingTime && !isAlarmPlaying && (
-              <div className="absolute right-1 top-1/2 mt-[20px] ml-[5px] -translate-y-1/2 flex flex-col gap-1.5">
-                {[5, 15, 25].map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => startTimer(preset * 60)}
-                    className="w-10 py-1 text-xs bg-white/5 hover:bg-white/20 rounded-lg transition-colors border border-white/10 font-medium"
-                  >
-                    {preset}m
-                  </button>
-                ))}
+      <div 
+        onPointerDown={() => setLastInteractionTime(Date.now())}
+        className={`relative pointer-events-auto select-none ${isTimerOpen || isAlarmPlaying ? '' : 'hidden'}`}
+      >
+        <div className="w-64 rounded-3xl glass-panel p-3 text-white flex flex-col gap-2">
+          {/* Timer Display / Editor */}
+          <div className="text-center min-h-[80px] flex flex-col items-center justify-center relative">
+            {activeTaskTitle && (
+              <div className="w-full max-w-[220px] mb-3 text-sm font-bold text-white flex items-center justify-center gap-2 bg-blue-600/50 backdrop-blur-md border border-blue-400/50 px-2 py-2 rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                <span className="shrink-0 w-2 h-2 rounded-full bg-blue-200 animate-pulse mt-[5px] self-start"></span>
+                <span className="break-words whitespace-normal text-center leading-snug drop-shadow-md">{activeTaskTitle}</span>
               </div>
             )}
+            <div className="flex items-center justify-center w-full relative">
+              {/* Quick Presets Right */}
+              {!timerEndAt && !timerPausedLeft && localTimeLeft === 0 && !isEditingTime && !isAlarmPlaying && (
+                <div className="absolute right-1 top-1/2 mt-[20px] ml-[5px] -translate-y-1/2 flex flex-col gap-1.5">
+                  {[5, 15, 25].map((preset) => (
+                    <button
+                      key={preset}
+                      onClick={() => startTimer(preset * 60)}
+                      className="w-10 py-1 text-xs bg-white/5 hover:bg-white/20 rounded-lg transition-colors border border-white/10 font-medium"
+                    >
+                      {preset}m
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {isEditingTime ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="flex flex-col items-center">
-                  <button onClick={() => adjustEditTime('h', 1)} className="hover:text-white/60 p-1"><ChevronUp size={20} /></button>
-                  <input
-                    type="number"
-                    value={editHours}
-                    onChange={(e) => setEditHours(e.target.value.padStart(2, '0'))}
-                    onKeyDown={(e) => e.key === 'Enter' && saveEditor()}
-                    className="w-16 bg-transparent text-5xl font-light tabular-nums text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none selection:bg-white/20"
-                    min="0"
-                    max="99"
-                  />
-                  <button onClick={() => adjustEditTime('h', -1)} className="hover:text-white/60 p-1"><ChevronDown size={20} /></button>
+              {isEditingTime ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="flex flex-col items-center">
+                    <button onClick={() => adjustEditTime('h', 1)} className="hover:text-white/60 p-1"><ChevronUp size={20} /></button>
+                    <input
+                      type="number"
+                      value={editHours}
+                      onChange={(e) => setEditHours(e.target.value.padStart(2, '0'))}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEditor()}
+                      className="w-16 bg-transparent text-5xl font-light tabular-nums text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none selection:bg-white/20"
+                      min="0"
+                      max="99"
+                    />
+                    <button onClick={() => adjustEditTime('h', -1)} className="hover:text-white/60 p-1"><ChevronDown size={20} /></button>
+                  </div>
+                  <span className="text-5xl font-light opacity-50 mb-0">:</span>
+                  <div className="flex flex-col items-center">
+                    <button onClick={() => adjustEditTime('m', 1)} className="hover:text-white/60 p-1"><ChevronUp size={20} /></button>
+                    <input
+                      type="number"
+                      value={editMins}
+                      onChange={(e) => setEditMins(e.target.value.padStart(2, '0'))}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEditor()}
+                      className="w-16 bg-transparent text-5xl font-light tabular-nums text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none selection:bg-white/20"
+                      min="0"
+                      max="59"
+                    />
+                    <button onClick={() => adjustEditTime('m', -1)} className="hover:text-white/60 p-1"><ChevronDown size={20} /></button>
+                  </div>
+                  <button onClick={saveEditor} className="ml-1 p-2 bg-blue-500/80 hover:bg-blue-500 rounded-xl transition-colors">
+                    <Check size={20} />
+                  </button>
                 </div>
-                <span className="text-5xl font-light opacity-50 mb-0">:</span>
-                <div className="flex flex-col items-center">
-                  <button onClick={() => adjustEditTime('m', 1)} className="hover:text-white/60 p-1"><ChevronUp size={20} /></button>
-                  <input
-                    type="number"
-                    value={editMins}
-                    onChange={(e) => setEditMins(e.target.value.padStart(2, '0'))}
-                    onKeyDown={(e) => e.key === 'Enter' && saveEditor()}
-                    className="w-16 bg-transparent text-5xl font-light tabular-nums text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none selection:bg-white/20"
-                    min="0"
-                    max="59"
-                  />
-                  <button onClick={() => adjustEditTime('m', -1)} className="hover:text-white/60 p-1"><ChevronDown size={20} /></button>
+              ) : (
+                <div
+                  onClick={openEditor}
+                  className={`text-5xl font-light tracking-widest tabular-nums drop-shadow-md transition-opacity ${!timerEndAt && !isAlarmPlaying ? 'cursor-pointer hover:opacity-80' : ''}`}
+                  title={!timerEndAt && !isAlarmPlaying ? "Click to set time" : ""}
+                >
+                  {formatTime(localTimeLeft)}
                 </div>
-                <button onClick={saveEditor} className="ml-1 p-2 bg-blue-500/80 hover:bg-blue-500 rounded-xl transition-colors">
-                  <Check size={20} />
-                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Alarm State */}
+          {isAlarmPlaying ? (
+            showContinuePrompt ? (
+              <div className="flex flex-col items-center gap-3 w-full py-2">
+                <p className="text-sm font-semibold text-blue-300">Are you still working?</p>
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={() => {
+                      setShowContinuePrompt(false);
+                      setIsAlarmPlaying(false);
+                      // Resume timer
+                      if (timerPausedLeft !== null) {
+                        setTimerEndAt(Date.now() + timerPausedLeft * 1000);
+                        setTimerPausedLeft(null);
+                      }
+                    }}
+                    className="flex-1 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Continue
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowContinuePrompt(false);
+                      setIsAlarmPlaying(false);
+                    }}
+                    className="flex-1 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Stop
+                  </button>
+                </div>
               </div>
             ) : (
-              <div
-                onClick={openEditor}
-                className={`text-5xl font-light tracking-widest tabular-nums drop-shadow-md transition-opacity ${!timerEndAt && !isAlarmPlaying ? 'cursor-pointer hover:opacity-80' : ''}`}
-                title={!timerEndAt && !isAlarmPlaying ? "Click to set time" : ""}
+              <button
+                onClick={stopAlarm}
+                className="w-full py-2 flex items-center justify-center gap-2 bg-red-500/80 hover:bg-red-500 rounded-xl font-medium transition-colors animate-pulse"
               >
-                {formatTime(localTimeLeft)}
-              </div>
-            )}
-          </div>
+                <VolumeX size={20} />
+                STOP TIMER
+              </button>
+            )
+          ) : (
+            <>
+              {/* Controls */}
+              {!isEditingTime && (
+                <div className="flex justify-center gap-2">
+                  <button
+                    onClick={localTimeLeft > 0 || timerPausedLeft ? togglePause : () => startTimer(25 * 60)}
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                    title={localTimeLeft > 0 || timerPausedLeft ? (timerEndAt ? "Pause" : "Resume") : "Start 25m Timer"}
+                  >
+                    {timerEndAt ? <Pause size={20} /> : <Play size={20} />}
+                  </button>
+                  <button
+                    onClick={resetTimer}
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                    title="Reset Timer"
+                  >
+                    <Square size={20} className="fill-current" />
+                  </button>
+                </div>
+              )}
+
+              {/* Custom Input */}
+              {!timerEndAt && !timerPausedLeft && localTimeLeft === 0 && !isEditingTime && (
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="number"
+                    placeholder="Custom mins..."
+                    value={customMins}
+                    onChange={(e) => setCustomMins(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCustomStart()}
+                    className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm outline-none focus:bg-white/10 transition-colors placeholder:text-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="1"
+                  />
+                  <button
+                    onClick={handleCustomStart}
+                    className="px-3 py-1 bg-blue-500/60 hover:bg-blue-500/80 rounded-lg text-sm font-medium transition-colors shrink-0"
+                  >
+                    Set
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Hidden Audio Element */}
+          <audio ref={audioRef} src={alarmSound} loop preload="auto" />
         </div>
-
-        {/* Alarm State */}
-        {isAlarmPlaying ? (
-          <button
-            onClick={stopAlarm}
-            className="w-full py-2 flex items-center justify-center gap-2 bg-red-500/80 hover:bg-red-500 rounded-xl font-medium transition-colors animate-pulse"
-          >
-            <VolumeX size={20} />
-            STOP ALARM
-          </button>
-        ) : (
-          <>
-            {/* Controls */}
-            {!isEditingTime && (
-              <div className="flex justify-center gap-2">
-                <button
-                  onClick={localTimeLeft > 0 || timerPausedLeft ? togglePause : () => startTimer(25 * 60)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                  title={localTimeLeft > 0 || timerPausedLeft ? (timerEndAt ? "Pause" : "Resume") : "Start 25m Timer"}
-                >
-                  {timerEndAt ? <Pause size={20} /> : <Play size={20} />}
-                </button>
-                <button
-                  onClick={resetTimer}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                  title="Reset Timer"
-                >
-                  <Square size={20} className="fill-current" />
-                </button>
-              </div>
-            )}
-
-            {/* Custom Input */}
-            {!timerEndAt && !timerPausedLeft && localTimeLeft === 0 && !isEditingTime && (
-              <div className="flex gap-2 mt-1">
-                <input
-                  type="number"
-                  placeholder="Custom mins..."
-                  value={customMins}
-                  onChange={(e) => setCustomMins(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCustomStart()}
-                  className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm outline-none focus:bg-white/10 transition-colors placeholder:text-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  min="1"
-                />
-                <button
-                  onClick={handleCustomStart}
-                  className="px-3 py-1 bg-blue-500/60 hover:bg-blue-500/80 rounded-lg text-sm font-medium transition-colors shrink-0"
-                >
-                  Set
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Hidden Audio Element */}
-        {isAlarmPlaying && enableAlarmSound && <audio src={alarmSound} loop autoPlay />}
       </div>
-    </div>
     </DraggableWidget>
   );
 }

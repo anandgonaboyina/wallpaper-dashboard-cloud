@@ -25,7 +25,7 @@ import GlobalBroadcastPopup from "@/components/GlobalBroadcastPopup";
 import VideoBackground from "@/components/VideoBackground";
 import LoadingScreen from "@/components/LoadingScreen";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ChevronDown, ChevronUp, CalendarDays, Settings, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
 import { useDashboardStore, hasUnsavedChanges } from "@/store/dashboardStore";
 import { fetchQuote } from "@/utils/quoteEngine";
@@ -53,11 +53,13 @@ export default function Dashboard() {
   const [activeCountdownIndex, setActiveCountdownIndex] = useState(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const calendarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isMobileCountdownsVisible = useDashboardStore((state) => state.isMobileCountdownsVisible);
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
   const setIsTimetableOpen = useDashboardStore((state) => state.setIsTimetableOpen);
   const isCalendarOpen = useDashboardStore((state) => state.isCalendarOpen);
+  const isCalendarBusy = useDashboardStore((state) => state.isCalendarBusy);
   const isTaskManagerOpen = useDashboardStore((state) => state.isTaskManagerOpen);
   const [edgeTouchStartX, setEdgeTouchStartX] = useState<number | null>(null);
   const [isMobileToolbarOpen, setIsMobileToolbarOpen] = useState(false);
@@ -137,6 +139,32 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleHide, isHidden, hideConfig, togglePanicHide, isPanicHidden, panicShortcutKey, focusShortcutKey]);
 
+  const handleCalendarExpand = () => {
+    useDashboardStore.setState({ isCalendarOpen: true });
+    if (calendarTimeoutRef.current) clearTimeout(calendarTimeoutRef.current);
+    calendarTimeoutRef.current = setTimeout(() => {
+      if (!useDashboardStore.getState().isCalendarBusy) {
+        useDashboardStore.setState({ isCalendarOpen: false });
+      }
+    }, 8000);
+  };
+
+  useEffect(() => {
+    if (isCalendarOpen) {
+      if (isCalendarBusy) {
+        if (calendarTimeoutRef.current) clearTimeout(calendarTimeoutRef.current);
+      } else {
+        handleCalendarExpand();
+      }
+    }
+  }, [isCalendarBusy, isCalendarOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (calendarTimeoutRef.current) clearTimeout(calendarTimeoutRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const initialTimer = setTimeout(async () => {
       const q = await fetchQuote();
@@ -212,7 +240,7 @@ export default function Dashboard() {
                   const touchEndY = e.changedTouches[0].clientY;
                   const diffX = touchStartX - touchEndX;
                   const diffY = touchStartY - touchEndY;
-                  
+
                   // Hide if swiped UP significantly
                   if (diffY > 50 && Math.abs(diffY) > Math.abs(diffX)) {
                     useDashboardStore.getState().setIsMobileCountdownsVisible(false);
@@ -221,7 +249,7 @@ export default function Dashboard() {
                   } else if (diffX < -40) {
                     setActiveCountdownIndex(p => Math.max(0, p - 1));
                   }
-                  
+
                   setTouchStartX(null);
                   setTouchStartY(null);
                 }}
@@ -250,37 +278,20 @@ export default function Dashboard() {
           {/* Left Side Drawer: Calendar */}
           {(!isHidden || !hideConfig.calendar) && showCalendar && (
             <>
-              {/* Left Edge Trigger (Mobile Swipe / Desktop Hover) */}
+              {/* Edge Peek Tab for Calendar */}
               <div
-                className={`fixed left-3 sm:left-4 top-[20vh] w-8 sm:w-10 h-[30vh] z-[40] cursor-pointer touch-none ${isCalendarOpen ? 'hidden' : ''}`}
-                onClick={() => { if (!isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true }) }}
-                onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
-                onTouchEnd={(e) => {
-                  if (edgeTouchStartX !== null && e.changedTouches[0].clientX - edgeTouchStartX > 30) {
-                    if (!isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true });
-                  }
-                  setEdgeTouchStartX(null);
-                }}
-                onMouseDown={(e) => setEdgeTouchStartX(e.clientX)}
-                onMouseUp={(e) => {
-                  if (edgeTouchStartX !== null && e.clientX - edgeTouchStartX > 30) {
-                    if (!isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true });
-                  }
-                  setEdgeTouchStartX(null);
-                }}
-                onMouseLeave={(e) => {
-                  if (edgeTouchStartX !== null && e.clientX - edgeTouchStartX > 30) {
-                    if (!isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: true });
-                  }
-                  setEdgeTouchStartX(null);
-                }}
-              />
+                className={`fixed left-0 top-[20vh] glass-btn border-l-0 rounded-l-none rounded-r-xl sm:rounded-r-2xl p-1.5 py-2 sm:p-2.5 sm:py-3 z-[90] cursor-pointer shadow-xl flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isCalendarOpen ? '-translate-x-[120%]' : 'translate-x-0'}`}
+                onClick={handleCalendarExpand}
+                title="Open Calendar"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 transition-colors" />
+              </div>
 
               <div
-                className={`fixed top-[100px] left-0 h-auto max-h-[calc(100vh-140px)] w-[320px] sm:w-[340px] max-w-[85vw] pb-4 pl-2 pr-0 sm:pl-4 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]  z-[100] ${isCalendarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'}`}
+                className={`fixed top-[100px] left-0 h-auto max-h-[calc(100vh-140px)] w-auto max-w-[85vw] pb-4 pl-2 pr-0 sm:pl-4 flex flex-col transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] z-[100] group pointer-events-auto select-none ${isCalendarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-[calc(100%+20px)] pointer-events-none'}`}
                 onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
                 onTouchEnd={(e) => {
-                  if (edgeTouchStartX !== null && edgeTouchStartX - e.changedTouches[0].clientX > 40) {
+                  if (edgeTouchStartX !== null && edgeTouchStartX - e.changedTouches[0].clientX > 15) {
                     if (isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: false });
                   }
                   setEdgeTouchStartX(null);
@@ -288,19 +299,20 @@ export default function Dashboard() {
                 onTouchCancel={() => setEdgeTouchStartX(null)}
                 onMouseDown={(e) => setEdgeTouchStartX(e.clientX)}
                 onMouseUp={(e) => {
-                  if (edgeTouchStartX !== null && edgeTouchStartX - e.clientX > 40) {
+                  if (edgeTouchStartX !== null && edgeTouchStartX - e.clientX > 15) {
                     if (isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: false });
                   }
                   setEdgeTouchStartX(null);
                 }}
                 onMouseLeave={(e) => {
-                  if (edgeTouchStartX !== null && edgeTouchStartX - e.clientX > 40) {
+                  if (edgeTouchStartX !== null && edgeTouchStartX - e.clientX > 15) {
                     if (isCalendarOpen) useDashboardStore.setState({ isCalendarOpen: false });
                   }
                   setEdgeTouchStartX(null);
                 }}
               >
-                <div className="w-full h-full relative">
+                {/* When closed, disable clicks on the calendar so you don't accidentally press its buttons when tapping the edge */}
+                <div className={`w-full h-full relative ${!isCalendarOpen ? 'pointer-events-none' : ''}`}>
                   <MiniCalendar />
                 </div>
               </div>
@@ -310,37 +322,20 @@ export default function Dashboard() {
           {/* Right Side Drawer: Tasks */}
           {(!isHidden || !hideConfig.tasks) && showTasks && (
             <>
-              {/* Right Edge Trigger (Mobile Swipe / Desktop Hover) */}
+              {/* Edge Peek Tab for Task Manager */}
               <div
-                className={`fixed right-3 sm:right-4 top-[20vh] w-8 sm:w-10 h-[30vh] z-[40] cursor-pointer touch-none ${isTaskManagerOpen ? 'hidden' : ''}`}
+                className={`fixed right-0 top-[20vh] glass-btn border-r-0 rounded-r-none rounded-l-xl sm:rounded-l-2xl p-1.5 py-2 sm:p-2.5 sm:py-3 z-[90] cursor-pointer shadow-xl flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isTaskManagerOpen ? 'translate-x-[120%]' : 'translate-x-0'}`}
                 onClick={() => { if (!isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true }) }}
-                onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
-                onTouchEnd={(e) => {
-                  if (edgeTouchStartX !== null && edgeTouchStartX - e.changedTouches[0].clientX > 30) {
-                    if (!isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true });
-                  }
-                  setEdgeTouchStartX(null);
-                }}
-                onMouseDown={(e) => setEdgeTouchStartX(e.clientX)}
-                onMouseUp={(e) => {
-                  if (edgeTouchStartX !== null && edgeTouchStartX - e.clientX > 30) {
-                    if (!isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true });
-                  }
-                  setEdgeTouchStartX(null);
-                }}
-                onMouseLeave={(e) => {
-                  if (edgeTouchStartX !== null && edgeTouchStartX - e.clientX > 30) {
-                    if (!isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: true });
-                  }
-                  setEdgeTouchStartX(null);
-                }}
-              />
+                title="Open Tasks"
+              >
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 transition-colors" />
+              </div>
 
               <div
                 className={`fixed top-[140px] right-0 h-auto max-h-[calc(100vh-200px)] w-[320px] sm:w-[340px] max-w-[85vw] pb-4 pr-2 pl-0 sm:pr-4 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[100] ${isTaskManagerOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
                 onTouchStart={(e) => setEdgeTouchStartX(e.touches[0].clientX)}
                 onTouchEnd={(e) => {
-                  if (edgeTouchStartX !== null && e.changedTouches[0].clientX - edgeTouchStartX > 40) {
+                  if (edgeTouchStartX !== null && e.changedTouches[0].clientX - edgeTouchStartX > 15) {
                     if (isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: false });
                   }
                   setEdgeTouchStartX(null);
@@ -348,13 +343,13 @@ export default function Dashboard() {
                 onTouchCancel={() => setEdgeTouchStartX(null)}
                 onMouseDown={(e) => setEdgeTouchStartX(e.clientX)}
                 onMouseUp={(e) => {
-                  if (edgeTouchStartX !== null && e.clientX - edgeTouchStartX > 40) {
+                  if (edgeTouchStartX !== null && e.clientX - edgeTouchStartX > 15) {
                     if (isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: false });
                   }
                   setEdgeTouchStartX(null);
                 }}
                 onMouseLeave={(e) => {
-                  if (edgeTouchStartX !== null && e.clientX - edgeTouchStartX > 40) {
+                  if (edgeTouchStartX !== null && e.clientX - edgeTouchStartX > 15) {
                     if (isTaskManagerOpen) useDashboardStore.setState({ isTaskManagerOpen: false });
                   }
                   setEdgeTouchStartX(null);
@@ -438,8 +433,8 @@ export default function Dashboard() {
             className="absolute right-1 sm:right-2 md:right-2 flex items-end transition-all duration-300 pointer-events-none scale-[0.75] sm:scale-85 md:scale-100 origin-bottom-right"
           >
             {/* TaskManager & Timer Group */}
-            <div className="flex flex-col items-end gap-2 pointer-events-none mr-1 md:mr-[10px]">
-              <div className="flex flex-col md:flex-row items-end md:items-start gap-2 md:gap-3 pointer-events-none">
+            <div className="flex flex-col items-end gap-2 pointer-events-none mr-1 md:mr-[10px] relative z-20">
+              <div className="flex flex-col md:flex-row items-end md:items-start gap-2 md:gap-3 pointer-events-auto">
                 <div className={(!isHidden || !hideConfig.stopwatch) && showStopwatch ? '' : 'hidden'}>
                   <Stopwatch />
                 </div>
@@ -450,7 +445,7 @@ export default function Dashboard() {
             </div>
 
             {/* Vertical Icons Toolbar (Side toggle btns scale with container) */}
-            <div className="pointer-events-none">
+            <div className="pointer-events-none relative z-10">
               <RightToolbar />
             </div>
           </div>

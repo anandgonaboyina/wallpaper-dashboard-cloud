@@ -20,6 +20,18 @@
   }
 }
 
+.light {
+  --color-white: #0f172a; /* slate-900 */
+  --color-black: #ffffff; /* white */
+  --color-white-rgb: 15, 23, 42;
+  --color-black-rgb: 255, 255, 255;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
 body {
   background: transparent;
   color: var(--foreground);
@@ -28,8 +40,37 @@ body {
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl;
   }
+  .light .glass-panel {
+    @apply bg-black/40 border-black/20;
+  }
+  .glass-btn {
+    @apply bg-white/10 text-white/70 border-white/20 hover:bg-white/20 hover:text-white backdrop-blur-xl;
+  }
+  .glass-btn-active {
+    @apply bg-white/30 text-white border-white/30 backdrop-blur-xl;
+  }
+  
+  .light .glass-btn {
+    @apply bg-black/40 text-white/90 border-black/20 hover:bg-black/50 hover:text-white;
+  }
+  .light .glass-btn-active {
+    @apply bg-black/60 text-white border-black/30;
+  }
+  
+  /* Pill colors mapped strictly to the theme class, bypassing OS dark mode media queries */
+  .text-timer-pill { @apply text-blue-300; }
+  .light .text-timer-pill { @apply text-blue-700; }
+  
+  .text-stopwatch-pill { @apply text-green-300; }
+  .light .text-stopwatch-pill { @apply text-blue-700; }
+  
+  .icon-timer-pill { @apply text-blue-400; }
+  .light .icon-timer-pill { @apply text-blue-600; }
+  
+  .icon-stopwatch-pill { @apply text-green-400; }
+  .light .icon-stopwatch-pill { @apply text-blue-600; }
 }
 
 /* Custom Webkit Scrollbar for CEF / Live Wallpaper Engine */

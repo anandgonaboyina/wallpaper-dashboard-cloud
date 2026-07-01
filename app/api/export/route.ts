@@ -41,6 +41,13 @@ export async function GET(request: Request) {
         ...(displaySettings || {}),
         ...(generalSettings || {})
       };
+      
+      // Strip stats so users don't think they are backed up and can be modified
+      delete reconstructedState.history;
+      delete reconstructedState.healthData;
+      delete reconstructedState.stopwatchSessions;
+      delete reconstructedState.timerLastSavedChunks;
+      
       returnedData = { state: reconstructedState, version: version || 2 };
     }
     

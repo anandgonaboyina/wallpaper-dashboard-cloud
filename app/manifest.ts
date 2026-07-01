@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Productive Dashboard',
+    name: 'Grind Board',
     short_name: 'Dashboard',
     description: 'A full screen web experience without the URL bar',
     start_url: '/dashboard',

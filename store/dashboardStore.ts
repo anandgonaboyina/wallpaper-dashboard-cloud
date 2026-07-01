@@ -34,7 +34,7 @@ export type RoadmapItem = {
 export type Roadmap = {
   id: string;
   name: string;
-  targetDate?: string; 
+  targetDate?: string;
   nodes: RoadmapItem[];
 };
 
@@ -90,6 +90,8 @@ interface DashboardState {
   toggleTimer: () => void;
   isCalendarOpen: boolean;
   toggleCalendar: () => void;
+  isCalendarBusy: boolean;
+  setIsCalendarBusy: (busy: boolean) => void;
   isClockOpen: boolean;
   toggleClock: () => void;
   isSettingsOpen: boolean;
@@ -225,7 +227,7 @@ interface DashboardState {
   widgetOffsets: Record<string, Record<string, { x: number, y: number }>>;
   updateWidgetOffset: (bgSrc: string, widgetId: string, x: number, y: number) => void;
   resetWidgetOffset: (bgSrc: string, widgetId: string) => void;
-  
+
   lockedWidgets: string[];
   toggleWidgetLock: (widgetId: string) => void;
   resetAllOffsets: (bgSrc: string) => void;
@@ -234,7 +236,7 @@ interface DashboardState {
 
   currentBgSrc: string | null;
   setCurrentBgSrc: (src: string | null) => void;
-  
+
   hiddenWallpapers: string[];
   toggleWallpaperVisibility: (filename: string) => void;
 
@@ -249,6 +251,10 @@ interface DashboardState {
   // Support
   upiId: string;
   setUpiId: (id: string) => void;
+
+  // Theme
+  theme: 'light' | 'dark' | 'auto';
+  setTheme: (theme: 'light' | 'dark' | 'auto') => void;
 
   // Widget Visibility Preferences
   showHealth: boolean;
@@ -275,11 +281,11 @@ interface DashboardState {
   hideConfig: Record<string, boolean>;
   setHideConfig: (key: string, value: boolean) => void;
   setHideAll: (hide: boolean) => void;
-  
+
   mobileHideConfig: Record<string, boolean>;
   setMobileHideConfig: (key: string, value: boolean) => void;
   setMobileHideAll: (hide: boolean) => void;
-  
+
   isPanicHidden: boolean;
   togglePanicHide: () => void;
   panicShortcutKey: string;
@@ -345,7 +351,7 @@ const performSave = async () => {
   }
   const valueToSave = pendingValue;
   isSaving = true;
-  
+
   if (failedToLoadDB || !getSyncToken()) {
     if (pendingValue === valueToSave) {
       pendingValue = null;
@@ -357,13 +363,13 @@ const performSave = async () => {
     isSaving = false;
     return;
   }
-  
+
   let success = false;
   try {
     const lastModified = getSyncLastModified();
     const res = await fetch('/api/store', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getSyncToken()}`
       },
@@ -375,11 +381,11 @@ const performSave = async () => {
       const json = await res.json();
       const parsedCloud = json.cloudData;
       const parsedLocal = JSON.parse(valueToSave);
-      
+
       const mergedState = {
         ...parsedCloud.state,
         ...parsedLocal.state, // Local scalar settings win
-        
+
         // Intelligently merge arrays to prevent data loss, prioritizing local changes
         tasks: [...(parsedLocal.state.tasks || []), ...(parsedCloud.state.tasks || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
         countdowns: [...(parsedLocal.state.countdowns || []), ...(parsedCloud.state.countdowns || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
@@ -388,21 +394,21 @@ const performSave = async () => {
         stopwatchSessions: [...(parsedLocal.state.stopwatchSessions || []), ...(parsedCloud.state.stopwatchSessions || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
         roadmaps: [...(parsedLocal.state.roadmaps || []), ...(parsedCloud.state.roadmaps || [])].filter((t: any, i: number, a: any[]) => a.findIndex(x => x.id === t.id) === i),
       };
-      
+
       const mergedData = { version: 2, state: mergedState };
       const mergedStr = JSON.stringify(mergedData);
-      
+
       isSyncingFromCloud = true;
       setSyncLastModified(Date.now());
       localStorage.setItem('dashboard-storage', mergedStr);
       useDashboardStore.setState(mergedState);
       setTimeout(() => { isSyncingFromCloud = false; }, 500);
-      
+
       // Re-queue the merged data to save to cloud
       pendingValue = mergedStr;
       hasUnsavedChanges = true;
       saveTimeout = setTimeout(performSave, 500);
-      
+
       isSaving = false;
       return;
     }
@@ -445,19 +451,19 @@ const performSave = async () => {
 const fileStorage = createJSONStorage(() => ({
   getItem: async (_name: string): Promise<string | null> => {
     if (typeof window === 'undefined') return null;
-    
+
     let retries = 0;
     const token = getSyncToken();
-    
+
     while (retries < 15 && token) {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         console.warn("Device is offline. Bypassing cloud sync and loading local data instantly.");
         break;
       }
       try {
-        const res = await fetch('/api/store', { 
+        const res = await fetch('/api/store', {
           headers: { 'Authorization': `Bearer ${token}` },
-          cache: 'no-store' 
+          cache: 'no-store'
         });
         if (res.ok) {
           const json = await res.json();
@@ -505,7 +511,7 @@ const fileStorage = createJSONStorage(() => ({
       retries++;
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    
+
     console.warn("Failed to fetch store from DB after retries or no token, falling back to localStorage.");
     const localData = localStorage.getItem('dashboard-storage');
     if (!localData && !token) {
@@ -517,7 +523,7 @@ const fileStorage = createJSONStorage(() => ({
   setItem: async (_name: string, value: string): Promise<void> => {
     if (typeof window === 'undefined' || isSyncingFromCloud || isAuthTransition) return;
     if (value === lastSavedValue) return; // Prevent overwriting DB with unchanged hydration state
-    
+
     // ALWAYS save locally first so offline restarts have immediate latest data!
     localStorage.setItem('dashboard-storage', value);
     const newTime = Math.max(Date.now(), getSyncLastModified() + 1);
@@ -525,7 +531,7 @@ const fileStorage = createJSONStorage(() => ({
 
     pendingValue = value;
     hasUnsavedChanges = true;
-    
+
     if (!isSaving && !saveTimeout) {
       saveTimeout = setTimeout(performSave, 500);
     }
@@ -535,13 +541,13 @@ const fileStorage = createJSONStorage(() => ({
     try {
       await fetch('/api/store', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getSyncToken()}`
         },
         body: JSON.stringify({ data: null, lastModified: Date.now() }),
       });
-    } catch { 
+    } catch {
       localStorage.removeItem('dashboard-storage');
     }
   },
@@ -558,6 +564,8 @@ export const useDashboardStore = create<DashboardState>()(
       tasks: [],
       isHidden: true,
       _hasHydrated: false,
+      theme: 'dark',
+      setTheme: (theme) => set({ theme }),
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       setLockedWallpaper: (filename) => set({ lockedWallpaper: filename }),
@@ -625,7 +633,7 @@ export const useDashboardStore = create<DashboardState>()(
 
       toggleHide: () => set((state) => ({ isHidden: !state.isHidden })),
 
-  isTaskManagerOpen: false,
+      isTaskManagerOpen: false,
       toggleTaskManager: () => set((state) => {
         const next = !state.isTaskManagerOpen;
         let extra = {};
@@ -650,6 +658,8 @@ export const useDashboardStore = create<DashboardState>()(
         return { isTimerOpen: next, ...extra };
       }),
       isCalendarOpen: true,
+      isCalendarBusy: false,
+      setIsCalendarBusy: (busy) => set({ isCalendarBusy: busy }),
       toggleCalendar: () => set((state) => {
         const next = !state.isCalendarOpen;
         let extra = {};
@@ -681,7 +691,7 @@ export const useDashboardStore = create<DashboardState>()(
       triggerTimer: (mins, taskId, taskTitle) => set((state) => {
         const currentZ = state.widgetZIndices || {};
         const maxZ = Object.values(currentZ).length > 0 ? Math.max(...Object.values(currentZ)) : 50;
-        return { 
+        return {
           timerTrigger: { mins, ts: Date.now(), taskId, taskTitle },
           showTimer: true,
           isTimerOpen: true,
@@ -696,10 +706,10 @@ export const useDashboardStore = create<DashboardState>()(
       activeTaskTitle: null,
       setActiveTask: (id, title) => set({ activeTaskId: id, activeTaskTitle: title }),
       updateTaskDuration: (id, decreaseMins) => set((state) => ({
-        tasks: state.tasks.map(t => t.id === id ? { 
-          ...t, 
+        tasks: state.tasks.map(t => t.id === id ? {
+          ...t,
           duration: Math.max(0, t.duration - decreaseMins),
-          timeSpent: (t.timeSpent || 0) + decreaseMins 
+          timeSpent: (t.timeSpent || 0) + decreaseMins
         } : t)
       })),
       editTaskDuration: (id, newDuration) => set((state) => ({
@@ -713,7 +723,7 @@ export const useDashboardStore = create<DashboardState>()(
       timerLastUpdated: 0,
       isAlarmPlaying: false,
       alarmSound: '/ringtones/alarm.mp3',
-      alarmVolume: 0.5,
+      alarmVolume: 1,
       setTimerEndAt: (time) => set({ timerEndAt: time, timerLastUpdated: Date.now() }),
       setTimerPausedLeft: (time) => set({ timerPausedLeft: time, timerLastUpdated: Date.now() }),
       setTimerInitialMins: (mins) => set({ timerInitialMins: mins, timerLastUpdated: Date.now() }),
@@ -769,9 +779,9 @@ export const useDashboardStore = create<DashboardState>()(
           const defaultNote = { id: Date.now().toString(), title: 'Daily Journal', entries: {} };
           return { notes: [defaultNote], activeNoteId: defaultNote.id };
         }
-        return { 
-          notes: newNotes, 
-          activeNoteId: state.activeNoteId === id ? newNotes[0].id : state.activeNoteId 
+        return {
+          notes: newNotes,
+          activeNoteId: state.activeNoteId === id ? newNotes[0].id : state.activeNoteId
         };
       }),
       setActiveNote: (id) => set({ activeNoteId: id }),
@@ -792,18 +802,18 @@ export const useDashboardStore = create<DashboardState>()(
       }),
       addStopwatchSession: (title, secs, addToStats) => set((state) => {
         const mins = Math.floor(secs / 60);
-        
+
         // Don't save to history if it's strictly less than a minute
         if (mins === 0) return state;
 
         const today = getLocalDateString();
-        
+
         let newHistory = state.history;
         if (addToStats) {
           newHistory = { ...state.history };
           newHistory[today] = (newHistory[today] || 0) + mins;
         }
-        
+
         return {
           history: newHistory,
           stopwatchSessions: [
@@ -889,7 +899,7 @@ export const useDashboardStore = create<DashboardState>()(
         deadlines: state.deadlines.filter(d => d.date !== date)
       })),
       deleteAllDeadlines: () => set({ deadlines: [] }),
-      
+
       deadlineAlertDays: 0,
       setDeadlineAlertDays: (days) => set({ deadlineAlertDays: Math.max(0, days) }),
       dismissedDeadlineAlerts: [],
@@ -935,12 +945,12 @@ export const useDashboardStore = create<DashboardState>()(
         const newTimes = [...timesList];
         const oldTime = newTimes[index];
         newTimes[index] = newTime;
-        
+
         // Also update the timetableGrid and timetableColors keys to preserve data
         const newGrid = { ...state.timetableGrid };
         const newColors = { ...(state.timetableColors || {}) };
         const targetDays = isWeekend ? ["Sat", "Sun"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
-        
+
         if (keyMap) {
           targetDays.forEach(day => {
             if (newGrid[day]) {
@@ -977,7 +987,7 @@ export const useDashboardStore = create<DashboardState>()(
           });
         }
 
-        return isWeekend 
+        return isWeekend
           ? { weekendTimes: newTimes, timetableGrid: newGrid, timetableColors: newColors }
           : { weekdayTimes: newTimes, timetableGrid: newGrid, timetableColors: newColors };
       }),
@@ -985,12 +995,12 @@ export const useDashboardStore = create<DashboardState>()(
         const newGrid = { ...state.timetableGrid };
         const newColors = { ...(state.timetableColors || {}) };
         const targetDays = isWeekend ? ["Sat", "Sun"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
-        
+
         targetDays.forEach(day => {
           if (newGrid[day]) {
             const currentDayData = { ...newGrid[day] };
             let updatedDayData: Record<string, string> = {};
-            
+
             Object.entries(currentDayData).forEach(([oldKey, value]) => {
               const newKey = keyMap[oldKey] || oldKey;
               updatedDayData[newKey] = value;
@@ -1000,7 +1010,7 @@ export const useDashboardStore = create<DashboardState>()(
           if (newColors[day]) {
             const currentDayColors = { ...newColors[day] };
             let updatedDayColors: Record<string, string> = {};
-            
+
             Object.entries(currentDayColors).forEach(([oldKey, value]) => {
               const newKey = keyMap[oldKey] || oldKey;
               updatedDayColors[newKey] = value;
@@ -1008,7 +1018,7 @@ export const useDashboardStore = create<DashboardState>()(
             newColors[day] = updatedDayColors;
           }
         });
-        
+
         return { timetableGrid: newGrid, timetableColors: newColors };
       }),
       resetTimetable: () => set(() => ({
@@ -1092,7 +1102,7 @@ export const useDashboardStore = create<DashboardState>()(
         // Background API sync
         fetch('/api/health', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${getSyncToken()}`
           },
@@ -1109,7 +1119,7 @@ export const useDashboardStore = create<DashboardState>()(
         delete newOffsets[bgSrc];
         return { clockOffsets: newOffsets };
       }),
-      
+
       widgetOffsets: {},
       updateWidgetOffset: (bgSrc, widgetId, x, y) => set((state) => {
         const currentBgOffsets = state.widgetOffsets[bgSrc] || {};
@@ -1131,7 +1141,7 @@ export const useDashboardStore = create<DashboardState>()(
           }
         };
       }),
-      
+
       lockedWidgets: ['quote', 'countdowns', 'timer', 'toolbar'],
       toggleWidgetLock: (widgetId) => set((state) => ({
         lockedWidgets: state.lockedWidgets.includes(widgetId)
@@ -1156,16 +1166,16 @@ export const useDashboardStore = create<DashboardState>()(
       resetAllOffsets: (bgSrc) => set((state) => {
         const newClockOffsets = { ...state.clockOffsets };
         delete newClockOffsets[bgSrc];
-        
+
         const newWidgetOffsets = { ...state.widgetOffsets };
         delete newWidgetOffsets[bgSrc];
-        
+
         return {
           clockOffsets: newClockOffsets,
           widgetOffsets: newWidgetOffsets
         };
       }),
-      
+
       hiddenWallpapers: [],
       toggleWallpaperVisibility: (filename) => set((state) => ({
         hiddenWallpapers: state.hiddenWallpapers.includes(filename)
@@ -1209,9 +1219,11 @@ export const useDashboardStore = create<DashboardState>()(
       },
       setHideAll: (hide) => {
         if (hide) {
-          set({ hideConfig: { 
-            quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
-          }});
+          set({
+            hideConfig: {
+              quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+            }
+          });
         } else {
           set({ hideConfig: {} });
         }
@@ -1223,9 +1235,11 @@ export const useDashboardStore = create<DashboardState>()(
       },
       setMobileHideAll: (hide) => {
         if (hide) {
-          set({ mobileHideConfig: { 
-            quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
-          }});
+          set({
+            mobileHideConfig: {
+              quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+            }
+          });
         } else {
           set({ mobileHideConfig: {} });
         }
@@ -1258,7 +1272,7 @@ export const useDashboardStore = create<DashboardState>()(
           if (token) headers['Authorization'] = `Bearer ${token}`;
 
           await fetch(`/api/health?action=olderThan&days=${days}`, { method: 'DELETE', headers });
-          
+
           set((state) => {
             const newHistory = { ...state.history };
             const cutoffDate = new Date();
@@ -1329,7 +1343,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       partialize: (state) => Object.fromEntries(
         Object.entries(state).filter(([key]) => ![
-          'isQuotePopupOpen', 'isTaskManagerOpen', 'isStatsOpen', 'timerTrigger', 
+          'isQuotePopupOpen', 'isTaskManagerOpen', 'isStatsOpen', 'timerTrigger',
           'isNotesOpen', 'isPlansOpen', 'isTimetableOpen', 'isHealthModalOpen', 'healthData',
           'isVideoMuted', 'isVideoPlaying', 'isSettingsOpen', 'isStopwatchOpen', '_hasHydrated',
           'widgetZIndices'
@@ -1344,12 +1358,12 @@ export const useDashboardStore = create<DashboardState>()(
           persistedState.activeTaskId = null;
           persistedState.activeTaskTitle = null;
         }
-        
+
         // Conflict resolution: The most recently updated timer state always wins.
         // This prevents a polling tab from reviving a stopped timer from its own stale state.
         const currentUpdated = currentState.timerLastUpdated || 0;
         const persistedUpdated = persistedState.timerLastUpdated || 0;
-        
+
         if (currentUpdated > persistedUpdated) {
           persistedState.timerEndAt = currentState.timerEndAt;
           persistedState.timerPausedLeft = currentState.timerPausedLeft;
@@ -1364,21 +1378,44 @@ export const useDashboardStore = create<DashboardState>()(
         if (persistedState.hideConfig && currentState.hideConfig) {
           persistedState.hideConfig = { ...currentState.hideConfig, ...persistedState.hideConfig };
         }
+        if (persistedState.mobileHideConfig && currentState.mobileHideConfig) {
+          persistedState.mobileHideConfig = { ...currentState.mobileHideConfig, ...persistedState.mobileHideConfig };
+        }
 
         // Auto-cleanup deadlines that are more than 7 days in the past
         if (persistedState.deadlines && Array.isArray(persistedState.deadlines)) {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           persistedState.deadlines = persistedState.deadlines.filter((d: any) => {
-             const dDate = new Date(d.date);
-             dDate.setHours(0, 0, 0, 0);
-             const diffTime = today.getTime() - dDate.getTime();
-             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-             return diffDays <= 7; // Keep if it is in the future, today, or up to 7 days past
+            const dDate = new Date(d.date);
+            dDate.setHours(0, 0, 0, 0);
+            const diffTime = today.getTime() - dDate.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 7; // Keep if it is in the future, today, or up to 7 days past
           });
         }
 
-        return { ...currentState, ...persistedState };
+        // Create a safe merged state that defaults to current state
+        const safeState = { ...currentState, ...persistedState };
+
+        // Defensive fallbacks: Ensure critical arrays and objects are NEVER overwritten with undefined or null
+        // due to schema mismatches, and always retain their expected types.
+        safeState.tasks = Array.isArray(persistedState.tasks) ? persistedState.tasks : currentState.tasks;
+        safeState.notes = Array.isArray(persistedState.notes) ? persistedState.notes : currentState.notes;
+        safeState.roadmaps = Array.isArray(persistedState.roadmaps) ? persistedState.roadmaps : currentState.roadmaps;
+        
+        // Deep merge records/objects to ensure we don't drop newly added default keys
+        if (persistedState.history && typeof persistedState.history === 'object') {
+           safeState.history = { ...currentState.history, ...persistedState.history };
+        }
+        if (persistedState.timetableGrid && typeof persistedState.timetableGrid === 'object') {
+           safeState.timetableGrid = { ...currentState.timetableGrid, ...persistedState.timetableGrid };
+        }
+        if (persistedState.healthData && typeof persistedState.healthData === 'object') {
+           safeState.healthData = { ...currentState.healthData, ...persistedState.healthData };
+        }
+
+        return safeState;
       },
       onRehydrateStorage: () => (state) => {
         if (state) state.setHasHydrated(true);

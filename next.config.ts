@@ -12,7 +12,8 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['172.21.114.230'],
+  // @ts-ignore - Some custom or newer Next.js versions use this for host check bypassing
+  allowedDevOrigins: ['172.21.114.230', '192.168.1.5', '10.197.163.230'],
   async headers() {
     return [
       {
@@ -28,10 +29,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-module.exports = {
-  allowedDevOrigins: ['10.197.163.230'],
-}
-module.exports = {
-  allowedDevOrigins: ['192.168.1.5'],
-}
 export default withPWA(nextConfig);

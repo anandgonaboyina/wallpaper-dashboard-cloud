@@ -7,7 +7,7 @@ interface DockProps {
 
 export default function Dock({ onOpenNotes }: DockProps) {
     return (
-        <div id="nav-dock" className="relative flex items-end justify-center gap-4 px-4 pb-2 pt-4 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl before:absolute before:inset-0 before:-z-10 before:rounded-3xl before:bg-gradient-to-b before:from-white/10 before:to-transparent pointer-events-auto">
+        <div id="nav-dock" className="relative flex items-end justify-center gap-4 px-4 pb-2 pt-4 rounded-3xl glass-panel before:absolute before:inset-0 before:-z-10 before:rounded-3xl before:bg-gradient-to-b before:from-white/10 before:to-transparent pointer-events-auto">
             {/* Translate */}
             <button
                 onClick={() => window.open('https://translate.google.com', '_blank')}

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import PwaRegister from "@/components/PwaRegister";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Productive Dashboard",
+  title: "Grind Board",
   description: "Your personal dashboard",
   manifest: "/manifest.webmanifest?v=2",
   appleWebApp: {
@@ -60,6 +61,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col select-none">
+        <ThemeProvider />
         <PwaRegister />
         {children}
       </body>

@@ -13,7 +13,7 @@ export default function LoadingScreen() {
           animation: profileFlip 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
       `}</style>
-      
+
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-blue-500/10 rounded-full blur-[80px] md:blur-[120px]" />
       </div>
@@ -32,7 +32,7 @@ export default function LoadingScreen() {
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300 fill-mode-both w-full">
               <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent">
-                Productive Dashboard
+                Grind Board
               </h1>
               <div className="text-[10px] md:text-xs font-mono text-blue-400 mb-8 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 inline-block">
                 Cloud Sync Enabled
