@@ -8,8 +8,8 @@ export async function GET(request: Request) {
     const db = client.db();
     
     // Fetch all custom quotes from MongoDB
-    const quotes = await db.collection('Quotes').find().sort({ _id: -1 }).toArray();
-    
+    let quotes: any[] = await db.collection('Quotes').find().sort({ _id: -1 }).toArray();
+
     return NextResponse.json({ quotes });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch quotes' }, { status: 500 });

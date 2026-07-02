@@ -182,7 +182,7 @@ export default function Dashboard() {
       clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, [showQuotePopup]);
+  }, [_hasHydrated, showQuotePopup]);
 
   useEffect(() => {
     const token = localStorage.getItem('dashboard_sync_token');

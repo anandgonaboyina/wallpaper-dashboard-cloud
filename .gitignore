@@ -42,3 +42,5 @@ next-env.d.ts
 
 # local scripts
 migrate-to-cloud.js
+seed-quotes.js
+seed-demo-data.js
