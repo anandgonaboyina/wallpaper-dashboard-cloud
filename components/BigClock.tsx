@@ -59,7 +59,7 @@ export default function BigClock() {
     if (swipeStartX.current === null) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const diffX = clientX - swipeStartX.current;
-    
+
     if (Math.abs(diffX) > 10) {
       wasSwiped.current = true;
     }
@@ -207,7 +207,7 @@ export default function BigClock() {
       {/* Top Floating Pills (Global Focus + Global Timer) */}
       {typeof document !== 'undefined' && createPortal(
         <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 pointer-events-none mt-2 md:mt-3">
-          <div 
+          <div
             className="flex flex-row items-start justify-center gap-1.5 md:gap-2 px-2 max-w-full w-full md:w-auto"
             onTouchStart={handlePillTouchStart}
             onTouchMove={handlePillTouchMove}
@@ -220,17 +220,17 @@ export default function BigClock() {
 
             {/* 3 Dots for Mobile ONLY */}
             {isMobile && hasAlerts && isDeadlinesCollapsed && (
-              <div 
-                className={`flex md:hidden flex-row gap-1.5 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1.5 rounded-full border backdrop-blur-md shadow-lg shrink-0 ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
+              <div
+                className={`fixed left-0 -top-1 flex md:hidden flex-row gap-1 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1 rounded-full border backdrop-blur-md shadow-lg shrink-0 ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsDeadlinesCollapsed(false);
                 }}
                 title="Show Deadline Alerts"
               >
-                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" />
-                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '150ms' }} />
-                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" />
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '300ms' }} />
               </div>
             )}
 

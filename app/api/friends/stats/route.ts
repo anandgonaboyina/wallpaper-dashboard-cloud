@@ -39,19 +39,42 @@ export async function GET(request: Request) {
     if (!friendship) return NextResponse.json({ error: 'Not friends' }, { status: 403 });
 
     const friendDashboard = await db.collection('DashboardStorage').findOne({ userId: friendId });
+    const settingsRecord = await db.collection('Settings').findOne({ userId: friendId });
+    const tasksRecord = await db.collection('Tasks').findOne({ userId: friendId });
+    const statsRecord = await db.collection('Stats').findOne({ userId: friendId });
 
-    if (!friendDashboard) return NextResponse.json({ data: null });
+    if (!friendDashboard && !settingsRecord && !tasksRecord && !statsRecord) {
+      return NextResponse.json({ data: null });
+    }
 
-    let parsedData;
-    if (friendDashboard.data && typeof friendDashboard.data === 'string') {
+    let parsedData: any = {};
+    if (friendDashboard && friendDashboard.data && typeof friendDashboard.data === 'string') {
       parsedData = JSON.parse(friendDashboard.data).state || {};
     } else {
-      const { displaySettings, generalSettings, ...coreData } = friendDashboard;
+      const { displaySettings: legacyDS, generalSettings: legacyGS, ...coreData } = (friendDashboard || {}) as any;
       parsedData = {
         ...coreData,
-        ...(displaySettings || {}),
-        ...(generalSettings || {})
+        ...(settingsRecord?.displaySettings || legacyDS || {}),
+        ...(settingsRecord?.generalSettings || legacyGS || {})
       };
+      
+      const SETTING_ARRAY_KEYS = [
+        'timetableGrid', 'timetableColors', 'widgetOffsets', 'clockOffsets', 'lockedWidgets',
+        'hiddenWallpapers', 'customDesktopWallpapers', 'customMobileWallpapers'
+      ];
+      SETTING_ARRAY_KEYS.forEach(key => {
+        if (settingsRecord && settingsRecord[key] !== undefined) parsedData[key] = settingsRecord[key];
+      });
+
+      const TASK_KEYS = ['tasks', 'countdowns', 'deadlines', 'syntheticDeadlines'];
+      TASK_KEYS.forEach(key => {
+        if (tasksRecord && tasksRecord[key] !== undefined) parsedData[key] = tasksRecord[key];
+      });
+
+      const STATS_KEYS = ['history', 'healthData', 'stopwatchSessions'];
+      STATS_KEYS.forEach(key => {
+        if (statsRecord && statsRecord[key] !== undefined) parsedData[key] = statsRecord[key];
+      });
     }
     
     const { ObjectId } = require('mongodb');
@@ -71,6 +94,11 @@ export async function GET(request: Request) {
       tasks: parsedData.tasks || [],
       deadlines: parsedData.deadlines || [],
       timetableGrid: parsedData.timetableGrid || null,
+      timetableColors: parsedData.timetableColors || null,
+      weekdayTimes: parsedData.weekdayTimes || null,
+      weekendTimes: parsedData.weekendTimes || null,
+      timetableStartTime: parsedData.timetableStartTime !== undefined ? parsedData.timetableStartTime : 540,
+      timetableWeekendStartTime: parsedData.timetableWeekendStartTime !== undefined ? parsedData.timetableWeekendStartTime : 540,
       lastLogin: friendAccount?.lastLogin || null,
       createdAt: friendAccount?.createdAt || null
     };

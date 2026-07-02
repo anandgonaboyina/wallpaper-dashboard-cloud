@@ -11,6 +11,12 @@ export default function ConnectTab() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
 
+  useEffect(() => {
+    if (connectInitialTab) {
+      setActiveTab(connectInitialTab);
+    }
+  }, [connectInitialTab]);
+
   // Auth state
   const [authEmail, setAuthEmail] = useState('');
   const [authUsername, setAuthUsername] = useState('');
@@ -25,7 +31,7 @@ export default function ConnectTab() {
 
   // Friends state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ id: string, username: string, profilePicture?: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string, username: string, profilePicture?: string, alias?: string }[]>([]);
   const [friends, setFriends] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
   const [pendingRequests, setPendingRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
   const [sentRequests, setSentRequests] = useState<{ id: string, user: { id: string, username: string, lastActive?: string, profilePicture?: string } }[]>([]);
@@ -50,6 +56,7 @@ export default function ConnectTab() {
 
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [leaderboardFilter, setLeaderboardFilter] = useState<'today' | 'week' | 'month'>('today');
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<'current' | 'previous'>('current');
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState('');
   const [expandedLeaderboardUserId, setExpandedLeaderboardUserId] = useState<string | null>(null);
@@ -180,13 +187,18 @@ export default function ConnectTab() {
     if (!token) return;
     try {
       const res = await fetch('/api/friends', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
       });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
-        setFriends(data.acceptedFriends || []);
-        setPendingRequests(data.pendingRequests || []);
-        setSentRequests(data.sentRequests || []);
+        setFriends((data.acceptedFriends || []).filter((f: any) => f && f.user));
+        setPendingRequests((data.pendingRequests || []).filter((r: any) => r && r.user));
+        setSentRequests((data.sentRequests || []).filter((r: any) => r && r.user));
       }
     } catch (err) { }
   };
@@ -295,12 +307,17 @@ export default function ConnectTab() {
 
   const handleLogout = async () => {
     setAuthTransition(true);
-    localStorage.removeItem('dashboard_sync_token');
-    localStorage.removeItem('dashboard_token');
-    localStorage.removeItem('dashboard_username');
-    localStorage.removeItem('dashboard_role');
-    localStorage.removeItem('dashboard-storage');
-    localStorage.removeItem('dashboard_last_modified');
+
+    // Clear all dashboard-related local storage to prevent state leakage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('dashboard')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Also clear other potential cached stuff like stopwatch timers if needed
+    localStorage.removeItem('stopwatch_paused_secs');
+    localStorage.removeItem('stopwatch_last_active');
 
     fetch('/api/session', {
       method: 'POST',
@@ -385,6 +402,18 @@ export default function ConnectTab() {
 
   const removeFriend = async (friendshipId: string) => {
     if (!confirm('Are you sure you want to remove this friend?')) return;
+    const token = localStorage.getItem('dashboard_sync_token');
+    try {
+      const res = await fetch(`/api/friends?id=${friendshipId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) fetchFriendsData();
+    } catch (err) { }
+  };
+
+  const cancelFriendRequest = async (friendshipId: string) => {
+    if (!confirm('Are you sure you want to cancel this request?')) return;
     const token = localStorage.getItem('dashboard_sync_token');
     try {
       const res = await fetch(`/api/friends?id=${friendshipId}`, {
@@ -898,7 +927,9 @@ export default function ConnectTab() {
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border border-white/10 overflow-hidden">
                         {u.profilePicture ? <img src={u.profilePicture} alt="" className="w-full h-full object-cover" /> : u.username.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-medium text-sm truncate">{u.username}</span>
+                      <span className="font-medium text-sm truncate">
+                        {u.username} {u.alias && <span className="text-white/40 text-[10px]">({u.alias})</span>}
+                      </span>
                     </div>
                     <button onClick={() => sendFriendRequest(u.id)} className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/30 text-xs font-semibold whitespace-nowrap shrink-0 transition-colors">
                       Add Friend
@@ -950,7 +981,12 @@ export default function ConnectTab() {
                   {sentRequests.map(r => (
                     <div key={r.id} className="flex items-center justify-between bg-black/40 p-2 rounded-lg text-xs min-w-0 gap-2 border border-white/5">
                       <span className="truncate min-w-0 flex-1">{r.user.username}</span>
-                      <span className="text-white/40 shrink-0 text-[10px]">Pending</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-white/40 text-[10px]">Pending</span>
+                        <button onClick={() => cancelFriendRequest(r.id)} className="w-6 h-6 flex items-center justify-center bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded border border-red-500/30 transition-colors" title="Cancel Request">
+                          <X size={12} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1048,27 +1084,45 @@ export default function ConnectTab() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mb-1 md:mb-2 bg-black/40 p-1.5 md:p-1 rounded-lg md:rounded-xl w-full border border-white/10 items-center justify-between min-w-0">
-            <div className="flex gap-1 md:gap-2 w-full sm:w-fit overflow-x-auto no-scrollbar">
-              <button
-                onClick={() => setLeaderboardFilter('today')}
-                className={`px-2 py-1 md:px-4 md:py-2 rounded text-[9px] md:text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none border ${leaderboardFilter === 'today' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'border-transparent text-white/40'}`}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => setLeaderboardFilter('week')}
-                className={`px-2 py-1 md:px-4 md:py-2 rounded text-[9px] md:text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none border ${leaderboardFilter === 'week' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'border-transparent text-white/40'}`}
-              >
-                7 Days
-              </button>
-              <button
-                onClick={() => setLeaderboardFilter('month')}
-                className={`px-2 py-1 md:px-4 md:py-2 rounded text-[9px] md:text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none border ${leaderboardFilter === 'month' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'border-transparent text-white/40'}`}
-              >
-                30 Days
-              </button>
-            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-fit overflow-x-auto no-scrollbar">
+              <div className="flex w-full sm:w-auto bg-black/40 border border-white/10 rounded overflow-hidden shrink-0">
+                <button
+                  onClick={() => setLeaderboardFilter('today')}
+                  className={`px-2 py-1 md:px-4 md:py-2 rounded text-[9px] md:text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none border ${leaderboardFilter === 'today' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'border-transparent text-white/40'}`}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setLeaderboardFilter('week')}
+                  className={`px-2 py-1 md:px-4 md:py-2 rounded text-[9px] md:text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none border ${leaderboardFilter === 'week' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'border-transparent text-white/40'}`}
+                >
+                  This Week
+                </button>
+                <button
+                  onClick={() => setLeaderboardFilter('month')}
+                  className={`px-2 py-1 md:px-4 md:py-2 rounded text-[9px] md:text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none border ${leaderboardFilter === 'month' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'border-transparent text-white/40'}`}
+                >
+                  This Month
+                </button>
+              </div>
 
+              {leaderboardFilter !== 'today' && (
+                <div className="flex w-full sm:w-auto bg-black/40 border border-white/10 rounded overflow-hidden shrink-0 ml-auto sm:ml-0">
+                  <button
+                    onClick={() => setLeaderboardPeriod('current')}
+                    className={`px-2 py-1 md:px-3 md:py-2 text-[9px] md:text-xs font-semibold transition-all whitespace-nowrap border flex-1 sm:flex-none ${leaderboardPeriod === 'current' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'border-transparent text-white/40'}`}
+                  >
+                    Current
+                  </button>
+                  <button
+                    onClick={() => setLeaderboardPeriod('previous')}
+                    className={`px-2 py-1 md:px-3 md:py-2 text-[9px] md:text-xs font-semibold transition-all whitespace-nowrap border flex-1 sm:flex-none ${leaderboardPeriod === 'previous' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'border-transparent text-white/40'}`}
+                  >
+                    Previous
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="relative w-full sm:w-48 shrink-0 min-w-0">
               <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-white/30 w-3 h-3 md:w-3.5 md:h-3.5" />
               <input
@@ -1086,17 +1140,19 @@ export default function ConnectTab() {
           ) : (
             <div className="flex flex-col gap-2 md:gap-3 w-full min-w-0">
               {(() => {
-                const sortedData = [...leaderboardData].sort((a, b) => {
-                  const valA = leaderboardFilter === 'today' ? a.todayFocused : leaderboardFilter === 'week' ? a.last7DaysFocused : a.last30DaysFocused;
-                  const valB = leaderboardFilter === 'today' ? b.todayFocused : leaderboardFilter === 'week' ? b.last7DaysFocused : b.last30DaysFocused;
-                  return valB - valA;
-                });
+                const getVal = (u: any) => {
+                  if (leaderboardFilter === 'today') return u.todayFocused;
+                  if (leaderboardFilter === 'week') return leaderboardPeriod === 'current' ? u.thisWeekFocused : u.lastWeekFocused;
+                  return leaderboardPeriod === 'current' ? u.thisMonthFocused : u.lastMonthFocused;
+                };
+
+                const sortedData = [...leaderboardData].sort((a, b) => getVal(b) - getVal(a));
                 const filteredData = sortedData.filter(u => u.displayName.toLowerCase().includes(leaderboardSearch.toLowerCase()));
 
                 if (filteredData.length === 0) return <p className="text-white/40 italic text-center py-6 md:py-10 text-[9px] md:text-base">No users found.</p>;
 
                 return filteredData.map((user, index) => {
-                  const val = leaderboardFilter === 'today' ? user.todayFocused : leaderboardFilter === 'week' ? user.last7DaysFocused : user.last30DaysFocused;
+                  const val = getVal(user);
                   const isTop3 = index < 3 && val > 0;
                   const rankColors = ['bg-yellow-500/20 text-yellow-400 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]', 'bg-gray-300/20 text-gray-300 border-gray-300/30', 'bg-amber-700/20 text-amber-500 border-amber-700/30'];
                   const rankColor = isTop3 ? rankColors[index] : 'bg-white/5 text-white/50 border-white/10';
@@ -1112,19 +1168,14 @@ export default function ConnectTab() {
                             {user.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : user.displayName.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col min-w-0 overflow-hidden">
-                            <span className={`font-bold text-[10px] md:text-lg tracking-wide truncate w-full ${user.isMe ? 'text-blue-500 dark:text-blue-400' : 'text-gray-800 dark:text-white/90'}`}>
+                            <span className={`font-bold text-[10px] md:text-lg tracking-wide truncate w-full ${user.isMe ? 'text-blue-500 dark:text-blue-400' : 'text-white dark:text-white/90'}`}>
                               {user.displayName}
                             </span>
-                            <div className="flex gap-1 md:gap-1.5 mt-0.5 md:mt-1 flex-wrap w-full min-w-0">
-                              {user.badges?.today > 0 && <span className="text-[7px] md:text-[10px] bg-yellow-500/20 text-yellow-500 px-1 py-0.5 rounded border border-yellow-500/20 font-bold tracking-wider whitespace-nowrap">🏆 {user.badges.today} Day</span>}
-                              {user.badges?.week > 0 && <span className="text-[7px] md:text-[10px] bg-purple-500/20 text-purple-400 px-1 py-0.5 rounded border border-purple-500/20 font-bold tracking-wider whitespace-nowrap">🌟 {user.badges.week} Wk</span>}
-                              {user.badges?.month > 0 && <span className="text-[7px] md:text-[10px] bg-emerald-500/20 text-emerald-400 px-1 py-0.5 rounded border border-emerald-500/20 font-bold tracking-wider whitespace-nowrap">👑 {user.badges.month} Mo</span>}
-                            </div>
                           </div>
                         </div>
                         <div className="text-right flex items-center gap-1.5 md:gap-4 shrink-0">
                           <div className="flex flex-col items-end justify-center">
-                            <span className="font-mono font-bold text-[10px] md:text-2xl tracking-tighter text-gray-800 dark:text-white/90">{Math.floor(val / 60)}<span className="text-[8px] md:text-sm text-gray-500 dark:text-white/40 mr-0.5">h</span>{val % 60}<span className="text-[8px] md:text-sm text-gray-500 dark:text-white/40">m</span></span>
+                            <span className="font-mono font-bold text-[10px] md:text-2xl tracking-tighter text-white dark:text-white/90">{Math.floor(val / 60)}<span className="text-[8px] md:text-sm ml-1 text-gray-500 dark:text-white/40 mr-1">hrs</span>{val % 60}<span className="text-[8px] ml-1 md:text-sm text-gray-500 dark:text-white/40">min</span></span>
                             <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/40 uppercase tracking-widest font-semibold">Focus</span>
                           </div>
                           <button
@@ -1140,17 +1191,17 @@ export default function ConnectTab() {
                       {/* Expanded Stats */}
                       {expandedLeaderboardUserId === user.id && (
                         <div className="w-full mt-1.5 md:mt-2 pt-2 md:pt-3 border-t border-gray-300 dark:border-white/10 grid grid-cols-3 gap-1.5 md:gap-3 text-center animate-fade-in min-w-0">
-                          <div className="flex flex-col bg-gray-200/50 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
-                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Today</span>
+                          <div className="flex flex-col bg-black/10 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
+                            <span className="text-[7px] md:text-[10px] text-white dark:text-white uppercase tracking-widest mb-0.5 md:mb-1 truncate">Today</span>
                             <span className="font-mono text-[9px] md:text-base font-bold text-yellow-600 dark:text-yellow-300 truncate">{Math.floor(user.todayFocused / 60)}h {user.todayFocused % 60}m</span>
                           </div>
-                          <div className="flex flex-col bg-gray-200/50 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
-                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Week</span>
-                            <span className="font-mono text-[9px] md:text-base font-bold text-purple-600 dark:text-purple-300 truncate">{Math.floor(user.last7DaysFocused / 60)}h {user.last7DaysFocused % 60}m</span>
+                          <div className="flex flex-col bg-black/10 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
+                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">{leaderboardPeriod === 'current' ? 'This Week' : 'Last Week'}</span>
+                            <span className="font-mono text-[9px] md:text-base font-bold text-purple-600 dark:text-purple-300 truncate">{Math.floor((leaderboardPeriod === 'current' ? user.thisWeekFocused : user.lastWeekFocused) / 60)}h {(leaderboardPeriod === 'current' ? user.thisWeekFocused : user.lastWeekFocused) % 60}m</span>
                           </div>
-                          <div className="flex flex-col bg-gray-200/50 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
-                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">Month</span>
-                            <span className="font-mono text-[9px] md:text-base font-bold text-emerald-600 dark:text-emerald-300 truncate">{Math.floor(user.last30DaysFocused / 60)}h {user.last30DaysFocused % 60}m</span>
+                          <div className="flex flex-col bg-black/10 dark:bg-black/20 p-1.5 md:p-2 rounded border border-gray-300 dark:border-white/5 min-w-0">
+                            <span className="text-[7px] md:text-[10px] text-gray-500 dark:text-white/50 uppercase tracking-widest mb-0.5 md:mb-1 truncate">{leaderboardPeriod === 'current' ? 'This Month' : 'Last Month'}</span>
+                            <span className="font-mono text-[9px] md:text-base font-bold text-emerald-600 dark:text-emerald-300 truncate">{Math.floor((leaderboardPeriod === 'current' ? user.thisMonthFocused : user.lastMonthFocused) / 60)}h {(leaderboardPeriod === 'current' ? user.thisMonthFocused : user.lastMonthFocused) % 60}m</span>
                           </div>
                         </div>
                       )}
@@ -1172,7 +1223,7 @@ export default function ConnectTab() {
             <div className="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
               <h3 className="font-bold text-sm text-white flex items-center gap-2">
                 <Info className="w-4 h-4 text-blue-400" />
-                Leaderboard & Badges
+                Leaderboard Rules
               </h3>
               <button
                 onClick={() => setShowInfoModal(false)}
@@ -1184,14 +1235,7 @@ export default function ConnectTab() {
             <div className="p-4 max-h-[60vh] overflow-y-auto arrow-scrollbar">
               <div className="space-y-3 text-sm text-white/80 pb-2">
                 <p className="text-[11px] leading-relaxed">The global leaderboard tracks your total accumulated focus time via the Timer and ranks you against all other users.</p>
-                <h4 className="font-bold text-white text-[13px] mt-2">Badges & Achievements</h4>
-                <p className="text-[11px] leading-relaxed">As you accumulate focused work hours, you can earn dynamic badges that appear next to your name. Badges are awarded automatically to the <strong>#1 top user on the leaderboard</strong> who also meets the strict minimum hour requirements for that timeframe:</p>
-                <ul className="list-disc pl-4 space-y-1 text-[11px] mt-1">
-                  <li><strong>Daily Badge (🏆):</strong> Must be Rank #1 today AND have a minimum of <strong>6 hours</strong> of focus time.</li>
-                  <li><strong>Weekly Badge (🌟):</strong> Must be Rank #1 this week AND have a minimum of <strong>42 hours</strong> of focus time over the last 7 days.</li>
-                  <li><strong>Monthly Badge (👑):</strong> Must be Rank #1 this month AND have a minimum of <strong>180 hours</strong> of focus time over the last 30 days.</li>
-                </ul>
-                <p className="text-[10px] leading-relaxed italic text-white/50 mt-2">Note: Badges are incrementable! If you win the daily top spot with 6+ hours multiple times, your badge count will increase (e.g., "🏆 2 Day").</p>
+                <p className="text-[11px] leading-relaxed">You can toggle between viewing the data for today, the current week (Monday-Sunday), or the current month. You can also view the previous period's performance using the "Previous" toggle.</p>
               </div>
             </div>
             <div className="p-3 border-t border-white/5 bg-black/20">

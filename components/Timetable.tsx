@@ -53,6 +53,10 @@ export default function Timetable() {
     timetableColors: myTimetableColors,
     weekdayTimes: myWeekdayTimes,
     weekendTimes: myWeekendTimes,
+    timetableStartTime: myTimetableStartTime,
+    timetableWeekendStartTime: myTimetableWeekendStartTime,
+    setTimetableStartTime,
+    setTimetableWeekendStartTime,
     updateTimetableCell, updateTimetableColor,
     updateTimetableTime, addTimetableRow, deleteTimetableRow,
     useTimetableRange, toggleTimetableRange, renameTimetableKeys,
@@ -66,6 +70,8 @@ export default function Timetable() {
   const timetableColors = viewingFriend ? (viewingFriend.stats.timetableColors || {}) : myTimetableColors;
   const weekdayTimes = viewingFriend ? (viewingFriend.stats.weekdayTimes || ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]) : myWeekdayTimes;
   const weekendTimes = viewingFriend ? (viewingFriend.stats.weekendTimes || ["10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM"]) : myWeekendTimes;
+  const friendStartTime = viewingFriend ? (viewingFriend.stats.timetableStartTime ?? 540) : myTimetableStartTime;
+  const friendWeekendStartTime = viewingFriend ? (viewingFriend.stats.timetableWeekendStartTime ?? 540) : myTimetableWeekendStartTime;
 
   const [currentDayIndex, setCurrentDayIndex] = useState(() => new Date().getDay());
   const [viewMode, setViewMode] = useState<"weekdays" | "weekends">(
@@ -108,17 +114,21 @@ export default function Timetable() {
     scrollContainerRef.current.scrollLeft = scrollLeft - walkX;
   };
 
-  // Day Start Times
-  const [weekdayStartTime, setWeekdayStartTime] = useState(540); // 9:00 AM default
-  const [weekendStartTime, setWeekendStartTime] = useState(540);
   const [isEditingStartTime, setIsEditingStartTime] = useState(false);
 
+  // Sync legacy local storage to Zustand on load
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedWdStart = localStorage.getItem('timetable_start_weekday');
       const storedWeStart = localStorage.getItem('timetable_start_weekend');
-      if (storedWdStart) setWeekdayStartTime(parseInt(storedWdStart));
-      if (storedWeStart) setWeekendStartTime(parseInt(storedWeStart));
+      if (storedWdStart) {
+        setTimetableStartTime(parseInt(storedWdStart));
+        localStorage.removeItem('timetable_start_weekday'); // Migrate to cloud
+      }
+      if (storedWeStart) {
+        setTimetableWeekendStartTime(parseInt(storedWeStart));
+        localStorage.removeItem('timetable_start_weekend'); // Migrate to cloud
+      }
 
       const storedTheme = localStorage.getItem('timetable_theme') as 'dark' | 'light';
       if (storedTheme) setTheme(storedTheme);
@@ -134,6 +144,11 @@ export default function Timetable() {
     setTheme(newTheme);
     localStorage.setItem('timetable_theme', newTheme);
   };
+
+  const isWeekendMode = viewMode === "weekends";
+  const activeDays = isWeekendMode ? WEEKENDS : WEEKDAYS;
+  const rawTimes = isWeekendMode ? weekendTimes : weekdayTimes;
+  const startTime = isWeekendMode ? friendWeekendStartTime : friendStartTime;
 
   const handleSetStartTime = (mins: number, skipRename = false) => {
     if (!skipRename) {
@@ -157,18 +172,12 @@ export default function Timetable() {
     }
 
     if (viewMode === "weekdays") {
-      setWeekdayStartTime(mins);
-      localStorage.setItem('timetable_start_weekday', mins.toString());
+      setTimetableStartTime(mins);
     } else {
-      setWeekendStartTime(mins);
-      localStorage.setItem('timetable_start_weekend', mins.toString());
+      setTimetableWeekendStartTime(mins);
     }
     setIsEditingStartTime(false);
   };
-
-  const isWeekendMode = viewMode === "weekends";
-  const activeDays = isWeekendMode ? WEEKENDS : WEEKDAYS;
-  const rawTimes = isWeekendMode ? weekendTimes : weekdayTimes;
 
   // Map old string times to durations (60 mins default) to safely migrate
   const durations = rawTimes.length > 0 ? rawTimes.map((t: any) => {
@@ -177,7 +186,6 @@ export default function Timetable() {
   }) : [60, 60, 60, 60, 60, 60, 60, 60, 60];
 
   // Calculate actual absolute TIMES based on Start Time + cumulative Durations
-  const startTime = isWeekendMode ? weekendStartTime : weekdayStartTime;
 
   let currentAccumulatedMins = startTime;
   const generatedTimes: { startStr: string, endStr: string, startMins: number, endMins: number, duration: number }[] = [];

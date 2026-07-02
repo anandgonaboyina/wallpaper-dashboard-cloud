@@ -431,7 +431,7 @@ export default function Dashboard() {
 
           {/* Bottom Right Container */}
           <div
-            style={{ bottom: `${rightWidgetsOffset}px`, zIndex: bottomRightZ }}
+            style={{ bottom: `${rightWidgetsOffset + 30}px`, zIndex: bottomRightZ }}
             className="absolute right-1 sm:right-2 md:right-2 flex items-end transition-all duration-300 pointer-events-none scale-[0.75] sm:scale-85 md:scale-100 origin-bottom-right"
           >
             {/* TaskManager & Timer Group */}

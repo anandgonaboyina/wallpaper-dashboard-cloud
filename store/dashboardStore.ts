@@ -202,6 +202,10 @@ interface DashboardState {
   updateTimetableColor: (day: string, time: string, color: string) => void;
   weekdayTimes: string[];
   weekendTimes: string[];
+  timetableStartTime: number;
+  timetableWeekendStartTime: number;
+  setTimetableStartTime: (mins: number) => void;
+  setTimetableWeekendStartTime: (mins: number) => void;
   updateTimetableTime: (isWeekend: boolean, index: number, newTime: string, keyMap?: Record<string, string>) => void;
   renameTimetableKeys: (isWeekend: boolean, keyMap: Record<string, string>) => void;
   resetTimetable: () => void;
@@ -504,9 +508,10 @@ const fileStorage = createJSONStorage(() => ({
           const localTimestampStr = localStorage.getItem('dashboard_last_modified');
 
           // If cloud data is null (new account), we MUST return localData so they don't lose progress!
+          // We return "{}" instead of null if localDataStr is empty, to guarantee Zustand parses it cleanly.
           if (json.data === null) {
-            lastSavedValue = localDataStr;
-            return localDataStr;
+            lastSavedValue = localDataStr || "{}";
+            return lastSavedValue;
           }
 
           if (json.data) {
@@ -537,9 +542,12 @@ const fileStorage = createJSONStorage(() => ({
               return str;
             }
           }
+        } else {
+          console.warn(`Database API returned ${res.status}, skipping retries.`);
+          break; // Stop retrying on server/auth errors!
         }
-      } catch {
-        console.warn(`Database API not ready yet, retrying... (${retries + 1}/15)`);
+      } catch (e) {
+        console.warn(`Database API error, retrying... (${retries + 1}/15)`, e);
       }
       retries++;
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -772,7 +780,7 @@ export const useDashboardStore = create<DashboardState>()(
       enableAlarmSound: true,
       enableAlarmVibration: true,
       enablePanicButton: true,
-      panicButtonMode: 'redirect',
+      panicButtonMode: 'hide',
       setEnableAlarmSound: (val) => set({ enableAlarmSound: val }),
       setEnableAlarmVibration: (val) => set({ enableAlarmVibration: val }),
       setEnablePanicButton: (val) => set({ enablePanicButton: val }),
@@ -974,6 +982,10 @@ export const useDashboardStore = create<DashboardState>()(
       })),
       weekdayTimes: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"],
       weekendTimes: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"],
+      timetableStartTime: 540, // Default 9:00 AM
+      timetableWeekendStartTime: 540, // Default 9:00 AM
+      setTimetableStartTime: (mins) => set({ timetableStartTime: mins }),
+      setTimetableWeekendStartTime: (mins) => set({ timetableWeekendStartTime: mins }),
       updateTimetableTime: (isWeekend, index, newTime, keyMap) => set((state) => {
         const targetArray = isWeekend ? state.weekendTimes : state.weekdayTimes;
         const fallbackArray = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
@@ -1235,8 +1247,8 @@ export const useDashboardStore = create<DashboardState>()(
       showCountdowns: true,
       showVideoControls: true,
       showClock: true,
-      showTasks: true,
-      showCalendar: true,
+      showTasks: false,
+      showCalendar: false,
       showTodayWork: true,
       showStats: true,
       showPlans: true,
@@ -1249,7 +1261,9 @@ export const useDashboardStore = create<DashboardState>()(
       showStopwatch: true,
       toggleVisibility: (key) => set((state) => ({ [key]: !state[key] })),
 
-      hideConfig: {},
+      hideConfig: {
+        quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayFocusPill: true, timerPill: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+      },
       setHideConfig: (key, value) => {
         set((state) => ({ hideConfig: { ...state.hideConfig, [key]: value } }));
       },
@@ -1257,7 +1271,7 @@ export const useDashboardStore = create<DashboardState>()(
         if (hide) {
           set({
             hideConfig: {
-              quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+              quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayFocusPill: true, timerPill: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
             }
           });
         } else {
@@ -1265,7 +1279,9 @@ export const useDashboardStore = create<DashboardState>()(
         }
       },
 
-      mobileHideConfig: {},
+      mobileHideConfig: {
+        quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayFocusPill: true, timerPill: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+      },
       setMobileHideConfig: (key, value) => {
         set((state) => ({ mobileHideConfig: { ...state.mobileHideConfig, [key]: value } }));
       },
@@ -1273,7 +1289,7 @@ export const useDashboardStore = create<DashboardState>()(
         if (hide) {
           set({
             mobileHideConfig: {
-              quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayWork: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
+              quote: true, health: true, timer: true, countdowns: true, videoControls: true, clock: true, tasks: true, calendar: true, todayFocusPill: true, timerPill: true, stats: true, plans: true, notes: true, timetable: true, dock: true, deadlineAlerts: true, bgSwitcher: true, settingsBtn: true, stopwatch: true
             }
           });
         } else {
@@ -1389,6 +1405,7 @@ export const useDashboardStore = create<DashboardState>()(
         ].includes(key))
       ),
       merge: (persistedState: any, currentState: DashboardState) => {
+        if (!persistedState) return currentState;
         // Clean up expired timers from past sessions
         if (persistedState.timerEndAt && persistedState.timerEndAt < Date.now()) {
           persistedState.timerEndAt = null;
@@ -1462,8 +1479,16 @@ export const useDashboardStore = create<DashboardState>()(
 
         return safeState;
       },
-      onRehydrateStorage: () => (state) => {
-        if (state) state.setHasHydrated(true);
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error("Hydration failed!", error);
+        }
+        // Guarantee hydration completion so UI never gets stuck
+        if (state && typeof state.setHasHydrated === 'function') {
+          state.setHasHydrated(true);
+        } else {
+          useDashboardStore.getState().setHasHydrated(true);
+        }
       },
     }
   )

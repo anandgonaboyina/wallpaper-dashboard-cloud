@@ -58,9 +58,12 @@ export async function GET(request: Request) {
         try {
           const parsed = JSON.parse(store.data);
           if (parsed.history) history = parsed.history;
+          else if (parsed.state && parsed.state.history) history = parsed.state.history;
         } catch (e) {}
       } else if (store.data && store.data.history) {
         history = store.data.history;
+      } else if (store.data && store.data.state && store.data.state.history) {
+        history = store.data.state.history;
       }
       userHistories[store.userId] = history;
     });
@@ -71,21 +74,50 @@ export async function GET(request: Request) {
       return localDate.toISOString().split('T')[0];
     };
 
-    const todayStr = getLocalDateString(new Date());
-    const last7Days = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - i); return getLocalDateString(d);
-    });
-    const last30Days = Array.from({ length: 30 }).map((_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - i); return getLocalDateString(d);
-    });
+    const todayDate = new Date();
+    const todayStr = getLocalDateString(todayDate);
+
+    // This Week (Mon-Sun)
+    const thisWeekDays: string[] = [];
+    let currentDayOfWeek = todayDate.getDay() === 0 ? 7 : todayDate.getDay();
+    let mondayDate = new Date(todayDate);
+    mondayDate.setDate(todayDate.getDate() - currentDayOfWeek + 1);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mondayDate); d.setDate(mondayDate.getDate() + i); thisWeekDays.push(getLocalDateString(d));
+    }
+
+    // Last Week (Mon-Sun of previous week)
+    const lastWeekDays: string[] = [];
+    const lastWeekMonday = new Date(mondayDate);
+    lastWeekMonday.setDate(mondayDate.getDate() - 7);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(lastWeekMonday); d.setDate(lastWeekMonday.getDate() + i); lastWeekDays.push(getLocalDateString(d));
+    }
+
+    // This Month
+    const thisMonthDays: string[] = [];
+    let lastDayOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).getDate();
+    for (let i = 1; i <= lastDayOfMonth; i++) {
+      const d = new Date(todayDate.getFullYear(), todayDate.getMonth(), i); thisMonthDays.push(getLocalDateString(d));
+    }
+
+    // Last Month
+    const lastMonthDays: string[] = [];
+    const prevMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() - 1, 1);
+    const lastDayOfPrevMonth = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+    for (let i = 1; i <= lastDayOfPrevMonth; i++) {
+      const d = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), i); lastMonthDays.push(getLocalDateString(d));
+    }
 
     const leaderboard = users.map((u, index) => {
       const uIdStr = u._id.toString();
       const history = userHistories[uIdStr] || {};
       
       const todayFocused = history[todayStr] || 0;
-      const last7DaysFocused = last7Days.reduce((acc, date) => acc + (history[date] || 0), 0);
-      const last30DaysFocused = last30Days.reduce((acc, date) => acc + (history[date] || 0), 0);
+      const thisWeekFocused = thisWeekDays.reduce((acc, date) => acc + (history[date] || 0), 0);
+      const lastWeekFocused = lastWeekDays.reduce((acc, date) => acc + (history[date] || 0), 0);
+      const thisMonthFocused = thisMonthDays.reduce((acc, date) => acc + (history[date] || 0), 0);
+      const lastMonthFocused = lastMonthDays.reduce((acc, date) => acc + (history[date] || 0), 0);
 
       const isMe = uIdStr === decoded.userId;
       const isFriend = friendIds.has(uIdStr);
@@ -104,9 +136,10 @@ export async function GET(request: Request) {
         displayName,
         isMe,
         todayFocused,
-        last7DaysFocused,
-        last30DaysFocused,
-        badges: u.badges || { today: 0, week: 0, month: 0 },
+        thisWeekFocused,
+        lastWeekFocused,
+        thisMonthFocused,
+        lastMonthFocused,
         profilePicture: u.profilePicture || null
       };
     });

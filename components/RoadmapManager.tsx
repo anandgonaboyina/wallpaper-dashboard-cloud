@@ -35,6 +35,9 @@ interface TreeNodeProps {
   handleDeleteNode: (node: RoadmapItem) => void;
   setEditingNode: (node: RoadmapItem | null) => void;
   toggleStatus: (item: RoadmapItem, e: React.MouseEvent) => void;
+  isLight?: boolean;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
 const TreeNode = ({
@@ -48,7 +51,10 @@ const TreeNode = ({
   handleAdd,
   handleDeleteNode,
   setEditingNode,
-  toggleStatus
+  toggleStatus,
+  isLight,
+  isFirst,
+  isLast
 }: TreeNodeProps) => {
   const isExpanded = expandedNodes.has(item.id);
   const hasChildren = item.subItems && item.subItems.length > 0;
@@ -70,36 +76,36 @@ const TreeNode = ({
 
   const nodeContentJsx = (
     <div className="w-full relative">
-      <div className={`flex flex-col p-2.5 bg-slate-800/90 backdrop-blur-md border ${borderColors[item.status]} rounded-lg shadow-md transition-all w-full relative ${activeMenuId === item.id ? 'z-[10000]' : activePath ? 'z-[9999]' : 'z-10'}`}>
-        <div className="flex items-start justify-between gap-1.5">
+      <div className={`flex flex-col p-2.5 backdrop-blur-md border bg-blue-300/50 ${borderColors[item.status]} rounded-lg shadow-md transition-all w-full relative ${activeMenuId === item.id ? 'z-[10000]' : activePath ? 'z-[9999]' : 'z-10'} ${isLight ? ' border-black' : 'bg-slate-800/90 border-white/10'}`}>
+        <div className={`flex items-start justify-between gap-1.5 `}>
 
           <div
             onClick={(e) => {
               if (hasChildren) toggleExpand(item.id, e);
               else setEditingNode(item);
             }}
-            className="flex-1 min-w-0 cursor-pointer flex gap-1.5 items-start"
+            className={`flex-1 min-w-0 cursor-pointer flex gap-1.5 items-start`}
           >
-            <span className="text-white/40 font-bold w-3 flex justify-center text-[10px] mt-0.5 shrink-0">
+            <span className={`font-bold w-3 flex justify-center text-[10px] mt-0.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
               {hasChildren ? (isExpanded ? '▼' : '▶') : '•'}
             </span>
             <div className="min-w-0">
-              <div className={`font-medium text-xs sm:text-sm break-words leading-tight ${item.status === 'completed' ? 'text-green-400 line-through opacity-50' : 'text-white'}`}>
+              <div className={`font-medium text-xs sm:text-sm break-words leading-tight ${item.status === 'completed' ? (isLight ? 'text-green-600 line-through opacity-60' : 'text-green-400 line-through opacity-50') : (isLight ? 'text-slate-800' : 'text-white')}`}>
                 {item.title}
               </div>
-              {item.description && <div className="text-white/50 text-[11px] mt-0.5 break-words leading-tight">{item.description}</div>}
+              {item.description && <div className={`text-[11px] mt-0.5 break-words leading-tight ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{item.description}</div>}
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex gap-1 items-center shrink-0 ml-1 relative">
-            <button onClick={(e) => toggleStatus(item, e)} className="w-6 h-6 flex items-center justify-center bg-slate-700/60 rounded text-[11px] hover:bg-slate-600 transition-colors text-white">
+            <button onClick={(e) => toggleStatus(item, e)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' : 'bg-slate-700/60 hover:bg-slate-600 text-white'}`}>
               {item.status === 'pending' ? '⚪' : item.status === 'in-progress' ? '🔵' : '✅'}
             </button>
 
             <button
               onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === item.id ? null : item.id); }}
-              className="w-6 h-6 flex items-center justify-center bg-white/5 rounded hover:bg-white/10 text-white text-xs font-bold transition-colors"
+              className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' : 'bg-white/5 hover:bg-white/10 text-white'}`}
             >
               ⋮
             </button>
@@ -107,17 +113,17 @@ const TreeNode = ({
             {activeMenuId === item.id && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 top-7 mt-0.5 w-28 bg-slate-900 border border-white/10 rounded-md shadow-xl z-999 flex flex-col overflow-hidden"
+                className={`absolute right-0 top-7 mt-0.5 w-28 border rounded-md shadow-xl z-999 flex flex-col overflow-hidden ${isLight ? 'bg-black border-slate-200' : 'bg-slate-900 border-white/10'}`}
               >
                 {depth < 3 && (
-                  <button onClick={() => handleAdd(item.id)} className="px-3 py-1.5 text-left text-[11px] text-white hover:bg-white/10 flex items-center gap-1.5">
+                  <button onClick={() => handleAdd(item.id)} className={`px-3 py-1.5 text-left text-[11px] flex items-center gap-1.5 ${isLight ? 'text-slate-800 hover:bg-slate-100' : 'text-white hover:bg-white/10'}`}>
                     <span>➕</span> Subtopic
                   </button>
                 )}
-                <button onClick={() => { setEditingNode(item); setActiveMenuId(null); }} className="px-3 py-1.5 text-left text-[11px] text-white hover:bg-white/10 flex items-center gap-1.5">
+                <button onClick={() => { setEditingNode(item); setActiveMenuId(null); }} className={`px-3 py-1.5 text-left text-[11px] flex items-center gap-1.5 ${isLight ? 'text-slate-800 hover:bg-slate-100' : 'text-white hover:bg-white/10'}`}>
                   <span>✎</span> Edit
                 </button>
-                <button onClick={() => handleDeleteNode(item)} className="px-3 py-1.5 text-left text-[11px] text-red-400 hover:bg-white/10 flex items-center gap-1.5 border-t border-white/5">
+                <button onClick={() => handleDeleteNode(item)} className={`px-3 py-1.5 text-left text-[11px] flex items-center gap-1.5 border-t ${isLight ? 'text-red-500 hover:bg-slate-100 border-slate-100' : 'text-red-400 hover:bg-white/10 border-white/5'}`}>
                   <span>✕</span> Delete
                 </button>
               </div>
@@ -128,7 +134,7 @@ const TreeNode = ({
         {item.links && item.links.length > 0 && (
           <div className="mt-1.5 ml-4 flex flex-wrap gap-1">
             {item.links.map(link => (
-              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] px-1.5 py-0.5 bg-blue-950/40 text-blue-300 rounded hover:bg-blue-900/50 transition-colors">
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${isLight ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : 'bg-blue-950/40 text-blue-300 hover:bg-blue-900/50'}`}>
                 🔗 {link.label}
               </a>
             ))}
@@ -137,25 +143,38 @@ const TreeNode = ({
       </div>
 
       {isExpanded && hasChildren && (
-        <div className={`ml-2 sm:ml-3 border-l border-white/10 pl-2 sm:pl-3 relative mt-1.5 space-y-1.5 pb-0.5 ${activePath ? 'z-[9999]' : 'z-50'}`}>
-          {item.subItems!.map((child, i) => (
-            <div key={child.id} className={`relative ${activeMenuId && isMenuPath(child) ? 'z-[9999]' : 'z-10'}`}>
-              <div className="absolute -left-2 sm:-left-3 top-4 w-2 sm:w-3 border-t border-white/10" />
-              <TreeNode
-                item={child}
-                depth={depth + 1}
-                index={i}
-                expandedNodes={expandedNodes}
-                toggleExpand={toggleExpand}
-                activeMenuId={activeMenuId}
-                setActiveMenuId={setActiveMenuId}
-                handleAdd={handleAdd}
-                handleDeleteNode={handleDeleteNode}
-                setEditingNode={setEditingNode}
-                toggleStatus={toggleStatus}
-              />
-            </div>
-          ))}
+        <div className={`ml-2 sm:ml-3 pl-2 sm:pl-3 relative mt-1 ${activePath ? 'z-[9999]' : 'z-50'}`}>
+          {item.subItems!.map((child, i) => {
+            const isLastChild = i === item.subItems!.length - 1;
+            return (
+              <div key={child.id} className={`relative ${activeMenuId && isMenuPath(child) ? 'z-[9999]' : 'z-10'} ${!isLastChild ? 'pb-1.5' : ''}`}>
+
+                {/* Vertical line segment for this child */}
+                <div className={`absolute -left-2 sm:-left-3 w-[1px] z-0 ${isLight ? 'bg-white' : 'bg-white'} 
+                 ${isLastChild ? 'top-0 h-4' : 'top-0 bottom-0'}
+              `} />
+
+                {/* Horizontal line to this child */}
+                <div className={`absolute -left-2 sm:-left-3 top-4 w-2 sm:w-3 border-t z-0 border-white`} />
+                <TreeNode
+                  item={child}
+                  depth={depth + 1}
+                  index={i}
+                  expandedNodes={expandedNodes}
+                  toggleExpand={toggleExpand}
+                  activeMenuId={activeMenuId}
+                  setActiveMenuId={setActiveMenuId}
+                  handleAdd={handleAdd}
+                  handleDeleteNode={handleDeleteNode}
+                  setEditingNode={setEditingNode}
+                  toggleStatus={toggleStatus}
+                  isLight={isLight}
+                  isFirst={i === 0}
+                  isLast={isLastChild}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -173,6 +192,17 @@ const TreeNode = ({
           md:-translate-x-0 
           ${isRight ? 'md:left-[-4px] md:right-auto' : 'md:left-auto md:right-[-4px]'} 
         `} />
+
+        {/* Node Line Segment */}
+        {!(isFirst && isLast) && (
+          <div className={`absolute w-[1px] bg-black z-10 transform -translate-x-1/2 md:translate-x-0
+            left-4 md:left-auto
+            ${isRight ? 'md:left-[0px] md:right-auto' : 'md:right-[0px] md:left-auto'}
+            ${isFirst ? 'top-4 bottom-0' : isLast ? 'top-0 h-4' : 'top-0 bottom-0'}
+            ${isLight ? 'bg-whtie/80' : 'bg-white/40'}
+          `} />
+        )}
+
         {nodeContentJsx}
       </div>
     );
@@ -182,7 +212,18 @@ const TreeNode = ({
 
 // --- Main Layout Export ---
 export default function RoadmapManager() {
-  const { roadmaps, setRoadmaps, syntheticDeadlines, setSyntheticDeadline, isPlansOpen, togglePlans } = useDashboardStore();
+  const { roadmaps, setRoadmaps, syntheticDeadlines, setSyntheticDeadline, isPlansOpen, togglePlans, theme } = useDashboardStore();
+
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
+  useEffect(() => {
+    if (theme === 'auto') {
+      const hour = new Date().getHours();
+      setResolvedTheme(hour >= 6 && hour < 18 ? 'light' : 'dark');
+    } else {
+      setResolvedTheme(theme as 'light' | 'dark');
+    }
+  }, [theme]);
+  const isLight = resolvedTheme === 'light';
 
   const [activeRoadmapId, setActiveRoadmapId] = useState<string>(roadmaps && roadmaps.length > 0 ? roadmaps[0].id : '');
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -230,7 +271,7 @@ export default function RoadmapManager() {
 
   const syntheticRoadmap = React.useMemo(() => {
     if (!statusFilter) return null;
-    
+
     const filterNodeByStatus = (node: RoadmapItem): RoadmapItem | null => {
       let newSubItems: RoadmapItem[] = [];
       let keep = node.status === statusFilter;
@@ -341,7 +382,7 @@ export default function RoadmapManager() {
 
   const handleDeleteNode = (node: RoadmapItem) => {
     const isRootNode = activeRoadmap.nodes.some(n => n.id === node.id);
-    
+
     if (isRootNode) {
       const input = prompt(`Type "DELETE" to remove main topic "${node.title}":`);
       if (input !== "DELETE") return;
@@ -380,18 +421,18 @@ export default function RoadmapManager() {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto text-white">
+    <div className={`fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto ${isLight ? 'text-slate-800' : 'text-white'}`}>
       <div className="absolute inset-0" onClick={togglePlans} />
-      <div className="relative w-full max-w-5xl h-[80vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#0f172a] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 border border-white/20 font-sans">
+      <div className={`relative w-full max-w-5xl h-[80vh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 border font-sans ${isLight ? 'bg-slate-300 border-slate-300' : 'bg-[#0f172a] border-white/20'}`}>
 
         {/* Header */}
-        <div className="p-3 sm:p-4 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
+        <div className={`p-3 sm:p-4 border-b flex justify-between items-center shrink-0 ${isLight ? 'border-slate-200 bg-black/30' : 'border-white/10 bg-black/40'}`}>
           <h1 className="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
             Roadmap Master
           </h1>
           <button
             onClick={togglePlans}
-            className="p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/20"
+            className={`p-1.5 rounded-lg transition-colors border ${isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-200 border-transparent' : 'text-white/60 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'}`}
           >
             ✕
           </button>
@@ -408,18 +449,18 @@ export default function RoadmapManager() {
           onMouseMove={handleMouseMove}
         >
           {/* Legend */}
-          <div className="w-full max-w-2xl flex justify-end mb-2 px-2">
-            <div className="text-[10px] text-white/50 flex gap-3 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <span 
-                onClick={() => setStatusFilter(statusFilter === 'pending' ? null : 'pending')} 
-                className={`flex items-center gap-1 cursor-pointer hover:text-white transition-colors ${statusFilter === 'pending' ? 'text-white font-bold scale-110' : ''}`}
+          <div className="w-full max-w-2xl flex justify-center mb-2 px-2">
+            <div className={`text-[10px] flex gap-3 px-3 py-1.5 rounded-full border ${isLight ? ' border-slate-200 text-slate-500 bg-black' : 'bg-white/15 border-white/10 text-white/50'}`}>
+              <span
+                onClick={() => setStatusFilter(statusFilter === 'pending' ? null : 'pending')}
+                className={`flex items-center gap-1 cursor-pointer transition-colors ${statusFilter === 'pending' ? (isLight ? 'text-slate-800 font-bold scale-110' : 'text-white font-bold scale-110') : (isLight ? 'hover:text-slate-800' : 'hover:text-white')}`}
               >⚪ Pending</span>
-              <span 
-                onClick={() => setStatusFilter(statusFilter === 'in-progress' ? null : 'in-progress')} 
+              <span
+                onClick={() => setStatusFilter(statusFilter === 'in-progress' ? null : 'in-progress')}
                 className={`flex items-center gap-1 cursor-pointer hover:text-blue-400 transition-colors ${statusFilter === 'in-progress' ? 'text-blue-400 font-bold scale-110' : ''}`}
               >🔵 In Progress</span>
-              <span 
-                onClick={() => setStatusFilter(statusFilter === 'completed' ? null : 'completed')} 
+              <span
+                onClick={() => setStatusFilter(statusFilter === 'completed' ? null : 'completed')}
                 className={`flex items-center gap-1 cursor-pointer hover:text-green-400 transition-colors ${statusFilter === 'completed' ? 'text-green-400 font-bold scale-110' : ''}`}
               >✅ Completed</span>
             </div>
@@ -429,26 +470,26 @@ export default function RoadmapManager() {
           <div className="w-full max-w-2xl flex justify-center mb-8">
             <button
               onClick={() => setIsRoadmapSwitcherOpen(true)}
-              className="px-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-medium flex items-center gap-2 transition-colors shadow-sm text-white"
+              className={`px-4 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 transition-colors shadow-sm ${isLight ? 'bg-black hover:bg-slate-100 border border-slate-200 text-slate-800' : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white'}`}
             >
               <span>{activeRoadmap.name}</span>
-              <span className="text-teal-400 bg-teal-400/10 rounded-full w-4 h-4 flex items-center justify-center text-[9px]">▼</span>
+              <span className={`rounded-full w-4 h-4 flex items-center justify-center text-[9px] ${isLight ? 'text-teal-600 bg-teal-100' : 'text-teal-400 bg-teal-400/10'}`}>▼</span>
             </button>
           </div>
 
           {/* Switcher Overlay Modal */}
           {isRoadmapSwitcherOpen && (
             <div
-              className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-3 bg-white/10 backdrop-blur-xs"
               onClick={() => setIsRoadmapSwitcherOpen(false)}
             >
               <div
-                className="bg-slate-800 border border-white/10 rounded-xl p-4 w-full max-w-xs shadow-xl"
+                className={`rounded-xl p-4 w-full max-w-xs shadow-xl border ${isLight ? 'bg-black border-slate-200' : 'bg-slate-800 border-white/10'}`}
                 onClick={e => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-sm font-semibold text-white">Select Roadmap</h2>
-                  <button onClick={() => setIsRoadmapSwitcherOpen(false)} className="text-white/40 hover:text-white text-xs">✕</button>
+                  <h2 className={`text-sm font-semibold ${isLight ? 'text-white' : 'text-white'}`}>Select Roadmap</h2>
+                  <button onClick={() => setIsRoadmapSwitcherOpen(false)} className={`text-xs ${isLight ? 'text-slate-400 hover:text-slate-600' : 'text-white/40 hover:text-white'}`}>✕</button>
                 </div>
 
                 <div className="flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto pr-0.5">
@@ -457,18 +498,18 @@ export default function RoadmapManager() {
                       key={r.id}
                       onClick={() => { setActiveRoadmapId(r.id); setIsRoadmapSwitcherOpen(false); setStatusFilter(null); }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex justify-between items-center ${activeRoadmapId === r.id
-                        ? 'bg-teal-500/10 border border-teal-500/30 text-teal-300'
-                        : 'bg-white/5 text-white/80 hover:bg-white/10 border border-transparent'
+                        ? (isLight ? 'bg-teal-50 border border-teal-200 text-teal-700' : 'bg-teal-500/10 border border-teal-500/30 text-teal-300')
+                        : (isLight ? 'bg-white/50 text-slate-700 hover:bg-slate-100 border border-transparent' : 'bg-white/5 text-white/80 hover:bg-white/10 border border-transparent')
                         }`}
                     >
                       {r.name}
-                      {activeRoadmapId === r.id && <span className="text-teal-400 text-sm">✓</span>}
+                      {activeRoadmapId === r.id && <span className={`${isLight ? 'text-teal-600' : 'text-teal-400'} text-sm`}>✓</span>}
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-white/5">
-                  <button onClick={() => { createNewRoadmap(); setIsRoadmapSwitcherOpen(false); }} className="w-full px-3 py-2 rounded-lg text-xs font-medium bg-teal-600 hover:bg-teal-500 text-white transition-colors flex items-center justify-center gap-1">
+                <div className={`mt-3 pt-3 border-t ${isLight ? 'border-slate-100' : 'border-white/5'}`}>
+                  <button onClick={() => { createNewRoadmap(); setIsRoadmapSwitcherOpen(false); }} className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${isLight ? 'bg-teal-100 hover:bg-teal-200 text-teal-800' : 'bg-teal-600 hover:bg-teal-500 text-white'}`}>
                     <span>+</span> Create Roadmap
                   </button>
                 </div>
@@ -482,10 +523,9 @@ export default function RoadmapManager() {
             {/* Tracker Deadline */}
             {statusFilter !== 'pending' && statusFilter !== 'completed' && (
               <div className="absolute top-[-38px] left-4 md:left-1/2 transform md:-translate-x-1/2 flex flex-row md:flex-col items-center md:items-center z-30">
-                <div className="hidden md:block w-[1px] h-[14px] bg-teal-500 mt-0.5 order-2" />
                 <div className="md:hidden w-[16px] h-[1px] bg-teal-500 order-1" />
-                <div className="bg-slate-800 border border-teal-500 rounded-full px-2.5 py-1 shadow-md text-center flex flex-col relative w-[110px] hover:bg-slate-700 transition-colors order-2 md:order-1">
-                  <span className="text-teal-400 font-semibold text-[10px] uppercase pointer-events-none relative z-0">
+                <div className={`rounded-full px-2.5 py-1 shadow-md text-center flex flex-col relative w-[110px] transition-colors order-2 md:order-1 border ${isLight ? 'bg-black border-blue-300 hover:bg-slate-50' : 'bg-slate-800 border-teal-500 hover:bg-slate-700'}`}>
+                  <span className={`font-semibold text-[10px] uppercase pointer-events-none relative z-0 ${isLight ? 'text-teal-600' : 'text-teal-400'}`}>
                     {daysLeft !== null ? `${daysLeft} Left` : 'Set Deadline'}
                   </span>
                   <input
@@ -505,13 +545,17 @@ export default function RoadmapManager() {
               </div>
             )}
 
+            {/* Connection from Deadline to First Node */}
+            {statusFilter !== 'pending' && statusFilter !== 'completed' && activeRoadmap.nodes.length > 0 && (
+              <div className="absolute w-[1px] bg-teal-500 z-20
+                left-4 transform -translate-x-1/2
+                md:left-1/2 md:-translate-x-1/2
+                top-[-26px] md:top-[-14px] h-[42px] md:h-[30px]
+              " />
+            )}
+
             {/* Dynamic Central Alignment Vector */}
             <div className="relative w-full">
-              {/* Desktop Central Divider */}
-              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/10 transform -translate-x-1/2" />
-              {/* Mobile Left-aligned Divider */}
-              <div className="md:hidden absolute left-4 top-0 bottom-0 w-[1px] bg-white/10 transform -translate-x-1/2" />
-
               {activeRoadmap.nodes.map((node, index) => (
                 <TreeNode
                   key={node.id}
@@ -526,24 +570,31 @@ export default function RoadmapManager() {
                   handleDeleteNode={handleDeleteNode}
                   setEditingNode={setEditingNode}
                   toggleStatus={toggleStatus}
+                  isLight={isLight}
+                  isFirst={index === 0}
+                  isLast={index === activeRoadmap.nodes.length - 1}
                 />
               ))}
             </div>
 
-            {/* Add Main Item Action */}
-            <div className="flex justify-center mt-4">
-              <button onClick={() => handleAdd(null)} className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-medium hover:bg-white/10 shadow-md flex items-center gap-2 transition-colors text-white">
-                <span className="text-sm bg-teal-500 rounded-full w-4 h-4 flex items-center justify-center">+</span>
-                Add Main Topic
-              </button>
-            </div>
+            {!statusFilter && (
+              <>
+                {/* Add Main Item Action */}
+                <div className="flex justify-center mt-4">
+                  <button onClick={() => handleAdd(null)} className={`px-5 py-2 rounded-full text-xs font-medium shadow-md flex items-center gap-2 transition-colors border ${isLight ? 'bg-black border-slate-200 hover:bg-slate-50 text-slate-800' : 'bg-white/5 border-white/10 hover:bg-white/10 text-white'}`}>
+                    <span className={`rounded-full w-4 h-4 flex items-center justify-center text-sm ${isLight ? 'bg-teal-100 text-teal-700' : 'bg-teal-500'}`}>+</span>
+                    Add Main Topic
+                  </button>
+                </div>
 
-            {/* Core Destruct Action */}
-            <div className="flex justify-center mt-10 mb-4">
-              <button onClick={deleteActiveRoadmap} className="px-3 py-1.5 text-[11px] text-red-500/50 hover:text-red-400 hover:bg-red-500/5 rounded-md transition-colors">
-                Delete Entire Roadmap
-              </button>
-            </div>
+                {/* Core Destruct Action */}
+                <div className="flex justify-center mt-10 mb-4">
+                  <button onClick={deleteActiveRoadmap} className="px-3 py-1.5 text-[11px] text-red-500/50 hover:text-red-400 hover:bg-red-500/5 rounded-md transition-colors">
+                    Delete Entire Roadmap
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -551,36 +602,36 @@ export default function RoadmapManager() {
       {/* Minimal Node Editor Modal */}
       {editingNode && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs">
-          <div className="bg-slate-800 border border-white/10 rounded-xl p-4 w-full max-w-sm shadow-xl">
+          <div className={`rounded-xl p-4 w-full max-w-sm shadow-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'}`}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-sm font-bold text-white">Edit Topic</h2>
-              <button onClick={() => setEditingNode(null)} className="text-white/40 hover:text-white text-xs">✕</button>
+              <h2 className={`text-sm font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>Edit Topic</h2>
+              <button onClick={() => setEditingNode(null)} className={`text-xs ${isLight ? 'text-slate-400 hover:text-slate-600' : 'text-white/40 hover:text-white'}`}>✕</button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-white/60 text-[11px] font-medium mb-1">Title</label>
+                <label className={`block text-[11px] font-medium mb-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Title</label>
                 <input
                   type="text"
                   value={editingNode.title}
                   onChange={(e) => setEditingNode({ ...editingNode, title: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-teal-400 transition-colors"
+                  className={`w-full rounded-lg p-2 text-xs outline-none focus:border-teal-400 transition-colors border ${isLight ? 'bg-slate-50 border-slate-200 text-slate-800 focus:bg-white' : 'bg-black/30 border-white/10 text-white'}`}
                   placeholder="e.g., Learn Fundamentals"
                 />
               </div>
               <div>
-                <label className="block text-white/60 text-[11px] font-medium mb-1">Description (Optional)</label>
+                <label className={`block text-[11px] font-medium mb-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Description (Optional)</label>
                 <textarea
                   value={editingNode.description || ''}
                   onChange={(e) => setEditingNode({ ...editingNode, description: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-xs text-white h-16 outline-none focus:border-teal-400 transition-colors resize-none"
+                  className={`w-full rounded-lg p-2 text-xs h-16 outline-none focus:border-teal-400 transition-colors resize-none border ${isLight ? 'bg-slate-50 border-slate-200 text-slate-800 focus:bg-white' : 'bg-black/30 border-white/10 text-white'}`}
                   placeholder="Add notes..."
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setEditingNode(null)} className="px-3 py-1.5 rounded-lg text-white/60 hover:bg-white/5 text-xs font-medium transition-colors">
+              <button onClick={() => setEditingNode(null)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isLight ? 'text-slate-500 hover:bg-slate-100' : 'text-white/60 hover:bg-white/5'}`}>
                 Cancel
               </button>
               <button onClick={() => handleSaveNode(editingNode)} className="px-3 py-1.5 bg-teal-600 rounded-lg text-white hover:bg-teal-500 text-xs font-medium transition-colors shadow-sm">

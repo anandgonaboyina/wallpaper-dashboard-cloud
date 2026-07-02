@@ -181,7 +181,7 @@ Open via the **📊 Stats** button on the dock/toolbar.
 **Left panel:**
 - **Today's Focus** — minutes logged today
 - **All Time** — total ever logged
-- **7-Day Avg / 30-Day Avg** — daily averages for recent periods
+- **This Week Total / Avg** — total minutes and daily average for the current week (Mon-Sun)
 - **Days Logged** — number of days you've used the timer
 
 **Right panel — Monthly Breakdown:**
@@ -339,14 +339,6 @@ Click the 🗑️ trash icon next to any friend → confirm.
 - Your **alias** is shown if you set one; otherwise your username is shown.
 - Use the search bar to find a specific user.
 - Click any user row to expand and see their stats breakdown.
-
-### Badges & Achievements
-As you accumulate focused work hours, you can earn dynamic badges that appear next to your name on the leaderboard. Badges are awarded automatically to the **#1 top user on the leaderboard** who also meets the strict minimum hour requirements for that timeframe:
-- **Daily Badge (🏆)**: Must be Rank #1 today AND have a minimum of **6 hours** of focus time in a single day.
-- **Weekly Badge (🌟)**: Must be Rank #1 this week AND have a minimum of **42 hours** of focus time over the last 7 days.
-- **Monthly Badge (👑)**: Must be Rank #1 this month AND have a minimum of **180 hours** of focus time over the last 30 days.
-
-*Note: Badges are incrementable! If you win the daily top spot with 6+ hours multiple times, your badge count will increase (e.g., "🏆 2 Day").*
 
 > Set your alias in **Settings → Connect → Profile → Security & Alias** (requires password unlock) to appear anonymously on the leaderboard.
 

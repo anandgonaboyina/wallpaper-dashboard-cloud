@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -24,16 +26,21 @@ export async function GET(request: Request) {
     const client = await clientPromise;
     const db = client.db();
 
+    const dbUser = await db.collection('User').findOne({ _id: new ObjectId(user.userId) });
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+    }
+
     const received = await db.collection('Friendship').find({ receiverId: user.userId }).toArray();
     const sent = await db.collection('Friendship').find({ senderId: user.userId }).toArray();
 
     const allUserIds = new Set([
-      ...received.map(f => f.senderId),
-      ...sent.map(f => f.receiverId)
+      ...received.map(f => f.senderId?.toString()),
+      ...sent.map(f => f.receiverId?.toString())
     ]);
 
     const users = await db.collection('User').find({
-      _id: { $in: Array.from(allUserIds).map(id => new ObjectId(id)) }
+      _id: { $in: Array.from(allUserIds).filter(Boolean).map(id => new ObjectId(id as string)) }
     }).project({ _id: 1, username: 1, lastLogin: 1, profilePicture: 1 }).toArray();
 
     const storages = await db.collection('DashboardStorage').find({
@@ -61,16 +68,18 @@ export async function GET(request: Request) {
 
     const pendingRequests = received
       .filter(f => f.status === 'PENDING')
-      .map(f => ({ id: f._id.toString(), user: userMap.get(f.senderId) }));
+      .map(f => ({ id: f._id.toString(), user: userMap.get(f.senderId?.toString()) }))
+      .filter(f => f.user);
       
     const sentRequests = sent
       .filter(f => f.status === 'PENDING')
-      .map(f => ({ id: f._id.toString(), user: userMap.get(f.receiverId) }));
+      .map(f => ({ id: f._id.toString(), user: userMap.get(f.receiverId?.toString()) }))
+      .filter(f => f.user);
     
     const acceptedFriends = [
-      ...received.filter(f => f.status === 'ACCEPTED').map(f => ({ id: f._id.toString(), user: userMap.get(f.senderId) })),
-      ...sent.filter(f => f.status === 'ACCEPTED').map(f => ({ id: f._id.toString(), user: userMap.get(f.receiverId) }))
-    ];
+      ...received.filter(f => f.status === 'ACCEPTED').map(f => ({ id: f._id.toString(), user: userMap.get(f.senderId?.toString()) })),
+      ...sent.filter(f => f.status === 'ACCEPTED').map(f => ({ id: f._id.toString(), user: userMap.get(f.receiverId?.toString()) }))
+    ].filter(f => f.user);
 
     return NextResponse.json({ pendingRequests, sentRequests, acceptedFriends });
   } catch (error) {
@@ -122,7 +131,7 @@ export async function PATCH(request: Request) {
     const db = client.db();
 
     const friendship = await db.collection('Friendship').findOne({ _id: new ObjectId(friendshipId) });
-    if (!friendship || friendship.receiverId !== user.userId) {
+    if (!friendship || friendship.receiverId?.toString() !== user.userId) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
@@ -155,7 +164,7 @@ export async function DELETE(request: Request) {
     const db = client.db();
 
     const friendship = await db.collection('Friendship').findOne({ _id: new ObjectId(friendshipId) });
-    if (!friendship || (friendship.senderId !== user.userId && friendship.receiverId !== user.userId)) {
+    if (!friendship || (friendship.senderId?.toString() !== user.userId && friendship.receiverId?.toString() !== user.userId)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 

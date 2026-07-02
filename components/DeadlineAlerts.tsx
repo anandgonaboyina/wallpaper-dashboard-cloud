@@ -9,7 +9,7 @@ export default function DeadlineAlerts() {
   const { deadlines, deadlineAlertDays, dismissedDeadlineAlerts, dismissDeadlineAlert, isDeadlinesCollapsed, setIsDeadlinesCollapsed, theme } = useDashboardStore();
   const [activeAlerts, setActiveAlerts] = useState<typeof deadlines>([]);
   const [isStackExpanded, setIsStackExpanded] = useState(false);
-  
+
   const startY = useRef<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -44,7 +44,7 @@ export default function DeadlineAlerts() {
 
   if (isDeadlinesCollapsed) {
     return (
-      <div 
+      <div
         className={`hidden md:flex fixed top-3 left-3 z-[100000] flex-row gap-1.5 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1.5 rounded-full border backdrop-blur-md shadow-lg ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
         onClick={() => setIsDeadlinesCollapsed(false)}
         title="Show Deadline Alerts"
@@ -65,6 +65,7 @@ export default function DeadlineAlerts() {
       const deltaY = startY.current - clientY;
       if (deltaY > 30) {
         setIsDeadlinesCollapsed(true);
+        setIsStackExpanded(false);
       }
       startY.current = null;
     }
@@ -81,7 +82,7 @@ export default function DeadlineAlerts() {
   };
 
   return (
-    <div 
+    <div
       className="fixed left-1/2 -translate-x-1/2 top-16 md:top-16 z-[10000] flex flex-col gap-1.5 pointer-events-auto items-center cursor-grab active:cursor-grabbing touch-none"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -99,13 +100,13 @@ export default function DeadlineAlerts() {
 
           const isStacked = !isStackExpanded && activeAlerts.length > 1;
           const isTop = index === 0;
-          
+
           if (isStacked && index > 2) return null;
 
           let transform = 'none';
           let opacity = '1';
           let zIndex = 100 - index;
-          
+
           if (isStacked) {
             if (index === 1) {
               transform = 'translateY(8px) scale(0.96)';
@@ -137,7 +138,7 @@ export default function DeadlineAlerts() {
                     <CalendarClock className="w-2.5 h-2.5 drop-shadow-md" />
                     <span className="text-[8px] font-bold uppercase tracking-wider leading-none">{daysText}</span>
                   </div>
-                  
+
                   {/* Dismiss Button */}
                   <div className="flex items-center gap-1">
                     <button
@@ -161,33 +162,25 @@ export default function DeadlineAlerts() {
                   <span className={`${theme === 'light' ? 'text-slate-500' : 'text-white/40'} text-[8px] font-semibold tracking-wide uppercase leading-none`}>
                     Due: {deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
-                  
-                  {isTop && isStacked && activeAlerts.length > 1 && (
-                     <button className={`${theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-white/40 hover:text-white'} text-[9px] font-semibold flex items-center gap-0.5`}>
-                       +{activeAlerts.length - 1} <ChevronDown className="w-3 h-3" />
-                     </button>
-                  )}
-                  {isTop && !isStacked && activeAlerts.length > 1 && (
-                     <button 
-                        onClick={(e) => { e.stopPropagation(); setIsStackExpanded(false); }} 
-                        className={`${theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-white/40 hover:text-white'} text-[9px] font-semibold flex items-center gap-0.5 px-1 py-0.5 rounded hover:bg-black/10 transition-colors`}
-                     >
-                       Collapse <ChevronUp className="w-3 h-3" />
-                     </button>
-                  )}
+
+
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-      
-      <div 
-        className="text-[9px] text-white/40 flex items-center gap-1 font-medium bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 pointer-events-auto cursor-pointer mt-1 hover:text-white transition-colors" 
-        onClick={() => setIsDeadlinesCollapsed(true)}
+
+      {isStackExpanded && (<div
+        className="text-[9px] text-white/40 flex items-center gap-1 font-medium bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 pointer-events-auto cursor-pointer mt-1 hover:text-white transition-colors"
+        onClick={() => {
+          setIsDeadlinesCollapsed(true)
+          setIsStackExpanded(false);
+        }}
       >
         <ChevronUp className="w-3 h-3" /> Swipe up to collapse
-      </div>
+      </div>)
+      }
     </div>
   );
 }

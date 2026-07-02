@@ -51,17 +51,9 @@ export default function StatsModal() {
   const todayMins = history[today] || 0;
   const totalMins = Object.values(history).reduce((acc: number, curr: any) => acc + (curr as number), 0);
 
-  // Helper to calculate total mins for last X days
-  const calculateHistoryRange = (days: number) => {
-    let total = 0;
-    const todayObj = new Date();
-    for (let i = 0; i < days; i++) {
-      const d = new Date(todayObj);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      total += history[dateStr] || 0;
-    }
-    return total;
+  // Helper to calculate total mins for a set of dates
+  const calculateTotalForDates = (dateStrings: string[]) => {
+    return dateStrings.reduce((total, dateStr) => total + (history[dateStr] || 0), 0);
   };
 
   const currentYear = new Date().getFullYear();
@@ -74,10 +66,36 @@ export default function StatsModal() {
     if (year === currentYear - 1) prevYearTotal += (mins as number);
   });
 
-  const sevenDaysTotal = calculateHistoryRange(7);
-  const thirtyDaysTotal = calculateHistoryRange(30);
-  const sevenDaysAvg = Math.round(sevenDaysTotal / 7);
-  const thirtyDaysAvg = Math.round(thirtyDaysTotal / 30);
+  // Calculate "This Week" (Monday to Sunday)
+  const todayDate = new Date();
+  const getLocalDateStr = (d: Date) => {
+    const offset = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - (offset * 60 * 1000));
+    return local.toISOString().split('T')[0];
+  };
+
+  const thisWeekDays: string[] = [];
+  const currentDayOfWeek = todayDate.getDay() === 0 ? 7 : todayDate.getDay();
+  const mondayDate = new Date(todayDate);
+  mondayDate.setDate(todayDate.getDate() - currentDayOfWeek + 1);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mondayDate);
+    d.setDate(mondayDate.getDate() + i);
+    thisWeekDays.push(getLocalDateStr(d));
+  }
+
+  // Calculate "This Month"
+  const thisMonthDays: string[] = [];
+  const lastDayOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).getDate();
+  for (let i = 1; i <= lastDayOfMonth; i++) {
+    const d = new Date(todayDate.getFullYear(), todayDate.getMonth(), i);
+    thisMonthDays.push(getLocalDateStr(d));
+  }
+
+  const thisWeekTotal = calculateTotalForDates(thisWeekDays);
+  const thisMonthTotal = calculateTotalForDates(thisMonthDays);
+  const thisWeekAvg = Math.round(thisWeekTotal / currentDayOfWeek); // average based on days passed this week so far
+  const thisMonthAvg = Math.round(thisMonthTotal / todayDate.getDate()); // average based on days passed this month so far
 
   // Group by month
   const monthlyData = dates.reduce((acc, date) => {
@@ -194,21 +212,15 @@ export default function StatsModal() {
                     <span className="font-bold text-white px-1.5 py-px rounded bg-white/10">{dates.length}</span>
                   </div>
                   <div className="flex justify-between items-center bg-black/20 p-1 sm:p-1.5 rounded border border-white/5">
-                    <span className="text-white/70 font-medium">Daily Avg</span>
-                    <span className="font-bold text-white px-1.5 py-px rounded bg-white/10">
-                      {dates.length ? formatMinutes(Math.floor(totalMins / dates.length)) : '0m'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center bg-black/20 p-1 sm:p-1.5 rounded border border-white/5">
-                    <span className="text-white/70 font-medium">7-Day Avg</span>
+                    <span className="text-white/70 font-medium">This Week Total</span>
                     <span className="font-bold text-white px-1.5 py-px rounded bg-blue-500/20 text-blue-200 border border-blue-400/30">
-                      {formatMinutes(sevenDaysAvg)}
+                      {formatMinutes(thisWeekTotal)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center bg-black/20 p-1 sm:p-1.5 rounded border border-white/5">
-                    <span className="text-white/70 font-medium">30-Day Avg</span>
-                    <span className="font-bold text-white px-1.5 py-px rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
-                      {formatMinutes(thirtyDaysAvg)}
+                    <span className="text-white/70 font-medium">This Week Avg</span>
+                    <span className="font-bold text-white px-1.5 py-px rounded bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                      {formatMinutes(thisWeekAvg)}
                     </span>
                   </div>
                 </div>

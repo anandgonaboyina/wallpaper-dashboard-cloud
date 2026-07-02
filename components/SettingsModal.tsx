@@ -353,8 +353,16 @@ export default function SettingsModal() {
       setSettingsActiveTab('connect');
       setIsMobileDetailView(true);
     };
+    const handleOpenConnect = () => {
+      setSettingsActiveTab('connect');
+      setIsMobileDetailView(true);
+    };
     window.addEventListener('open-leaderboard', handleOpenLeaderboard);
-    return () => window.removeEventListener('open-leaderboard', handleOpenLeaderboard);
+    window.addEventListener('open-connect', handleOpenConnect);
+    return () => {
+      window.removeEventListener('open-leaderboard', handleOpenLeaderboard);
+      window.removeEventListener('open-connect', handleOpenConnect);
+    };
   }, [setSettingsActiveTab]);
 
   const isDragging = useRef(false);

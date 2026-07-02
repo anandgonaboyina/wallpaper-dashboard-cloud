@@ -53,6 +53,7 @@ export async function POST(request: Request) {
     const result = await db.collection('User').insertOne({
       username,
       email,
+      alias: "",
       password: hashedPassword,
       createdAt: new Date()
     });

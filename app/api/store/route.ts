@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import clientPromise from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
-import { calculateAndAwardBadges } from '@/lib/badgeCalculator';
+
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
@@ -481,8 +481,6 @@ export async function POST(request: Request) {
       { $set: { lastActiveAt: new Date() } }
     );
 
-    // Trigger automatic badge distribution asynchronously without blocking response
-    calculateAndAwardBadges().catch(console.error);
 
     return NextResponse.json({ success: true, lastModified: newLastModified });
   } catch (error) {

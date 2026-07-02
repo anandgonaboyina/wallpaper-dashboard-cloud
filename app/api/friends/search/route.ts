@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -32,13 +34,17 @@ export async function GET(request: Request) {
     const db = client.db();
 
     const users = await db.collection('User').find({
-      username: { $regex: query, $options: 'i' },
+      $or: [
+        { username: { $regex: query, $options: 'i' } },
+        { alias: { $regex: query, $options: 'i' } }
+      ],
       _id: { $ne: new ObjectId(user.userId) },
-    }).project({ _id: 1, username: 1, profilePicture: 1 }).limit(10).toArray();
+    }).project({ _id: 1, username: 1, profilePicture: 1, alias: 1 }).limit(10).toArray();
 
     const mappedUsers = users.map(u => ({ 
       id: u._id.toString(), 
       username: u.username,
+      alias: u.alias || '',
       profilePicture: u.profilePicture || null 
     }));
 
