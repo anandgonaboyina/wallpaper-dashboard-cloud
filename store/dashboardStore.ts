@@ -606,7 +606,7 @@ export const useDashboardStore = create<DashboardState>()(
       lockedWallpaper: null,
       history: {},
       tasks: [],
-      isHidden: true,
+      isHidden: false,
       _hasHydrated: false,
       theme: 'dark',
       setTheme: (theme) => set({ theme }),

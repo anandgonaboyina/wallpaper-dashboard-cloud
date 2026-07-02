@@ -54,7 +54,11 @@ export async function GET(request: Request) {
     let returnedData: any = null;
     // Backwards compatibility for old stringified format
     if (existing && existing.data && typeof existing.data === 'string') {
-      returnedData = JSON.parse(existing.data);
+      try {
+        returnedData = JSON.parse(existing.data);
+      } catch (e) {
+        returnedData = { state: {} };
+      }
       returnedData.state = returnedData.state || {};
       if (notesRecord && notesRecord.notes) {
         returnedData.state.notes = notesRecord.notes;
@@ -181,7 +185,11 @@ export async function POST(request: Request) {
     let existingCloudData: any = null;
     if (existing || existingNotes || existingSettings || existingTasks || existingRoadmaps || existingStats) {
       if (existing && existing.data && typeof existing.data === 'string') {
-        existingCloudData = JSON.parse(existing.data);
+        try {
+          existingCloudData = JSON.parse(existing.data);
+        } catch (e) {
+          existingCloudData = { state: {} };
+        }
         existingCloudData.state = existingCloudData.state || {};
         if (existingNotes && existingNotes.notes) {
           existingCloudData.state.notes = existingNotes.notes;

@@ -44,28 +44,14 @@ export async function GET(request: Request) {
       f.senderId === decoded.userId ? f.receiverId : f.senderId
     ));
 
-    // 3. Fetch all stores to get history
-    const stores = await db.collection('DashboardStorage').find({}, {
-      projection: { userId: 1, history: 1, data: 1 }
+    // 3. Fetch all stats to get history
+    const stats = await db.collection('Stats').find({}, {
+      projection: { userId: 1, history: 1 }
     }).toArray();
 
     const userHistories: Record<string, Record<string, number>> = {};
-    stores.forEach(store => {
-      let history = {};
-      if (store.history) {
-        history = store.history;
-      } else if (store.data && typeof store.data === 'string') {
-        try {
-          const parsed = JSON.parse(store.data);
-          if (parsed.history) history = parsed.history;
-          else if (parsed.state && parsed.state.history) history = parsed.state.history;
-        } catch (e) {}
-      } else if (store.data && store.data.history) {
-        history = store.data.history;
-      } else if (store.data && store.data.state && store.data.state.history) {
-        history = store.data.state.history;
-      }
-      userHistories[store.userId] = history;
+    stats.forEach(stat => {
+      userHistories[stat.userId] = stat.history || {};
     });
 
     const getLocalDateString = (d: Date) => {

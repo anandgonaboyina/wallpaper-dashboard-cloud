@@ -124,7 +124,9 @@ export default function Timer() {
              const actualRemaining = Math.max(0, Math.floor((timerEndAt - intendedPauseTime) / 1000));
              setTimerPausedLeft(actualRemaining);
              setTimerEndAt(null);
-             playAlarm();
+             if (now - intendedPauseTime < 120000) {
+               playAlarm();
+             }
              setShowContinuePrompt(true);
              updateInteraction();
              return;
@@ -137,7 +139,10 @@ export default function Timer() {
           setLocalTimeLeft(0);
           setTimerEndAt(null);
           setTimerPausedLeft(null);
-          playAlarm();
+          
+          if (now - timerEndAt < 120000) {
+            playAlarm();
+          }
 
           // Log to history
           if (timerInitialMins && timerInitialMins > 0) {

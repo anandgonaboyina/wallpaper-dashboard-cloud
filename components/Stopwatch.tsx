@@ -35,7 +35,9 @@ export default function Stopwatch() {
         setIsRunning(false);
         setElapsedSecs(cappedElapsed);
         setShowContinuePrompt(true);
-        useDashboardStore.getState().setIsAlarmPlaying(true);
+        if (now - (lastActive + 7200000) < 120000) {
+          useDashboardStore.getState().setIsAlarmPlaying(true);
+        }
         useDashboardStore.setState({ isStopwatchOpen: true });
         
         if (typeof window !== 'undefined') {
@@ -68,7 +70,9 @@ export default function Stopwatch() {
           
           if (timeSinceActive >= 7200) {
             setIsRunning(false);
-            useDashboardStore.getState().setIsAlarmPlaying(true);
+            if (now - (lastActive + 7200000) < 120000) {
+              useDashboardStore.getState().setIsAlarmPlaying(true);
+            }
             useDashboardStore.setState({ isStopwatchOpen: true });
             setShowContinuePrompt(true);
             updateInteraction();
