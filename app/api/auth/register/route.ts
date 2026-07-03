@@ -26,16 +26,16 @@ export async function POST(request: Request) {
 
     const existingUser = await db.collection('User').findOne({
       $or: [
-        { username },
-        { email }
+        { username: { $regex: new RegExp(`^${username}$`, 'i') } },
+        { email: { $regex: new RegExp(`^${email}$`, 'i') } }
       ]
     });
 
     if (existingUser) {
-      if (existingUser.username === username) {
-        return NextResponse.json({ error: 'Username already taken' }, { status: 400 });
+      if (existingUser.username.toLowerCase() === username.toLowerCase()) {
+        return NextResponse.json({ error: 'Username already taken, please try another' }, { status: 400 });
       } else {
-        return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+        return NextResponse.json({ error: 'Email already registered, please try logging in' }, { status: 400 });
       }
     }
 

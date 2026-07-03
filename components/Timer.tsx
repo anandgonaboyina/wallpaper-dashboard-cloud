@@ -609,7 +609,19 @@ export default function Timer() {
           )}
 
           {/* Hidden Audio Element */}
-          <audio ref={audioRef} src={alarmSound} loop preload="auto" />
+          <audio 
+            ref={audioRef} 
+            src={alarmSound} 
+            loop 
+            preload="auto" 
+            onPlay={(e) => {
+              // Prevent Lively Wallpaper / Chromium from auto-resuming media on focus
+              if (!useDashboardStore.getState().isAlarmPlaying) {
+                e.currentTarget.pause();
+                e.currentTarget.currentTime = 0;
+              }
+            }}
+          />
         </div>
       </div>
     </DraggableWidget>

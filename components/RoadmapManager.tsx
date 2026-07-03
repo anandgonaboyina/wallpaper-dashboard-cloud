@@ -193,13 +193,19 @@ const TreeNode = ({
           ${isRight ? 'md:left-[-4px] md:right-auto' : 'md:left-auto md:right-[-4px]'} 
         `} />
 
+        {/* Horizontal Connector Line (Desktop Only) */}
+        <div className={`hidden md:block absolute top-4 w-5 h-[1px] z-10
+          ${isRight ? 'left-0' : 'right-0'}
+          ${isLight ? 'bg-black' : 'bg-white/40'}
+        `} />
+
         {/* Node Line Segment */}
         {!(isFirst && isLast) && (
-          <div className={`absolute w-[1px] bg-black z-10 transform -translate-x-1/2 md:translate-x-0
-            left-4 md:left-auto
-            ${isRight ? 'md:left-[0px] md:right-auto' : 'md:right-[0px] md:left-auto'}
+          <div className={`absolute w-[1px] z-10 transform -translate-x-1/2
+            left-4
+            ${isRight ? 'md:left-0 md:right-auto md:-translate-x-1/2' : 'md:right-0 md:left-auto md:translate-x-1/2'}
             ${isFirst ? 'top-4 bottom-0' : isLast ? 'top-0 h-4' : 'top-0 bottom-0'}
-            ${isLight ? 'bg-whtie/80' : 'bg-white/40'}
+            ${isLight ? 'bg-black' : 'bg-white/40'}
           `} />
         )}
 

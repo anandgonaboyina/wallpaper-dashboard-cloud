@@ -1083,8 +1083,8 @@ export default function ConnectTab() {
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mb-1 md:mb-2 bg-black/40 p-1.5 md:p-1 rounded-lg md:rounded-xl w-full border border-white/10 items-center justify-between min-w-0">
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-fit overflow-x-auto no-scrollbar">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 md:gap-4 mb-1 md:mb-2 bg-black/40 p-1.5 md:p-1 rounded-lg md:rounded-xl w-full border border-white/10 items-center justify-between min-w-0">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full sm:w-fit overflow-x-auto sm:overflow-visible no-scrollbar">
               <div className="flex w-full sm:w-auto bg-black/40 border border-white/10 rounded overflow-hidden shrink-0">
                 <button
                   onClick={() => setLeaderboardFilter('today')}

@@ -701,7 +701,7 @@ export const useDashboardStore = create<DashboardState>()(
         }
         return { isTimerOpen: next, ...extra };
       }),
-      isCalendarOpen: true,
+      isCalendarOpen: false,
       isCalendarBusy: false,
       setIsCalendarBusy: (busy) => set({ isCalendarBusy: busy }),
       toggleCalendar: () => set((state) => {
@@ -1247,8 +1247,8 @@ export const useDashboardStore = create<DashboardState>()(
       showCountdowns: true,
       showVideoControls: true,
       showClock: true,
-      showTasks: false,
-      showCalendar: false,
+      showTasks: true,
+      showCalendar: true,
       showTodayWork: true,
       showStats: true,
       showPlans: true,
@@ -1401,7 +1401,7 @@ export const useDashboardStore = create<DashboardState>()(
           'isQuotePopupOpen', 'isTaskManagerOpen', 'isStatsOpen', 'timerTrigger',
           'isNotesOpen', 'isPlansOpen', 'isTimetableOpen', 'isHealthModalOpen', 'healthData',
           'isVideoMuted', 'isVideoPlaying', 'isSettingsOpen', 'isStopwatchOpen', '_hasHydrated',
-          'widgetZIndices'
+          'widgetZIndices', 'isAlarmPlaying'
         ].includes(key))
       ),
       merge: (persistedState: any, currentState: DashboardState) => {
@@ -1414,6 +1414,9 @@ export const useDashboardStore = create<DashboardState>()(
           persistedState.activeTaskId = null;
           persistedState.activeTaskTitle = null;
         }
+        
+        // Prevent alarm from persisting and triggering continuously on reload/focus
+        persistedState.isAlarmPlaying = false;
 
         // Conflict resolution: The most recently updated timer state always wins.
         // This prevents a polling tab from reviving a stopped timer from its own stale state.
