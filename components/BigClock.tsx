@@ -168,7 +168,7 @@ export default function BigClock() {
   const msLeft = eod.getTime() - time.getTime();
   const hrsLeft = Math.floor(msLeft / (1000 * 60 * 60));
   const minsLeft = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
-  const timeLeftText = hrsLeft > 0 ? `${hrsLeft}h left` : `${minsLeft}m left`;
+  const timeLeftText = `${hrsLeft}h ` + `${minsLeft}m left`;
 
   const clockVisible = showClock && !isMobile && (!isHidden || !hideConfig.clock);
   const focusPillVisible = showTodayWork && (!isHidden || !hideConfig.todayFocusPill);
@@ -203,91 +203,93 @@ export default function BigClock() {
           </div>
         </>
       )}
+      <div className='center pills fixed top-0 left-0 w-full flex justify-center  items-center'>
+        {/* Top Floating Pills (Global Focus + Global Timer) */}
+        {typeof document !== 'undefined' && createPortal(
+          <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center gap-3 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 pointer-events-none mt-2 md:mt-3">
+            <div
+              className="flex flex-row items-center justify-center gap-1.5 md:gap-2 px-2 max-w-full w-full md:w-auto"
+              onTouchStart={handlePillTouchStart}
+              onTouchMove={handlePillTouchMove}
+              onTouchEnd={handlePillTouchEnd}
+              onMouseDown={handlePillTouchStart}
+              onMouseMove={handlePillTouchMove}
+              onMouseUp={handlePillTouchEnd}
+              onMouseLeave={handlePillTouchEnd}
+            >
 
-      {/* Top Floating Pills (Global Focus + Global Timer) */}
-      {typeof document !== 'undefined' && createPortal(
-        <div className="fixed top-0 left-0 right-0 z-[99999] flex items-start justify-center transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] translate-y-0 pointer-events-none mt-2 md:mt-3">
-          <div
-            className="flex flex-row items-start justify-center gap-1.5 md:gap-2 px-2 max-w-full w-full md:w-auto"
-            onTouchStart={handlePillTouchStart}
-            onTouchMove={handlePillTouchMove}
-            onTouchEnd={handlePillTouchEnd}
-            onMouseDown={handlePillTouchStart}
-            onMouseMove={handlePillTouchMove}
-            onMouseUp={handlePillTouchEnd}
-            onMouseLeave={handlePillTouchEnd}
-          >
-
-            {/* 3 Dots for Mobile ONLY */}
-            {isMobile && hasAlerts && isDeadlinesCollapsed && (
-              <div
-                className={`fixed left-0 -top-1 flex md:hidden flex-row gap-1 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1 rounded-full border backdrop-blur-md shadow-lg shrink-0 ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsDeadlinesCollapsed(false);
-                }}
-                title="Show Deadline Alerts"
-              >
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" />
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '300ms' }} />
-              </div>
-            )}
-
-            {/* Focus Pill for BOTH Desktop & Mobile */}
-            {focusPillVisible && (
-              <div
-                onClick={(e) => {
-                  if (wasSwiped.current) {
-                    wasSwiped.current = false;
-                    return;
-                  }
-                  toggleHide();
-                }}
-                title="Toggle Hidden Mode (Ctrl+H)"
-                className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-[13px] px-4 py-1.5 shadow-[0_5px_20px_rgba(59,130,246,0.3)] rounded-full bg-black/80 backdrop-blur-xl text-white border border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95 hover:bg-black/90"
-              >
-                <div className="flex items-center justify-center bg-orange-500/20 w-5 h-5 md:w-6 md:h-6 rounded-full border-blue-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
-                  <Flame className="text-orange-400 w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" />
+              {/* 3 Dots for Mobile ONLY */}
+              {isMobile && hasAlerts && isDeadlinesCollapsed && (
+                <div
+                  className={`fixed left-0 -top-1 mr-10 md:mr-0 flex md:hidden flex-row gap-1 cursor-pointer pointer-events-auto hover:scale-105 active:scale-95 transition-transform p-1 rounded-full border backdrop-blur-md shadow-lg shrink-0 ${theme === 'light' ? 'bg-white/60 border-red-500/30 shadow-red-500/10' : 'bg-black/40 border-red-500/20'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDeadlinesCollapsed(false);
+                  }}
+                  title="Show Deadline Alerts"
+                >
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" />
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-red-900/50" style={{ animationDelay: '300ms' }} />
                 </div>
-                <div className="flex items-center whitespace-nowrap">
-                  <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
-                  <span className="text-white/30 mx-1.5 md:mx-2">|</span>
-                  <span className="text-white/80">{timeLeftText}</span>
-                </div>
-              </div>
-            )}
-
-            {/* ACTIVE TIMER/STOPWATCH PILL FOR BOTH DESKTOP & MOBILE */}
-            {timerPillVisible && (activeTimerSecs !== null || activeStopwatchSecs !== null) && (
-              <div
-                onClick={() => {
-                  if (wasSwiped.current) {
-                    wasSwiped.current = false;
-                    return;
-                  }
-                  if (activeTimerSecs !== null) {
-                    useDashboardStore.getState().toggleTimer();
-                  } else if (activeStopwatchSecs !== null) {
-                    useDashboardStore.getState().toggleStopwatch();
-                  }
-                }}
-                className={`relative flex items-center gap-1.5 text-[12px] md:text-sm font-bold tracking-widest bg-black/80 border border-blue-500/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0 hover:bg-black/90 ${activeTimerSecs !== null ? 'text-timer-pill' : 'text-stopwatch-pill'}`}
-              >
-                {activeTimerSecs !== null ? (
-                  <Timer className="w-3.5 h-3.5 md:w-4 md:h-4 icon-timer-pill animate-pulse" />
-                ) : (
-                  <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 icon-stopwatch-pill animate-pulse" />
+              )}
+              <div className={`flex gap-1 ${timerPillVisible && (activeTimerSecs !== null || activeStopwatchSecs !== null) ? "ml-5 md:ml-0" : "ml-0"}`}>
+                {/* Focus Pill for BOTH Desktop & Mobile */}
+                {focusPillVisible && (
+                  <div
+                    onClick={(e) => {
+                      if (wasSwiped.current) {
+                        wasSwiped.current = false;
+                        return;
+                      }
+                      toggleHide();
+                    }}
+                    title="Toggle Hidden Mode (Ctrl+H)"
+                    className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-[13px] px-4 py-1.5 shadow-[0_5px_20px_rgba(59,130,246,0.3)] rounded-full bg-black/80 backdrop-blur-xl text-white border border-white/10 cursor-pointer pointer-events-auto shrink-0 transition-transform active:scale-95 hover:bg-black/90"
+                  >
+                    <div className="flex items-center justify-center bg-orange-500/20 w-5 h-5 md:w-6 md:h-6 rounded-full border-blue-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]">
+                      <Flame className="text-orange-400 w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" />
+                    </div>
+                    <div className="flex items-center whitespace-nowrap">
+                      <span>Today: <span className="text-white/90 font-bold ml-1">{focusText}</span></span>
+                      <span className="text-white/30 mx-1.5 md:mx-2">|</span>
+                      <span className="text-white/80">{timeLeftText}</span>
+                    </div>
+                  </div>
                 )}
-                <span>
-                  {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
-                </span>
+
+                {/* ACTIVE TIMER/STOPWATCH PILL FOR BOTH DESKTOP & MOBILE */}
+                {timerPillVisible && (activeTimerSecs !== null || activeStopwatchSecs !== null) && (
+                  <div
+                    onClick={() => {
+                      if (wasSwiped.current) {
+                        wasSwiped.current = false;
+                        return;
+                      }
+                      if (activeTimerSecs !== null) {
+                        useDashboardStore.getState().toggleTimer();
+                      } else if (activeStopwatchSecs !== null) {
+                        useDashboardStore.getState().toggleStopwatch();
+                      }
+                    }}
+                    className={`relative flex items-center gap-1.5 text-[12px] md:text-sm font-bold tracking-widest bg-black/80 border border-blue-500/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_5px_20px_rgba(59,130,246,0.3)] cursor-pointer pointer-events-auto active:scale-95 transition-transform shrink-0 hover:bg-black/90 ${activeTimerSecs !== null ? 'text-timer-pill' : 'text-stopwatch-pill'}`}
+                  >
+                    {activeTimerSecs !== null ? (
+                      <Timer className="w-3.5 h-3.5 md:w-4 md:h-4 icon-timer-pill animate-pulse" />
+                    ) : (
+                      <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 icon-stopwatch-pill animate-pulse" />
+                    )}
+                    <span>
+                      {activeTimerSecs !== null ? formatPillTime(activeTimerSecs) : formatPillTime(activeStopwatchSecs!)}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
     </div>
   );
 }
