@@ -3,6 +3,7 @@
 import { useDashboardStore } from "@/store/dashboardStore";
 import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock, ArrowUp, ArrowDown, X, Sun, Moon } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import ConfirmationModal from './ConfirmationModal';
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const WEEKENDS = ["Sat", "Sun"];
@@ -81,6 +82,16 @@ export default function Timetable() {
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [globalEditingIndex, setGlobalEditingIndex] = useState<number | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}
+  });
 
   // Scroll logic
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -281,13 +292,19 @@ export default function Timetable() {
   };
 
   const handleDeleteTopRow = () => {
-    if (confirm("Delete the top row?")) {
-      const durationToRemove = generatedTimes[0]?.duration || 60;
-      const newStart = startTime + durationToRemove;
-      handleSetStartTime(newStart, true); // skip key renaming
-      deleteTimetableRow(isWeekendMode, 0);
-      setShowSettings(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Top Row',
+      message: 'Delete the top row?',
+      isDestructive: true,
+      onConfirm: () => {
+        const durationToRemove = generatedTimes[0]?.duration || 60;
+        const newStart = startTime + durationToRemove;
+        handleSetStartTime(newStart, true); // skip key renaming
+        deleteTimetableRow(isWeekendMode, 0);
+        setShowSettings(false);
+      }
+    });
   };
 
   return (
@@ -342,7 +359,18 @@ export default function Timetable() {
               <button onClick={handleDeleteTopRow} className={`px-2 py-1.5 text-[10px] flex items-center gap-1.5 transition-colors w-full text-left ${isDark ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`}>
                 <Trash size={12} /> Delete Top Row
               </button>
-              <button onClick={() => { if (confirm("Delete the bottom row?")) deleteTimetableRow(isWeekendMode, generatedTimes.length - 1); setShowSettings(false); }} className={`px-2 py-1.5 text-[10px] flex items-center gap-1.5 transition-colors w-full text-left ${isDark ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`}>
+              <button onClick={() => { 
+                setConfirmModal({
+                  isOpen: true,
+                  title: 'Delete Bottom Row',
+                  message: 'Delete the bottom row?',
+                  isDestructive: true,
+                  onConfirm: () => {
+                    deleteTimetableRow(isWeekendMode, generatedTimes.length - 1);
+                    setShowSettings(false);
+                  }
+                });
+              }} className={`px-2 py-1.5 text-[10px] flex items-center gap-1.5 transition-colors w-full text-left ${isDark ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`}>
                 <Trash size={12} /> Delete Bottom Row
               </button>
             </div>
@@ -584,6 +612,15 @@ export default function Timetable() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDestructive={confirmModal.isDestructive}
+      />
     </div>
   );
 }

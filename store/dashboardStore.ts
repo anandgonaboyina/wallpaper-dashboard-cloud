@@ -95,9 +95,9 @@ interface DashboardState {
   isClockOpen: boolean;
   toggleClock: () => void;
   isSettingsOpen: boolean;
-  settingsActiveTab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper';
+  settingsActiveTab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper' | 'quotes';
   toggleSettings: () => void;
-  setSettingsActiveTab: (tab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper') => void;
+  setSettingsActiveTab: (tab: 'preferences' | 'data' | 'about' | 'focus' | 'sound' | 'credits' | 'connect' | 'feedback' | 'update' | 'wallpaper' | 'quotes') => void;
   connectInitialTab?: 'profile' | 'friends' | 'broadcasts' | 'leaderboard';
   setConnectInitialTab: (tab?: 'profile' | 'friends' | 'broadcasts' | 'leaderboard') => void;
   timerTrigger: { mins: number; ts: number; taskId?: string; taskTitle?: string } | null;
@@ -143,6 +143,11 @@ interface DashboardState {
   isQuotePopupOpen: boolean;
   showQuotePopup: (quote: { text: string; author: string }) => void;
   hideQuotePopup: () => void;
+  customQuotes: { text: string; author: string }[];
+  setCustomQuotes: (quotes: { text: string; author: string }[]) => void;
+  useCustomQuotes: boolean;
+  setUseCustomQuotes: (useCustom: boolean) => void;
+
 
   // Notes State
   notes: Note[];
@@ -300,6 +305,8 @@ interface DashboardState {
   setFocusShortcutKey: (key: string) => void;
   panicWallpaperSwitch: boolean;
   setPanicWallpaperSwitch: (val: boolean) => void;
+  enableRightToolbarPeek: boolean;
+  setEnableRightToolbarPeek: (val: boolean) => void;
 
   // Custom Placement
   rightWidgetsOffset: number;
@@ -614,7 +621,11 @@ export const useDashboardStore = create<DashboardState>()(
 
       setLockedWallpaper: (filename) => set({ lockedWallpaper: filename }),
       setWallpaper: (url) => set({ wallpaper: url }),
-      cycleBackground: () => set((state) => ({ lockedWallpaper: null, bgIndex: state.bgIndex + 1 })),
+      cycleBackground: () => set((state) => {
+        const BUILT_IN = ["/wallpapers/naruto.webp", "/wallpapers/defaultWallpaper2.jpeg"];
+        const nextIndex = (state.bgIndex + 1) % BUILT_IN.length;
+        return { lockedWallpaper: null, bgIndex: nextIndex, wallpaper: BUILT_IN[nextIndex] };
+      }),
       setCurrentBgType: (type) => set({ currentBgType: type }),
       currentBgSrc: null,
       setCurrentBgSrc: (src) => set({ currentBgSrc: src }),
@@ -790,6 +801,10 @@ export const useDashboardStore = create<DashboardState>()(
       isQuotePopupOpen: false,
       showQuotePopup: (quote) => set({ currentQuote: quote, isQuotePopupOpen: true }),
       hideQuotePopup: () => set({ isQuotePopupOpen: false }),
+      customQuotes: [],
+      setCustomQuotes: (quotes) => set({ customQuotes: quotes }),
+      useCustomQuotes: false,
+      setUseCustomQuotes: (useCustom) => set({ useCustomQuotes: useCustom }),
 
       // Notes State
       notes: [{ id: 'default', title: 'Daily Journal', entries: {} }],
@@ -1305,6 +1320,8 @@ export const useDashboardStore = create<DashboardState>()(
       setFocusShortcutKey: (key) => set({ focusShortcutKey: key.toLowerCase() }),
       panicWallpaperSwitch: false,
       setPanicWallpaperSwitch: (val) => set({ panicWallpaperSwitch: val }),
+      enableRightToolbarPeek: true,
+      setEnableRightToolbarPeek: (val) => set({ enableRightToolbarPeek: val }),
 
       rightWidgetsOffset: 48, // Default corresponds to bottom-12 (48px)
       setRightWidgetsOffset: (offset) => set({ rightWidgetsOffset: Math.max(0, offset) }),

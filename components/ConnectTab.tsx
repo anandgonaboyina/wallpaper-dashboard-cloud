@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useDashboardStore, setAuthTransition } from '@/store/dashboardStore';
 import { Users, UserPlus, Rss, LogIn, UserCircle, Search, Trash, Lock, Unlock, Check, X, ShieldAlert, BarChart2, Map, Clock, Trophy, RefreshCw, ChevronDown, ChevronUp, ChevronLeft, Info, Eye, EyeOff } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function ConnectTab() {
   const { history, tasks, timetableGrid, connectInitialTab, setConnectInitialTab } = useDashboardStore();
@@ -60,6 +61,17 @@ export default function ConnectTab() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState('');
   const [expandedLeaderboardUserId, setExpandedLeaderboardUserId] = useState<string | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    requireText?: string;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('dashboard_sync_token');
@@ -329,26 +341,32 @@ export default function ConnectTab() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and ALL your data will be permanently deleted.')) return;
-
-    const token = localStorage.getItem('dashboard_sync_token');
-    if (!token) return;
-
-    try {
-      const res = await fetch('/api/auth/delete', {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        alert('Your account has been deleted.');
-        handleLogout();
-      } else {
-        alert('Failed to delete account.');
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Account',
+      message: 'Are you absolutely sure you want to delete your account? This action cannot be undone and ALL your data will be permanently deleted.',
+      requireText: 'DELETE',
+      isDestructive: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('dashboard_sync_token');
+        if (!token) return;
+        try {
+          const res = await fetch('/api/auth/delete', {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            alert('Your account has been deleted.');
+            handleLogout();
+          } else {
+            alert('Failed to delete account.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Network error while deleting account.');
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert('Network error while deleting account.');
-    }
+    });
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -400,28 +418,42 @@ export default function ConnectTab() {
     } catch (err) { }
   };
 
-  const removeFriend = async (friendshipId: string) => {
-    if (!confirm('Are you sure you want to remove this friend?')) return;
-    const token = localStorage.getItem('dashboard_sync_token');
-    try {
-      const res = await fetch(`/api/friends?id=${friendshipId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) fetchFriendsData();
-    } catch (err) { }
+  const removeFriend = async (friendshipId: string, friendName: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Remove Friend',
+      message: `Are you sure you want to remove "${friendName}" from your friends?`,
+      isDestructive: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('dashboard_sync_token');
+        try {
+          const res = await fetch(`/api/friends?id=${friendshipId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) fetchFriendsData();
+        } catch (err) { }
+      }
+    });
   };
 
-  const cancelFriendRequest = async (friendshipId: string) => {
-    if (!confirm('Are you sure you want to cancel this request?')) return;
-    const token = localStorage.getItem('dashboard_sync_token');
-    try {
-      const res = await fetch(`/api/friends?id=${friendshipId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) fetchFriendsData();
-    } catch (err) { }
+  const cancelFriendRequest = async (friendshipId: string, friendName: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Cancel Request',
+      message: `Are you sure you want to cancel the request to "${friendName}"?`,
+      isDestructive: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('dashboard_sync_token');
+        try {
+          const res = await fetch(`/api/friends?id=${friendshipId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) fetchFriendsData();
+        } catch (err) { }
+      }
+    });
   };
 
   const viewFriendStats = async (friendId: string, friendUsername: string) => {
@@ -645,9 +677,13 @@ export default function ConnectTab() {
               <div className="flex gap-4 w-full mt-2 pb-1">
                 <button
                   onClick={() => {
-                    if (window.confirm("Are you sure you want to sign out?")) {
-                      handleLogout();
-                    }
+                    setConfirmModal({
+                      isOpen: true,
+                      title: 'Sign Out',
+                      message: 'Are you sure you want to sign out?',
+                      isDestructive: true,
+                      onConfirm: handleLogout
+                    });
                   }}
                   className="flex-1 p-1.5 bg-white/5 hover:bg-white/10 text-white/80 rounded-xl transition-colors border border-white/10 font-semibold text-[10px] md:text-xs"
                 >
@@ -701,7 +737,13 @@ export default function ConnectTab() {
                 </button>
                 <button
                   onClick={() => {
-                    if (window.confirm('Remove profile picture?')) updateProfilePicture('');
+                    setConfirmModal({
+                      isOpen: true,
+                      title: 'Remove Avatar',
+                      message: 'Remove profile picture?',
+                      isDestructive: true,
+                      onConfirm: () => updateProfilePicture('')
+                    });
                   }}
                   disabled={profilePictureLoading || !profilePicture}
                   className="flex-1 sm:flex-none px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/20 rounded-lg transition-colors font-semibold text-[10px] md:text-xs disabled:opacity-50"
@@ -889,7 +931,7 @@ export default function ConnectTab() {
                         <BarChart2 size={12} /> Stats
                       </button>
                       <button
-                        onClick={() => removeFriend(f.id)}
+                        onClick={() => removeFriend(f.id, f.user?.username || 'Unknown')}
                         className="text-red-400/70 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:border-red-500/20 hover:bg-red-500/10 transition-colors shrink-0"
                       >
                         <X size={14} />
@@ -983,7 +1025,7 @@ export default function ConnectTab() {
                       <span className="truncate min-w-0 flex-1">{r.user.username}</span>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-white/40 text-[10px]">Pending</span>
-                        <button onClick={() => cancelFriendRequest(r.id)} className="w-6 h-6 flex items-center justify-center bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded border border-red-500/30 transition-colors" title="Cancel Request">
+                        <button onClick={() => cancelFriendRequest(r.id, r.user?.username || 'Unknown')} className="w-6 h-6 flex items-center justify-center bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded border border-red-500/30 transition-colors" title="Cancel Request">
                           <X size={12} />
                         </button>
                       </div>
@@ -1250,6 +1292,16 @@ export default function ConnectTab() {
         </div>
       )}
 
+      {/* Confirmation Modal overlay (highest z-index) */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        requireText={confirmModal.requireText}
+        isDestructive={confirmModal.isDestructive}
+      />
     </div>
   );
 }

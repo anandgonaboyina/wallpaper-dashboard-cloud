@@ -5,11 +5,14 @@ import { useWallpaperUrl } from "@/hooks/useWallpaperUrl";
 
 export default function VideoBackground() {
   const isPanicHidden = useDashboardStore((state) => state.isPanicHidden);
+  const isHidden = useDashboardStore((state) => state.isHidden);
+  const panicWallpaperSwitch = useDashboardStore((state) => state.panicWallpaperSwitch);
   const { 
     customDesktopWallpapers, 
     activeDesktopCustomIndex, 
     customMobileWallpapers, 
-    activeMobileCustomIndex 
+    activeMobileCustomIndex,
+    wallpaper
   } = useDashboardStore();
 
   const [isMobile, setIsMobile] = useState(false);
@@ -24,7 +27,7 @@ export default function VideoBackground() {
   }, []);
 
   // Determine active source
-  let bgSrc = isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp"; // Default fallback
+  let bgSrc = wallpaper || (isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp"); // Default fallback
   
   if (isMobile && activeMobileCustomIndex !== null && customMobileWallpapers[activeMobileCustomIndex]) {
     bgSrc = customMobileWallpapers[activeMobileCustomIndex];
@@ -34,11 +37,13 @@ export default function VideoBackground() {
 
   const { resolvedUrl, isVideo } = useWallpaperUrl(bgSrc);
 
+  const showFallbackImage = isVideo && panicWallpaperSwitch && (isHidden || isPanicHidden);
+
   if (!resolvedUrl) return null;
 
   return (
     <>
-      {isVideo ? (
+      {isVideo && !showFallbackImage ? (
         <video
           key={resolvedUrl}
           src={resolvedUrl}
@@ -50,8 +55,8 @@ export default function VideoBackground() {
         />
       ) : (
         <img
-          key={resolvedUrl}
-          src={resolvedUrl}
+          key={showFallbackImage ? (isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp") : resolvedUrl}
+          src={showFallbackImage ? (isMobile ? "/wallpapers/defaultWallpaper2.jpeg" : "/wallpapers/naruto.webp") : resolvedUrl}
           alt="Wallpaper"
           className="fixed inset-0 w-full h-full object-cover -z-20 transition-opacity duration-1000 opacity-100"
         />

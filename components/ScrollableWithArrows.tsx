@@ -65,6 +65,9 @@ export default function ScrollableWithArrows({ children, className = '', hideArr
         scrollRef.current.style.cursor = 'grabbing';
         scrollRef.current.style.userSelect = 'none';
       }
+      try {
+        currentTarget.setPointerCapture(e.pointerId);
+      } catch (err) {}
     }
   };
 
@@ -85,26 +88,20 @@ export default function ScrollableWithArrows({ children, className = '', hideArr
     }
   };
 
-  const handlePointerUpOrLeave = () => {
+  const handlePointerUpOrLeave = (e: React.PointerEvent) => {
     isDragging.current = false;
     if (scrollRef.current) {
       scrollRef.current.style.cursor = '';
       scrollRef.current.style.userSelect = '';
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch (err) {}
     }
   };
 
   return (
     <div className="relative flex-1 overflow-hidden flex flex-col group/scrollable h-full">
-      {!hideArrows && canScrollUp && (
-        <div className="absolute top-2 left-0 right-0 flex justify-center z-30 pointer-events-none opacity-0 group-hover/scrollable:opacity-100 transition-opacity duration-300">
-          <button
-            onClick={() => scrollBy('up')}
-            className="bg-blue-500/80 hover:bg-blue-400 text-white p-1 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] border border-blue-400/50 backdrop-blur-md transition-all pointer-events-auto animate-bounce"
-          >
-            <ChevronUp size={18} strokeWidth={3} />
-          </button>
-        </div>
-      )}
+
 
       <div
         ref={scrollRef}
@@ -124,16 +121,7 @@ export default function ScrollableWithArrows({ children, className = '', hideArr
         {children}
       </div>
 
-      {!hideArrows && canScrollDown && (
-        <div className={`absolute ${downArrowOffset} left-0 right-0 flex justify-center z-30 pointer-events-none opacity-0 group-hover/scrollable:opacity-100 transition-opacity duration-300`}>
-          <button
-            onClick={() => scrollBy('down')}
-            className="bg-blue-500/80 hover:bg-blue-400 text-white p-1 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] border border-blue-400/50 backdrop-blur-md transition-all pointer-events-auto animate-bounce"
-          >
-            <ChevronDown size={18} strokeWidth={3} />
-          </button>
-        </div>
-      )}
+
     </div>
   );
 }

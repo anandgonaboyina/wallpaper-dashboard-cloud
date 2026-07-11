@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock, Timer as TimerIcon, Calendar, EyeOff } from 'lucide-react';
+import { Map, ListTodo, BarChart2, StickyNote, Settings, Clock, Timer as TimerIcon, Calendar, EyeOff, Image as ImageIcon } from 'lucide-react';
 
 export default function RightToolbar() {
   const isHidden = useDashboardStore((state) => state.isHidden);
@@ -33,6 +33,8 @@ export default function RightToolbar() {
 
   const toggleSettings = useDashboardStore((state) => state.toggleSettings);
   const showSettingsBtn = useDashboardStore((state) => state.showSettingsBtn);
+  const enableRightToolbarPeek = useDashboardStore((state) => state.enableRightToolbarPeek);
+
   const baseHideConfig = useDashboardStore((state) => state.hideConfig);
   const mobileHideConfig = useDashboardStore((state) => state.mobileHideConfig);
   const [isMobile, setIsMobile] = useState(false);
@@ -114,12 +116,13 @@ export default function RightToolbar() {
 
   return (
     <div
-      className={`relative  flex flex-col gap-2 md:gap-3 pointer-events-auto transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isExpanded ? 'translate-x-0' : 'translate-x-[calc(100%-12px)] md:translate-x-[calc(100%-16px)] opacity-90 md:opacity-100 hover:opacity-100 cursor-pointer drop-shadow-md'
-        }`}
-      onClick={!isExpanded ? () => setIsExpanded(true) : undefined}
+      className={`relative flex flex-col gap-2 md:gap-3 pointer-events-auto transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+        !enableRightToolbarPeek || isExpanded ? 'translate-x-0' : 'translate-x-[calc(100%-12px)] md:translate-x-[calc(100%-16px)] opacity-90 md:opacity-100 hover:opacity-100 cursor-pointer drop-shadow-md'
+      }`}
+      onClick={enableRightToolbarPeek && !isExpanded ? () => setIsExpanded(true) : undefined}
     >
       {/* Invisible drag handle to the left of the toolbar for easier swipe-to-close on desktop */}
-      {isExpanded && (
+      {enableRightToolbarPeek && isExpanded && (
         <div
           className="absolute right-full top-0 w-24 md:w-48 h-full cursor-e-resize z-10"
           onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
@@ -132,7 +135,7 @@ export default function RightToolbar() {
       )}
 
       <div
-        className={`relative z-20 flex flex-col gap-2 md:gap-3 ${!isExpanded ? 'pointer-events-none' : ''}`}
+        className={`relative z-20 flex flex-col gap-2 md:gap-3 ${(!isExpanded && enableRightToolbarPeek) ? 'pointer-events-none' : ''}`}
         onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
         onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
         onTouchCancel={() => { startX.current = null; }}

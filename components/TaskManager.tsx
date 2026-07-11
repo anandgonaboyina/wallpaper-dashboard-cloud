@@ -6,6 +6,7 @@ import { Plus, Play, Trash2, CheckCircle, Circle, Clock, RotateCcw, Filter } fro
 import { fetchQuote } from '@/utils/quoteEngine';
 import DraggableWidget from './DraggableWidget';
 import ScrollableWithArrows from './ScrollableWithArrows';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function TaskManager() {
     const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -13,6 +14,16 @@ export default function TaskManager() {
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingDurationId, setEditingDurationId] = useState<string | null>(null);
     const [filter, setFilter] = useState<'pending' | 'completed' | 'all'>('pending');
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: React.ReactNode;
+        isDestructive?: boolean;
+        onConfirm: () => void;
+    }>({
+        isOpen: false, title: '', message: '', onConfirm: () => {}
+    });
 
     const { tasks, setTasks, addTask, toggleTask, deleteTask, triggerTimer, isTaskManagerOpen, showQuotePopup, editTaskDuration, updateTaskTitle } = useDashboardStore();
 
@@ -30,27 +41,39 @@ export default function TaskManager() {
     };
 
     const handleRestartTask = (id: string) => {
-        if (window.confirm('Are you sure you want to restart this task?')) {
-            setTasks(tasks.map(t => {
-                if (t.id === id) {
-                    const totalDuration = t.duration + (t.timeSpent || 0);
-                    return { ...t, completed: false, duration: totalDuration > 0 ? totalDuration : 25, timeSpent: 0 };
-                }
-                return t;
-            }));
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Restart Task',
+            message: 'Are you sure you want to restart this task?',
+            isDestructive: false,
+            onConfirm: () => {
+                setTasks(tasks.map(t => {
+                    if (t.id === id) {
+                        const totalDuration = t.duration + (t.timeSpent || 0);
+                        return { ...t, completed: false, duration: totalDuration > 0 ? totalDuration : 25, timeSpent: 0 };
+                    }
+                    return t;
+                }));
+            }
+        });
     };
 
     const handleRestartAllCompleted = () => {
-        if (window.confirm('Are you sure you want to restart ALL completed tasks?')) {
-            setTasks(tasks.map(t => {
-                if (t.completed) {
-                    const totalDuration = t.duration + (t.timeSpent || 0);
-                    return { ...t, completed: false, duration: totalDuration > 0 ? totalDuration : 25, timeSpent: 0 };
-                }
-                return t;
-            }));
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Restart All Completed',
+            message: 'Are you sure you want to restart ALL completed tasks?',
+            isDestructive: false,
+            onConfirm: () => {
+                setTasks(tasks.map(t => {
+                    if (t.completed) {
+                        const totalDuration = t.duration + (t.timeSpent || 0);
+                        return { ...t, completed: false, duration: totalDuration > 0 ? totalDuration : 25, timeSpent: 0 };
+                    }
+                    return t;
+                }));
+            }
+        });
     };
 
     const handleAddTask = (e: React.FormEvent) => {
@@ -273,9 +296,13 @@ export default function TaskManager() {
                                         )}
                                         <button
                                             onClick={() => {
-                                                if (window.confirm('Are you sure you want to delete this task?')) {
-                                                    deleteTask(task.id);
-                                                }
+                                                setConfirmModal({
+                                                    isOpen: true,
+                                                    title: 'Delete Task',
+                                                    message: `Are you sure you want to delete the task "${task.title}"?`,
+                                                    isDestructive: true,
+                                                    onConfirm: () => deleteTask(task.id)
+                                                });
                                             }}
                                             className="p-1 text-white/30 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-all active:scale-95 border border-transparent hover:border-rose-500/20"
                                         >
@@ -309,6 +336,15 @@ export default function TaskManager() {
                     <Plus className="w-3.5 h-3.5 " />
                 </button>
             </form>
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                isDestructive={confirmModal.isDestructive}
+            />
         </div>
     );
 }

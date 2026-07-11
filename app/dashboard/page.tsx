@@ -26,7 +26,7 @@ import VideoBackground from "@/components/VideoBackground";
 import LoadingScreen from "@/components/LoadingScreen";
 
 import { useEffect, useState, useRef } from "react";
-import { ChevronDown, ChevronUp, CalendarDays, Settings, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
+import { ChevronDown, ChevronUp, CalendarDays, Settings, ChevronLeft, ChevronRight, EyeOff, Image as ImageIcon } from "lucide-react";
 import { useDashboardStore, hasUnsavedChanges } from "@/store/dashboardStore";
 import { fetchQuote } from "@/utils/quoteEngine";
 
@@ -54,6 +54,15 @@ export default function Dashboard() {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const calendarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showBgSwitcher = useDashboardStore((state) => state.showBgSwitcher);
+  const customDesktopWallpapers = useDashboardStore((state) => state.customDesktopWallpapers);
+  const activeDesktopCustomIndex = useDashboardStore((state) => state.activeDesktopCustomIndex);
+  const setActiveDesktopCustomIndex = useDashboardStore((state) => state.setActiveDesktopCustomIndex);
+  const customMobileWallpapers = useDashboardStore((state) => state.customMobileWallpapers);
+  const activeMobileCustomIndex = useDashboardStore((state) => state.activeMobileCustomIndex);
+  const setActiveMobileCustomIndex = useDashboardStore((state) => state.setActiveMobileCustomIndex);
+
 
   const isMobileCountdownsVisible = useDashboardStore((state) => state.isMobileCountdownsVisible);
   const isTimetableOpen = useDashboardStore((state) => state.isTimetableOpen);
@@ -92,6 +101,7 @@ export default function Dashboard() {
   const enablePanicButton = useDashboardStore((state) => state.enablePanicButton);
   const panicButtonMode = useDashboardStore((state) => state.panicButtonMode);
   const isAlarmPlaying = useDashboardStore((state) => state.isAlarmPlaying);
+  const cycleBackground = useDashboardStore((state) => state.cycleBackground);
 
   const handlePanic = () => {
     if (isHidden) {
@@ -148,6 +158,25 @@ export default function Dashboard() {
       }
     }, 8000);
   };
+
+  const cycleWallpaper = () => {
+    if (isMobile) {
+      if (!customMobileWallpapers || customMobileWallpapers.length === 0) {
+        cycleBackground();
+        return;
+      }
+      const nextIndex = activeMobileCustomIndex === null ? 0 : (activeMobileCustomIndex + 1) % customMobileWallpapers.length;
+      setActiveMobileCustomIndex(nextIndex);
+    } else {
+      if (!customDesktopWallpapers || customDesktopWallpapers.length === 0) {
+        cycleBackground();
+        return;
+      }
+      const nextIndex = activeDesktopCustomIndex === null ? 0 : (activeDesktopCustomIndex + 1) % customDesktopWallpapers.length;
+      setActiveDesktopCustomIndex(nextIndex);
+    }
+  };
+
 
   useEffect(() => {
     if (!_hasHydrated) return;
@@ -207,6 +236,18 @@ export default function Dashboard() {
       <VideoBackground />
 
       {(!isHidden || !hideConfig.deadlineAlerts) && showDeadlineAlerts && <DeadlineAlerts />}
+
+      {/* Background Switcher */}
+      {!isPanicHidden && (!isHidden || !hideConfig.bgSwitcher) && showBgSwitcher && (
+        <button
+          onClick={cycleWallpaper}
+          className="fixed top-10 left-3 z-[90000] p-1.5 sm:p-2 rounded-lg sm:rounded-xl border border-white/20 shadow-xl transition-all glass-btn hidden md:block"
+          title="Next Wallpaper"
+        >
+          <ImageIcon className="w-1 h-1 sm:w-4 sm:h-4" />
+        </button>
+      )}
+
       {!isPanicHidden && (
         <>
           {/* Quote Popup */}

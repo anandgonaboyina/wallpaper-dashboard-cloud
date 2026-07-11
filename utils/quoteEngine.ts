@@ -3,9 +3,22 @@ export interface Quote {
   author: string;
 }
 
+import { useDashboardStore } from '@/store/dashboardStore';
+
 let recentIndices: number[] = [];
 
 export async function fetchQuote(): Promise<Quote> {
+  const { useCustomQuotes, customQuotes } = useDashboardStore.getState();
+  
+  if (useCustomQuotes && customQuotes && customQuotes.length > 0) {
+    const randomIndex = Math.floor(Math.random() * customQuotes.length);
+    const q = customQuotes[randomIndex];
+    return {
+      text: q.text || 'Keep pushing forward.',
+      author: q.author || 'Unknown'
+    };
+  }
+
   // Always attempt to fetch fresh quotes if online (this is only called every ~30 mins)
   if (typeof navigator !== 'undefined' && navigator.onLine) {
     try {

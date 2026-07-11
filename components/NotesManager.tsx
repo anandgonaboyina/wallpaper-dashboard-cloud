@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { Plus, X, StickyNote, Trash2, Undo, Redo, Bold, Italic, Underline, List, Download, ChevronLeft } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
+import ConfirmationModal from './ConfirmationModal';
 
 function EditorBlock({ date, initialHtml, onChange }: { date: string; initialHtml: string; onChange: (html: string) => void }) {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -88,6 +89,16 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
 
   // Controls mobile drill-down view
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}
+  });
 
   useEffect(() => {
     const checkFormat = () => {
@@ -215,9 +226,13 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm(`Are you sure you want to delete "${note.title || 'Untitled Note'}"?`)) {
-                          deleteNote(note.id);
-                        }
+                        setConfirmModal({
+                          isOpen: true,
+                          title: 'Delete Note',
+                          message: `Are you sure you want to delete "${note.title || 'Untitled Note'}"?`,
+                          isDestructive: true,
+                          onConfirm: () => deleteNote(note.id)
+                        });
                       }}
                       className={`p-1 md:p-1.5 rounded-md md:rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-all text-white/40 group-hover:text-white/80 ${notes.length === 1 ? 'hidden' : ''}`}
                       title="Delete Note"
@@ -308,6 +323,15 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
         </div>
 
       </div>
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDestructive={confirmModal.isDestructive}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { Play, Pause, Square, History, Trash2, ChevronLeft, Check } from 'lucide-react';
 import DraggableWidget from './DraggableWidget';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function Stopwatch() {
   const { isStopwatchOpen, addStopwatchSession, stopwatchSessions, deleteStopwatchSession, clearStopwatchSessions, stopwatchStartTime, setStopwatchStartTime } = useDashboardStore();
@@ -13,6 +14,16 @@ export default function Stopwatch() {
   const [viewingHistory, setViewingHistory] = useState(false);
   const [addToStats, setAddToStats] = useState(true);
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}
+  });
 
   const updateInteraction = () => {
     if (typeof window !== 'undefined') {
@@ -170,7 +181,16 @@ export default function Stopwatch() {
                 </div>
                 {stopwatchSessions && stopwatchSessions.length > 0 && (
                   <button 
-                    onClick={(e) => { e.stopPropagation(); if (confirm('Clear all stopwatch history?')) clearStopwatchSessions(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Clear History',
+                        message: 'Clear all stopwatch history?',
+                        isDestructive: true,
+                        onConfirm: clearStopwatchSessions
+                      });
+                    }}
                     className="p-1.5 bg-white/10 border border-white/20 text-white/70 hover:text-red-400 hover:bg-red-500/20 hover:border-red-500/30 rounded-lg transition-all shadow-sm"
                     title="Clear All History"
                   >
@@ -316,6 +336,15 @@ export default function Stopwatch() {
           )}
         </div>
       </div>
+      
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDestructive={confirmModal.isDestructive}
+      />
     </DraggableWidget>
   );
 }

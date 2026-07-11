@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { X, Upload, BookOpen, Trash2, Image as ImageIcon, Settings as SettingsIcon, Sliders, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, ChevronLeft, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug, Info } from 'lucide-react';
+import { X, Upload, BookOpen, Trash2, Image as ImageIcon, Settings as SettingsIcon, Sliders, MonitorPlay, Clock, Users, Plus, Eye, EyeOff, Download, UploadCloud, Activity, MessageSquare, Timer as TimerIcon, Hourglass, Film, User, BadgeCheck, Send, Briefcase, Calendar, CheckSquare, Flame, ChevronUp, ChevronDown, ChevronLeft, Database, Bell, RefreshCw, AlertTriangle, CheckCircle, BarChart2, Map, StickyNote, CalendarDays, Layout, Globe, Star, Bug, Info, PanelRightClose } from 'lucide-react';
 import ConnectTab from './ConnectTab';
 import UserManualModal from './UserManualModal';
 import ScrollableWithArrows from './ScrollableWithArrows';
+import ConfirmationModal from './ConfirmationModal';
 
 const DEFAULT_WALLPAPERS = [
   'itachi-uchiha.png', 'kakashi.mp4', 'kakashi2.mp4', 'kakashi3.png',
@@ -67,12 +68,32 @@ const CustomWallpaperPreview = ({ url, isActive, onClick, onDelete, label, aspec
 };
 
 export default function SettingsModal() {
-  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, resetTimetable, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex, theme, setTheme } = useDashboardStore();
+  const { settingsActiveTab, setSettingsActiveTab, isSettingsOpen, toggleSettings, is24HourClock, toggle24HourClock, currentBgSrc, hiddenWallpapers, toggleWallpaperVisibility, showHealth, showQuote, showTimer, showCountdowns, showVideoControls, showClock, showTasks, showCalendar, showTodayWork, showStats, showPlans, showNotes, showTimetable, showDock, showDeadlineAlerts, showBgSwitcher, showSettingsBtn, showStopwatch, toggleVisibility, isSlideshowEnabled, setIsSlideshowEnabled, slideshowIntervalMins, setSlideshowIntervalMins, lockedWidgets, toggleWidgetLock, resetAllOffsets, clearOldData, clearAllData, lockedWallpaper, setLockedWallpaper, deadlineAlertDays, setDeadlineAlertDays, hideConfig, setHideConfig, setHideAll, mobileHideConfig, setMobileHideConfig, setMobileHideAll, rightWidgetsOffset, setRightWidgetsOffset, alarmSound, setAlarmSound, alarmDurationSecs, setAlarmDurationSecs, alarmVolume, setAlarmVolume, enableAlarmSound, setEnableAlarmSound, enableAlarmVibration, setEnableAlarmVibration, toggleHide, panicShortcutKey, setPanicShortcutKey, focusShortcutKey, setFocusShortcutKey, togglePanicHide, panicWallpaperSwitch, setPanicWallpaperSwitch, timetableGrid, resetTimetable, panicButtonMode, setPanicButtonMode, customDesktopWallpapers, setCustomDesktopWallpapers, activeDesktopCustomIndex, setActiveDesktopCustomIndex, customMobileWallpapers, setCustomMobileWallpapers, activeMobileCustomIndex, setActiveMobileCustomIndex, theme, setTheme, customQuotes, setCustomQuotes, useCustomQuotes, setUseCustomQuotes, enableRightToolbarPeek, setEnableRightToolbarPeek } = useDashboardStore();
 
   const [focusPlatform, setFocusPlatform] = useState<'desktop' | 'mobile'>('desktop');
 
   // Mobile specific drill-down state
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    requireText?: string;
+    isDestructive?: boolean;
+    isPrompt?: boolean;
+    promptPlaceholder?: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: (val?: string) => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   const [isUserManualOpen, setIsUserManualOpen] = useState(false);
 
   const [infoModalKey, setInfoModalKey] = useState<string | null>(null);
@@ -272,6 +293,43 @@ export default function SettingsModal() {
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const [mySubmissions, setMySubmissions] = useState<any[]>([]);
 
+  const [newQuoteText, setNewQuoteText] = useState('');
+  const [newQuoteAuthor, setNewQuoteAuthor] = useState('');
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false);
+  const [bulkQuotesJson, setBulkQuotesJson] = useState('');
+
+  const handleAddQuote = () => {
+    if (!newQuoteText.trim()) return;
+    const author = newQuoteAuthor.trim() || 'Unknown';
+    if (customQuotes.length >= 50) return alert('Maximum 50 custom quotes allowed.');
+    setCustomQuotes([...customQuotes, { text: newQuoteText.trim(), author }]);
+    setNewQuoteText('');
+    setNewQuoteAuthor('');
+  };
+
+  const handleBulkAddQuotes = () => {
+    try {
+      const parsed = JSON.parse(bulkQuotesJson);
+      if (!Array.isArray(parsed)) throw new Error('Must be an array of objects.');
+      const validQuotes = parsed.filter(q => q.text && typeof q.text === 'string').map(q => ({
+        text: q.text.trim(),
+        author: (q.author && typeof q.author === 'string' ? q.author.trim() : 'Unknown')
+      }));
+      if (validQuotes.length === 0) return alert('No valid quotes found in JSON.');
+      const newQuotes = [...customQuotes, ...validQuotes].slice(0, 50);
+      setCustomQuotes(newQuotes);
+      setShowBulkAddModal(false);
+      setBulkQuotesJson('');
+      alert(`Successfully added ${validQuotes.length} quotes! (Max 50)`);
+    } catch (err) {
+      alert('Invalid JSON format. Please provide an array of objects like: [{"text": "Quote", "author": "Author"}]');
+    }
+  };
+
+  const handleDeleteQuote = (index: number) => {
+    setCustomQuotes(customQuotes.filter((_, i) => i !== index));
+  };
+
   const fetchMySubmissions = async () => {
     try {
       const token = localStorage.getItem('dashboard_token') || localStorage.getItem('dashboard_sync_token');
@@ -425,15 +483,15 @@ export default function SettingsModal() {
         alert('You must be logged in to export data. Please login via the Connect tab.');
         return;
       }
-      
+
       const res = await fetch(`/api/export?token=${token}`);
       if (!res.ok) throw new Error('Export failed');
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      
+
       // Get filename from header if possible
       const contentDisposition = res.headers.get('Content-Disposition');
       let filename = 'dashboard-backup.json';
@@ -441,7 +499,7 @@ export default function SettingsModal() {
         filename = contentDisposition.split('filename="')[1].split('"')[0];
       }
       a.download = filename;
-      
+
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -481,41 +539,56 @@ export default function SettingsModal() {
         delete parsed.state.timerLastSavedChunks;
       }
 
-      const isMerge = confirm('Do you want to MERGE this backup with your current data?\n\nClick OK to MERGE (Combine old and new data without losing existing settings).\nClick Cancel to OVERWRITE entirely (Wipe existing data and replace it with the backup).');
-
-      let finalData = parsed;
-
-      if (isMerge) {
-        const currentState = useDashboardStore.getState();
-        finalData = {
-          version: parsed.version || 2,
-          state: {
-            ...currentState,
-            ...parsed.state,
-            tasks: [...(currentState.tasks || []), ...(parsed.state.tasks || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
-            countdowns: [...(currentState.countdowns || []), ...(parsed.state.countdowns || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
-            deadlines: [...(currentState.deadlines || []), ...(parsed.state.deadlines || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
-            notes: [...(currentState.notes || []), ...(parsed.state.notes || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
-            roadmaps: [...(currentState.roadmaps || []), ...(parsed.state.roadmaps || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+      const processImportData = async (isMerge: boolean) => {
+        try {
+          let finalData = parsed;
+          if (isMerge) {
+            const currentState = useDashboardStore.getState();
+            finalData = {
+              version: parsed.version || 2,
+              state: {
+                ...currentState,
+                ...parsed.state,
+                tasks: [...(currentState.tasks || []), ...(parsed.state.tasks || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+                countdowns: [...(currentState.countdowns || []), ...(parsed.state.countdowns || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+                deadlines: [...(currentState.deadlines || []), ...(parsed.state.deadlines || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+                notes: [...(currentState.notes || []), ...(parsed.state.notes || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+                roadmaps: [...(currentState.roadmaps || []), ...(parsed.state.roadmaps || [])].filter((t, i, a) => a.findIndex(x => x.id === t.id) === i),
+              }
+            };
           }
-        };
-      }
 
-      const res = await fetch('/api/store', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ data: finalData })
+          const res = await fetch('/api/store', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ data: finalData })
+          });
+
+          if (res.ok) {
+            alert('Import successful! Reloading...');
+            window.location.reload();
+          } else {
+            alert('Import failed. Server rejected the data.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Invalid JSON file format.');
+        }
+      };
+
+      setConfirmModal({
+        isOpen: true,
+        title: 'Restore Backup',
+        message: 'Do you want to MERGE this backup with your current data?\n\n• Merge: Combine old and new data without losing existing settings.\n• Overwrite: Wipe existing data and replace it entirely with the backup.',
+        confirmText: 'Merge',
+        cancelText: 'Overwrite',
+        onConfirm: () => processImportData(true),
+        onCancel: () => processImportData(false),
       });
 
-      if (res.ok) {
-        alert('Import successful! Reloading...');
-        window.location.reload();
-      } else {
-        alert('Import failed. Server rejected the data.');
-      }
     } catch (err) {
       console.error(err);
       alert('Invalid JSON file format.');
@@ -580,6 +653,19 @@ export default function SettingsModal() {
             </h2>
           </div>
           <div className="flex items-center gap-1 md:gap-2">
+            <div className="flex items-center gap-1.5 md:gap-2 mr-1 md:mr-2 border-r border-white/10 pr-2 md:pr-3">
+              <span className="hidden sm:inline-block text-[9px] text-white/50 leading-tight text-right max-w-[100px]">
+                Apply changes
+              </span>
+              <button
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-1 md:gap-1.5 p-1 md:px-2 md:py-1 hover:bg-blue-500/20 hover:border-blue-500/50 rounded-lg transition-all border border-white/10 bg-black/40 group"
+                title="Refresh the app to apply changes or fix wallpaper bugs"
+              >
+                <RefreshCw className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400 group-hover:rotate-180 transition-transform duration-500" />
+                <span className="text-[9px] md:text-[10px] font-medium text-white/80 pr-0.5">Refresh App</span>
+              </button>
+            </div>
             {isMobileDetailView && ['preferences', 'sound', 'focus', 'wallpaper', 'data', 'feedback'].includes(settingsActiveTab) && (
               <button
                 onClick={() => setInfoModalKey(settingsActiveTab === 'wallpaper' ? 'wallpapers' : settingsActiveTab === 'focus' ? 'panic' : settingsActiveTab === 'data' ? 'backup' : settingsActiveTab)}
@@ -603,16 +689,7 @@ export default function SettingsModal() {
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full">
           {/* Sidebar Tabs - Narrowed to w-48 on desktop */}
           <div className={`${isMobileDetailView ? 'hidden md:flex' : 'flex h-full'} flex-col w-full md:w-48 bg-black/20 border-r-0 md:border-r border-white/10 relative group shrink-0`}>
-            {canSidebarScrollUp && (
-              <div className="hidden md:flex absolute top-2 left-0 right-0 justify-center z-30 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={() => scrollBy(sidebarScrollRef, 'up')}
-                  className="bg-blue-500/80 hover:bg-blue-400 text-white p-1 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)] border border-blue-400/50 backdrop-blur-md transition-all pointer-events-auto animate-bounce"
-                >
-                  <ChevronUp size={16} strokeWidth={3} />
-                </button>
-              </div>
-            )}
+
 
             <div
               ref={sidebarScrollRef}
@@ -636,6 +713,12 @@ export default function SettingsModal() {
                 className={`flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs md:text-xs font-medium ${settingsActiveTab === 'wallpaper' && !isMobileDetailView ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-white/60 hover:bg-white/5 hover:text-white border border-transparent bg-black/40 md:bg-transparent'}`}
               >
                 <ImageIcon className="w-4 h-4" /> Wallpapers
+              </button>
+              <button
+                onClick={() => handleTabClick('quotes')}
+                className={`flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs md:text-xs font-medium ${settingsActiveTab === 'quotes' && !isMobileDetailView ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30' : 'text-white/60 hover:bg-white/5 hover:text-white border border-transparent bg-black/40 md:bg-transparent'}`}
+              >
+                <MessageSquare className="w-4 h-4" /> Quotes Settings
               </button>
               <button
                 onClick={() => handleTabClick('sound')}
@@ -698,30 +781,12 @@ export default function SettingsModal() {
 
             </div>
 
-            {canSidebarScrollDown && (
-              <div className="hidden md:flex absolute bottom-2 left-0 right-0 justify-center z-30 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={() => scrollBy(sidebarScrollRef, 'down')}
-                  className="bg-blue-500/80 hover:bg-blue-400 text-white p-1 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)] border border-blue-400/50 backdrop-blur-md transition-all pointer-events-auto animate-bounce"
-                >
-                  <ChevronDown size={16} strokeWidth={3} />
-                </button>
-              </div>
-            )}
+
           </div>
 
           {/* Content Area */}
           <div className={`relative flex-1 overflow-hidden flex-col group/content ${isMobileDetailView ? 'flex' : 'hidden md:flex'}`}>
-            {canContentScrollUp && (
-              <div className="absolute top-2 left-0 right-0 flex justify-center z-30 pointer-events-none opacity-0 group-hover/content:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={() => scrollBy(settingsScrollRef, 'up')}
-                  className="bg-blue-500/80 hover:bg-blue-400 text-white p-1 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] border border-blue-400/50 backdrop-blur-md transition-all pointer-events-auto animate-bounce"
-                >
-                  <ChevronUp className="w-4 h-4" strokeWidth={3} />
-                </button>
-              </div>
-            )}
+
 
             <div
               ref={settingsScrollRef}
@@ -793,6 +858,25 @@ export default function SettingsModal() {
                         className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors shrink-0 ${is24HourClock ? 'bg-blue-500' : 'bg-white/20'}`}
                       >
                         <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${is24HourClock ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+
+                    {/* Right Toolbar Peek Toggle */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 md:p-2.5 rounded-lg md:rounded-xl bg-black/20 border border-white/5 gap-1.5 sm:gap-3">
+                      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                        <div className="p-1 md:p-1.5 bg-blue-500/10 rounded-md shrink-0">
+                          <PanelRightClose className="text-blue-400 w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 pr-2">
+                          <h4 className="font-medium text-xs md:text-sm whitespace-nowrap">Right Toolbar Auto-Hide</h4>
+                          <p className="text-[9px] md:text-[10px] text-white/50 leading-tight">Swipe out of bounds to peek</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setEnableRightToolbarPeek(!enableRightToolbarPeek)}
+                        className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors shrink-0 ${enableRightToolbarPeek ? 'bg-blue-500' : 'bg-white/20'}`}
+                      >
+                        <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${enableRightToolbarPeek ? 'translate-x-4' : 'translate-x-0.5'}`} />
                       </button>
                     </div>
 
@@ -1026,6 +1110,104 @@ export default function SettingsModal() {
                 </div>
               )}
 
+              {settingsActiveTab === 'quotes' && (
+                <div className="flex flex-col gap-3 md:gap-4 min-h-[60vh]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm md:text-base font-semibold">Quotes Settings</h3>
+                      <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Manage your custom motivational quotes.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl bg-black/20 border border-white/5">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="p-1 md:p-1.5 bg-white/5 rounded-md">
+                        <MessageSquare className="text-pink-400 w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-xs md:text-sm text-white/90">Use Custom Quotes</span>
+                        <span className="text-[9px] md:text-[10px] text-white/50">Show custom list instead of defaults</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setUseCustomQuotes(!useCustomQuotes)}
+                      className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors shrink-0 ${useCustomQuotes ? 'bg-pink-500' : 'bg-white/20'}`}
+                    >
+                      <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${useCustomQuotes ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {useCustomQuotes && (
+                    <div className="flex flex-col gap-3">
+                      <div className="bg-black/30 border border-white/10 rounded-lg p-2.5 md:p-3 flex flex-col gap-2">
+                        <h4 className="text-[10px] md:text-xs font-semibold text-white/80">Add New Quote</h4>
+                        <input
+                          type="text"
+                          placeholder="Quote text..."
+                          value={newQuoteText}
+                          onChange={(e) => setNewQuoteText(e.target.value)}
+                          className="w-full bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] md:text-xs outline-none focus:border-pink-500/50 placeholder:text-white/40"
+                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Author (optional)"
+                            value={newQuoteAuthor}
+                            onChange={(e) => setNewQuoteAuthor(e.target.value)}
+                            className="flex-1 bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] md:text-xs outline-none focus:border-pink-500/50 placeholder:text-white/40"
+                          />
+                          <button onClick={handleAddQuote} className="bg-pink-500/80 hover:bg-pink-500 text-white px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors">Add</button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-[10px] md:text-xs font-medium text-white/60">Your Quotes ({customQuotes.length}/50)</span>
+                        <button onClick={() => setShowBulkAddModal(true)} className="text-[10px] md:text-xs text-pink-400 hover:text-pink-300 font-medium">Bulk Add JSON</button>
+                      </div>
+
+                      <div className="flex flex-col gap-2 h-[30vh]">
+                        <ScrollableWithArrows>
+                          <div className="flex flex-col gap-2">
+                            {customQuotes.length === 0 ? (
+                              <div className="text-center py-4 text-[10px] md:text-xs text-white/40 italic bg-black/20 rounded-lg">No custom quotes added.</div>
+                            ) : (
+                              customQuotes.map((q, idx) => (
+                                <div key={idx} className="flex justify-between items-start p-2 bg-white/5 border border-white/10 rounded-lg gap-2">
+                                  <div className="flex flex-col min-w-0 pointer-events-none">
+                                    <span className="text-[10px] md:text-[11px] text-white/90 break-words leading-snug">"{q.text}"</span>
+                                    <span className="text-[8px] md:text-[9px] text-pink-300 mt-0.5">- {q.author}</span>
+                                  </div>
+                                  <button onClick={() => handleDeleteQuote(idx)} className="p-1 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors shrink-0">
+                                    <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </ScrollableWithArrows>
+                      </div>
+                    </div>
+                  )}
+
+                  {showBulkAddModal && (
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col p-4 md:rounded-r-3xl">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-sm font-bold">Bulk Add Quotes (JSON)</h4>
+                        <button onClick={() => setShowBulkAddModal(false)} className="p-1 text-white/60 hover:text-white bg-white/10 rounded-full"><X className="w-4 h-4" /></button>
+                      </div>
+                      <p className="text-[10px] text-white/60 mb-2">Format: <code>{`[{"text": "Quote here", "author": "Author Name"}]`}</code></p>
+                      <textarea
+                        value={bulkQuotesJson}
+                        onChange={(e) => setBulkQuotesJson(e.target.value)}
+                        className="flex-1 bg-black/60 border border-white/20 rounded-lg p-3 text-[10px] md:text-xs font-mono outline-none focus:border-pink-500/50 text-white/80 resize-none"
+                        placeholder='[\n  {"text": "Stay hungry, stay foolish.", "author": "Steve Jobs"}\n]'
+                      />
+                      <button onClick={handleBulkAddQuotes} className="mt-3 bg-pink-500/80 hover:bg-pink-500 text-white py-2 rounded-lg text-xs font-bold transition-colors">Import JSON</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {settingsActiveTab === 'feedback' && (
                 <div className="flex flex-col gap-3 md:gap-4 min-h-[60vh]">
                   <div className="flex items-center justify-between">
@@ -1129,9 +1311,9 @@ export default function SettingsModal() {
                     <div>
                       <h3 className="text-sm md:text-base font-semibold">Custom Wallpapers</h3>
                       <p className="text-white/50 text-[10px] md:text-[11px] md:mt-0.5 px-1">Provide external image URLs.</p>
-                      
-                      <button 
-                        onClick={() => setInfoModalKey('liveWallpaper')} 
+
+                      <button
+                        onClick={() => setInfoModalKey('liveWallpaper')}
                         className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 rounded border border-blue-500/30 text-[10px] transition-colors"
                       >
                         <MonitorPlay size={12} />
@@ -1157,13 +1339,20 @@ export default function SettingsModal() {
                             onClick={() => setActiveDesktopCustomIndex(i)}
                             onDelete={async (e: React.MouseEvent) => {
                               e.stopPropagation();
-                              if (!confirm("Are you sure you want to remove this wallpaper?")) return;
-                              const newUrls = [...customDesktopWallpapers];
-                              newUrls.splice(i, 1);
-                              setCustomDesktopWallpapers(newUrls);
-                              if (activeDesktopCustomIndex === i) setActiveDesktopCustomIndex(null);
-                              else if (activeDesktopCustomIndex !== null && activeDesktopCustomIndex > i) setActiveDesktopCustomIndex(activeDesktopCustomIndex - 1);
-                              if (url.startsWith('custom-')) await deleteWallpaperFromDB(url);
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Remove Wallpaper',
+                                message: 'Are you sure you want to remove this wallpaper?',
+                                isDestructive: true,
+                                onConfirm: async () => {
+                                  const newUrls = [...customDesktopWallpapers];
+                                  newUrls.splice(i, 1);
+                                  setCustomDesktopWallpapers(newUrls);
+                                  if (activeDesktopCustomIndex === i) setActiveDesktopCustomIndex(null);
+                                  else if (activeDesktopCustomIndex !== null && activeDesktopCustomIndex > i) setActiveDesktopCustomIndex(activeDesktopCustomIndex - 1);
+                                  if (url.startsWith('custom-')) await deleteWallpaperFromDB(url);
+                                }
+                              });
                             }}
                             label={url.startsWith('custom-') ? 'Local File' : (url.split('/').pop() || 'image')}
                             aspectClass="aspect-video"
@@ -1175,7 +1364,7 @@ export default function SettingsModal() {
                         <div className="flex gap-2 w-full">
                           <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded text-[9px] md:text-[10px] text-white/60 hover:text-white cursor-pointer transition-colors">
                             <Plus className="w-3 h-3" /> Upload File
-                            <input 
+                            <input
                               type="file"
                               accept="image/*,video/*"
                               className="hidden"
@@ -1196,11 +1385,19 @@ export default function SettingsModal() {
                           </label>
                           <button
                             onClick={() => {
-                              const url = prompt("Enter a direct image URL (https://...):");
-                              if (url && url.trim().startsWith('http')) {
-                                setCustomDesktopWallpapers([...customDesktopWallpapers, url.trim()]);
-                                if (activeDesktopCustomIndex === null) setActiveDesktopCustomIndex(customDesktopWallpapers.length);
-                              }
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Add Wallpaper URL',
+                                message: 'Enter a direct image or video URL (https://...):',
+                                isPrompt: true,
+                                promptPlaceholder: 'https://...',
+                                onConfirm: (url?: string) => {
+                                  if (url && url.trim().startsWith('http')) {
+                                    setCustomDesktopWallpapers([...customDesktopWallpapers, url.trim()]);
+                                    if (activeDesktopCustomIndex === null) setActiveDesktopCustomIndex(customDesktopWallpapers.length);
+                                  }
+                                }
+                              });
                             }}
                             className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] md:text-[10px] text-white/60 hover:text-white transition-colors"
                           >
@@ -1223,13 +1420,20 @@ export default function SettingsModal() {
                             onClick={() => setActiveMobileCustomIndex(i)}
                             onDelete={async (e: React.MouseEvent) => {
                               e.stopPropagation();
-                              if (!confirm("Are you sure you want to remove this wallpaper?")) return;
-                              const newUrls = [...customMobileWallpapers];
-                              newUrls.splice(i, 1);
-                              setCustomMobileWallpapers(newUrls);
-                              if (activeMobileCustomIndex === i) setActiveMobileCustomIndex(null);
-                              else if (activeMobileCustomIndex !== null && activeMobileCustomIndex > i) setActiveMobileCustomIndex(activeMobileCustomIndex - 1);
-                              if (url.startsWith('custom-')) await deleteWallpaperFromDB(url);
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Remove Wallpaper',
+                                message: 'Are you sure you want to remove this wallpaper?',
+                                isDestructive: true,
+                                onConfirm: async () => {
+                                  const newUrls = [...customMobileWallpapers];
+                                  newUrls.splice(i, 1);
+                                  setCustomMobileWallpapers(newUrls);
+                                  if (activeMobileCustomIndex === i) setActiveMobileCustomIndex(null);
+                                  else if (activeMobileCustomIndex !== null && activeMobileCustomIndex > i) setActiveMobileCustomIndex(activeMobileCustomIndex - 1);
+                                  if (url.startsWith('custom-')) await deleteWallpaperFromDB(url);
+                                }
+                              });
                             }}
                             label={url.startsWith('custom-') ? 'Local File' : (url.split('/').pop() || 'image')}
                             aspectClass="aspect-[9/16]"
@@ -1241,7 +1445,7 @@ export default function SettingsModal() {
                         <div className="flex gap-2 w-full">
                           <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded text-[9px] md:text-[10px] text-white/60 hover:text-white cursor-pointer transition-colors">
                             <Plus className="w-3 h-3" /> Upload File
-                            <input 
+                            <input
                               type="file"
                               accept="image/*,video/*"
                               className="hidden"
@@ -1262,11 +1466,19 @@ export default function SettingsModal() {
                           </label>
                           <button
                             onClick={() => {
-                              const url = prompt("Enter a direct image URL (https://...):");
-                              if (url && url.trim().startsWith('http')) {
-                                setCustomMobileWallpapers([...customMobileWallpapers, url.trim()]);
-                                if (activeMobileCustomIndex === null) setActiveMobileCustomIndex(customMobileWallpapers.length);
-                              }
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Add Wallpaper URL',
+                                message: 'Enter a direct image or video URL (https://...):',
+                                isPrompt: true,
+                                promptPlaceholder: 'https://...',
+                                onConfirm: (url?: string) => {
+                                  if (url && url.trim().startsWith('http')) {
+                                    setCustomMobileWallpapers([...customMobileWallpapers, url.trim()]);
+                                    if (activeMobileCustomIndex === null) setActiveMobileCustomIndex(customMobileWallpapers.length);
+                                  }
+                                }
+                              });
                             }}
                             className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] md:text-[10px] text-white/60 hover:text-white transition-colors"
                           >
@@ -1535,11 +1747,17 @@ export default function SettingsModal() {
                           </button>
                         ))}
                         <button
-                          onClick={async () => {
-                            if (confirm(`Delete logs older than ${deleteDays} days?`)) {
-                              await clearOldData(deleteDays);
-                              alert(`Logs cleared.`);
-                            }
+                          onClick={() => {
+                            setConfirmModal({
+                              isOpen: true,
+                              title: 'Clear Old Data',
+                              message: `Delete logs older than ${deleteDays} days?`,
+                              isDestructive: true,
+                              onConfirm: async () => {
+                                await clearOldData(deleteDays);
+                                alert(`Logs cleared.`);
+                              }
+                            });
                           }}
                           className="px-2 py-1 md:px-3 md:py-1 bg-yellow-500/20 text-yellow-300 rounded text-[9px] md:text-[10px] font-bold border border-yellow-500/30 ml-auto"
                         >
@@ -1559,10 +1777,16 @@ export default function SettingsModal() {
                       </div>
                       <button
                         onClick={() => {
-                          if (confirm('Are you sure you want to completely reset your Timetable to default? This cannot be undone.')) {
-                            resetTimetable();
-                            alert('Timetable reset successfully.');
-                          }
+                          setConfirmModal({
+                            isOpen: true,
+                            title: 'Reset Timetable',
+                            message: 'Are you sure you want to completely reset your Timetable to default? This cannot be undone.',
+                            isDestructive: true,
+                            onConfirm: () => {
+                              resetTimetable();
+                              alert('Timetable reset successfully.');
+                            }
+                          });
                         }}
                         className="w-full sm:w-auto justify-center px-2 py-1 md:px-3 md:py-1.5 bg-purple-500/20 text-purple-300 rounded text-[9px] md:text-[10px] font-bold border border-purple-500/50 flex items-center gap-1 whitespace-nowrap"
                       >
@@ -1580,9 +1804,17 @@ export default function SettingsModal() {
                         </div>
                       </div>
                       <button
-                        onClick={async () => {
-                          const userTyped = prompt('Type "delete all" to confirm:');
-                          if (userTyped?.toLowerCase() === 'delete all') await clearAllData();
+                        onClick={() => {
+                          setConfirmModal({
+                            isOpen: true,
+                            title: 'Factory Reset Profile',
+                            message: 'Are you absolutely sure you want to delete all tasks, notes, history, and settings? This action cannot be undone.',
+                            requireText: 'delete all',
+                            isDestructive: true,
+                            onConfirm: async () => {
+                              await clearAllData();
+                            }
+                          });
                         }}
                         className="w-full sm:w-auto justify-center px-2 py-1 md:px-3 md:py-1.5 bg-red-500/20 text-red-300 rounded text-[9px] md:text-[10px] font-bold border border-red-500/50 flex items-center gap-1 whitespace-nowrap"
                       >
@@ -1759,16 +1991,7 @@ export default function SettingsModal() {
             </div>
 
             {/* Content Scroll Down Button */}
-            {canContentScrollDown && (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center z-30 pointer-events-none opacity-0 group-hover/content:opacity-100 transition-opacity duration-300">
-                <button
-                  onClick={() => scrollBy(settingsScrollRef, 'down')}
-                  className="bg-blue-500/80 hover:bg-blue-400 text-white p-1 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] border border-blue-400/50 backdrop-blur-md transition-all pointer-events-auto animate-bounce"
-                >
-                  <ChevronDown className="w-4 h-4" strokeWidth={3} />
-                </button>
-              </div>
-            )}
+
           </div>
         </div>
       </div>
@@ -1804,7 +2027,21 @@ export default function SettingsModal() {
           </div>
         </div>
       )}
-
+      {/* Confirmation Modal overlay (highest z-index) */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false, onCancel: undefined, isPrompt: false })}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={(confirmModal as any).onCancel}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        requireText={confirmModal.requireText}
+        isDestructive={confirmModal.isDestructive}
+        isPrompt={confirmModal.isPrompt}
+        promptPlaceholder={confirmModal.promptPlaceholder}
+        confirmText={(confirmModal as any).confirmText}
+        cancelText={(confirmModal as any).cancelText}
+      />
     </div>
   );
 }

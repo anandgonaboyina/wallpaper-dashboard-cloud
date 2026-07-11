@@ -3,12 +3,27 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash, ListTodo, X } from 'lucide-react';
 import { useDashboardStore } from '@/store/dashboardStore';
 import ScrollableWithArrows from './ScrollableWithArrows';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function MiniCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showAllDeadlines, setShowAllDeadlines] = useState(false);
   const [editingDeadlineId, setEditingDeadlineId] = useState<string | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    requireText?: string;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const { deadlines, addDeadline, updateDeadline, deleteDeadline, deleteAllDeadlinesForDay, deleteAllDeadlines, toggleCalendar, setIsCalendarBusy } = useDashboardStore();
 
@@ -67,8 +82,14 @@ export default function MiniCalendar() {
             {sortedAllDeadlines.length > 0 && (
               <button
                 onClick={() => {
-                  const val = window.prompt("Type 'delete' to confirm clearing ALL deadlines permanently:");
-                  if (val && val.toLowerCase() === 'delete') deleteAllDeadlines();
+                  setConfirmModal({
+                    isOpen: true,
+                    title: 'Clear All Deadlines',
+                    message: 'Are you sure you want to permanently clear ALL deadlines? This cannot be undone.',
+                    requireText: 'delete',
+                    isDestructive: true,
+                    onConfirm: () => deleteAllDeadlines()
+                  });
                 }}
                 className="p-1 text-rose-400/80 bg-rose-500/10 hover:text-rose-300 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1 text-[9px] font-semibold px-1.5 shrink-0"
                 title="Delete All Deadlines"
@@ -86,9 +107,13 @@ export default function MiniCalendar() {
                   <span className="text-rose-400 text-[9px] font-bold tracking-wider">{d.date}</span>
                   <button
                     onClick={() => {
-                      if (window.confirm('Are you sure you want to delete this deadline?')) {
-                        deleteDeadline(d.id);
-                      }
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Delete Deadline',
+                        message: 'Are you sure you want to delete this deadline?',
+                        isDestructive: true,
+                        onConfirm: () => deleteDeadline(d.id)
+                      });
                     }}
                     className="text-rose-400/80 bg-rose-500/10 hover:bg-rose-500/20 hover:text-rose-300 p-1 rounded transition-all shrink-0 opacity-100"
                   >
@@ -115,7 +140,13 @@ export default function MiniCalendar() {
             {dayDeadlines.length > 0 && (
               <button
                 onClick={() => {
-                  if (confirm('Clear all deadlines for this day?')) deleteAllDeadlinesForDay(selectedDate);
+                  setConfirmModal({
+                    isOpen: true,
+                    title: 'Clear Day Deadlines',
+                    message: 'Clear all deadlines for this day?',
+                    isDestructive: true,
+                    onConfirm: () => deleteAllDeadlinesForDay(selectedDate)
+                  });
                 }}
                 className="p-1 text-rose-400/80 bg-rose-500/10 hover:text-rose-300 hover:bg-rose-500/20 rounded-lg transition-colors flex items-center gap-1 text-[9px] font-semibold px-1.5 shrink-0"
                 title="Delete all"
@@ -169,9 +200,13 @@ export default function MiniCalendar() {
                 )}
                 <button
                   onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this deadline?')) {
-                      deleteDeadline(d.id);
-                    }
+                    setConfirmModal({
+                      isOpen: true,
+                      title: 'Delete Deadline',
+                      message: `Are you sure you want to delete the deadline "${d.text.length > 20 ? d.text.substring(0, 20) + '...' : d.text}"?`,
+                      isDestructive: true,
+                      onConfirm: () => deleteDeadline(d.id)
+                    });
                   }}
                   className="text-rose-400/80 bg-rose-500/10 hover:bg-rose-500/20 hover:text-rose-300 p-1 rounded transition-all shrink-0 opacity-100"
                 >
@@ -264,6 +299,16 @@ export default function MiniCalendar() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        requireText={confirmModal.requireText}
+        isDestructive={confirmModal.isDestructive}
+      />
     </div>
   );
 }

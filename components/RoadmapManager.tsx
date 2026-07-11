@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useDashboardStore, RoadmapItem, Roadmap } from '@/store/dashboardStore';
+import ConfirmationModal from './ConfirmationModal';
 
 // --- Helper Functions ---
 const generateId = () =>
@@ -244,6 +245,22 @@ export default function RoadmapManager() {
   const [startY, setStartY] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    requireText?: string;
+    isDestructive?: boolean;
+    isPrompt?: boolean;
+    promptPlaceholder?: string;
+    onConfirm: (val?: string) => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollRef.current) return;
     setIsDragging(true);
@@ -327,21 +344,35 @@ export default function RoadmapManager() {
   if (!activeRoadmap) return null;
 
   const createNewRoadmap = () => {
-    const name = prompt("Enter new roadmap name:");
-    if (!name) return;
-    const newRoadmap: Roadmap = { id: generateId(), name, nodes: [] };
-    setRoadmaps([...roadmaps, newRoadmap]);
-    setActiveRoadmapId(newRoadmap.id);
+    setConfirmModal({
+      isOpen: true,
+      title: 'New Roadmap',
+      message: 'Enter new roadmap name:',
+      isPrompt: true,
+      promptPlaceholder: 'Roadmap Name',
+      onConfirm: (name?: string) => {
+        if (!name || name.trim() === "") return;
+        const newRoadmap: Roadmap = { id: generateId(), name: name.trim(), nodes: [] };
+        setRoadmaps([...roadmaps, newRoadmap]);
+        setActiveRoadmapId(newRoadmap.id);
+      }
+    });
   };
 
   const deleteActiveRoadmap = () => {
     if (roadmaps.length === 1) return alert("You must have at least one roadmap.");
-    const input = prompt(`Type "DELETE" to confirm removal of "${activeRoadmap.name}":`);
-    if (input === "DELETE") {
-      const filtered = roadmaps.filter(r => r.id !== activeRoadmapId);
-      setRoadmaps(filtered);
-      setActiveRoadmapId(filtered[0].id);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Roadmap',
+      message: `Are you sure you want to permanently remove "${activeRoadmap.name}" and all its topics?`,
+      requireText: 'DELETE',
+      isDestructive: true,
+      onConfirm: () => {
+        const filtered = roadmaps.filter(r => r.id !== activeRoadmapId);
+        setRoadmaps(filtered);
+        setActiveRoadmapId(filtered[0].id);
+      }
+    });
   };
 
   const updateTargetDate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -389,23 +420,37 @@ export default function RoadmapManager() {
   const handleDeleteNode = (node: RoadmapItem) => {
     const isRootNode = activeRoadmap.nodes.some(n => n.id === node.id);
 
-    if (isRootNode) {
-      const input = prompt(`Type "DELETE" to remove main topic "${node.title}":`);
-      if (input !== "DELETE") return;
-    } else {
-      if (!confirm(`Remove subtopic "${node.title}"?`)) return;
-    }
-
-    const deleteGlobalNode = (nodes: RoadmapItem[]): RoadmapItem[] => {
-      return nodes
-        .filter(n => n.id !== node.id)
-        .map(n => {
-          if (n.subItems) return { ...n, subItems: deleteGlobalNode(n.subItems) };
-          return n;
-        });
+    const performDelete = () => {
+      const deleteGlobalNode = (nodes: RoadmapItem[]): RoadmapItem[] => {
+        return nodes
+          .filter(n => n.id !== node.id)
+          .map(n => {
+            if (n.subItems) return { ...n, subItems: deleteGlobalNode(n.subItems) };
+            return n;
+          });
+      };
+      setRoadmaps(roadmaps.map(r => ({ ...r, nodes: deleteGlobalNode(r.nodes) })));
+      setActiveMenuId(null);
     };
-    setRoadmaps(roadmaps.map(r => ({ ...r, nodes: deleteGlobalNode(r.nodes) })));
-    setActiveMenuId(null);
+
+    if (isRootNode) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Delete Main Topic',
+        message: `Remove main topic "${node.title}" and all its subtopics?`,
+        requireText: 'DELETE',
+        isDestructive: true,
+        onConfirm: performDelete
+      });
+    } else {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Remove Subtopic',
+        message: `Are you sure you want to remove "${node.title}"?`,
+        isDestructive: true,
+        onConfirm: performDelete
+      });
+    }
   };
 
   const handleSaveNode = (updatedItem: RoadmapItem) => {
@@ -647,6 +692,18 @@ export default function RoadmapManager() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        requireText={confirmModal.requireText}
+        isDestructive={confirmModal.isDestructive}
+        isPrompt={confirmModal.isPrompt}
+        promptPlaceholder={confirmModal.promptPlaceholder}
+      />
     </div>
   );
 }

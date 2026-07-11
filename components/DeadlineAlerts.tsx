@@ -171,16 +171,30 @@ export default function DeadlineAlerts() {
         })}
       </div>
 
-      {isStackExpanded && (<div
-        className="text-[9px] text-white/40 flex items-center gap-1 font-medium bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 pointer-events-auto cursor-pointer mt-1 hover:text-white transition-colors"
-        onClick={() => {
-          setIsDeadlinesCollapsed(true)
-          setIsStackExpanded(false);
-        }}
-      >
-        <ChevronUp className="w-3 h-3" /> Swipe up to collapse
-      </div>)
-      }
+      {isStackExpanded ? (
+        <div
+          className="text-[9px] text-white/40 flex items-center gap-1 font-medium bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 pointer-events-auto cursor-pointer mt-1 hover:text-white transition-colors"
+          onClick={() => {
+            setIsStackExpanded(false);
+          }}
+        >
+          <ChevronUp className="w-3 h-3" />
+        </div>
+      ) : (
+        <div className="relative flex w-full justify-center items-center gap-10 px-2">
+          <div
+            className="text-[9px] text-white/40 flex items-center gap-1 font-medium bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 hover:text-white transition-colors ml-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDeadlinesCollapsed(true);
+              setIsStackExpanded(false);
+            }}
+          >
+            <ChevronUp className="w-3 h-3" />
+          </div>
+        </div>
+
+      )}
     </div>
   );
 }

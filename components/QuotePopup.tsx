@@ -6,7 +6,14 @@ import { fetchQuote } from '@/utils/quoteEngine';
 import DraggableWidget from './DraggableWidget';
 
 export default function QuotePopup() {
-  const { currentQuote, isQuotePopupOpen, hideQuotePopup, showQuotePopup, currentBgSrc, updateWidgetOffset } = useDashboardStore();
+  const { currentQuote, isQuotePopupOpen, hideQuotePopup, showQuotePopup, currentBgSrc, updateWidgetOffset, useCustomQuotes } = useDashboardStore();
+
+  useEffect(() => {
+    if (isQuotePopupOpen) {
+      fetchQuote().then(q => showQuotePopup(q));
+    }
+  }, [useCustomQuotes]);
+
 
   // Force clear any saved offsets for the quote so it snaps perfectly under the notch
   useEffect(() => {
