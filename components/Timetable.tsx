@@ -1,7 +1,7 @@
 "use client";
 
 import { useDashboardStore } from "@/store/dashboardStore";
-import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock, ArrowUp, ArrowDown, X, Sun, Moon } from "lucide-react";
+import { CalendarDays, Edit2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Settings, Plus, Trash, Clock, ArrowUp, ArrowDown, X, Sun, Moon, Copy, ClipboardPaste } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import ConfirmationModal from './ConfirmationModal';
 
@@ -82,6 +82,14 @@ export default function Timetable() {
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [globalEditingIndex, setGlobalEditingIndex] = useState<number | null>(null);
+  const [copiedDay, setCopiedDay] = useState<string | null>(null);
+  const [isCopyMode, setIsCopyMode] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -90,7 +98,7 @@ export default function Timetable() {
     isDestructive?: boolean;
     onConfirm: () => void;
   }>({
-    isOpen: false, title: '', message: '', onConfirm: () => {}
+    isOpen: false, title: '', message: '', onConfirm: () => { }
   });
 
   // Scroll logic
@@ -154,6 +162,33 @@ export default function Timetable() {
     const newTheme = isDark ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('timetable_theme', newTheme);
+  };
+
+  const executeCopy = (sourceDay: string, targetDay: string) => {
+    if (viewingFriend) return;
+
+    // Create new maps to avoid mutation
+    const newGrid = { ...myTimetableGrid };
+    const newColors = { ...myTimetableColors };
+
+    // Copy content
+    if (myTimetableGrid[sourceDay]) {
+      newGrid[targetDay] = { ...myTimetableGrid[sourceDay] };
+    } else {
+      delete newGrid[targetDay];
+    }
+
+    // Copy colors
+    if (myTimetableColors[sourceDay]) {
+      newColors[targetDay] = { ...myTimetableColors[sourceDay] };
+    } else {
+      delete newColors[targetDay];
+    }
+
+    useDashboardStore.setState({
+      timetableGrid: newGrid,
+      timetableColors: newColors
+    });
   };
 
   const isWeekendMode = viewMode === "weekends";
@@ -359,7 +394,7 @@ export default function Timetable() {
               <button onClick={handleDeleteTopRow} className={`px-2 py-1.5 text-[10px] flex items-center gap-1.5 transition-colors w-full text-left ${isDark ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-rose-100 text-rose-600'}`}>
                 <Trash size={12} /> Delete Top Row
               </button>
-              <button onClick={() => { 
+              <button onClick={() => {
                 setConfirmModal({
                   isOpen: true,
                   title: 'Delete Bottom Row',
@@ -386,14 +421,34 @@ export default function Timetable() {
         </button>
       </div>
 
-      {/* Compact Start Time Trigger */}
-      <div className="mb-2 flex justify-center">
-        <button
-          onClick={() => !viewingFriend && setIsEditingStartTime(true)}
-          className={`text-[8px] md:text-[9px] px-2 py-0.5 rounded-full border transition-all flex items-center gap-1 font-semibold shadow-sm ${viewingFriend ? 'cursor-default' : 'active:scale-95'} ${isDark ? 'text-sky-300 bg-sky-500/10 border-sky-500/20 hover:bg-sky-500/20 hover:shadow-[0_0_10px_rgba(14,165,233,0.15)]' : 'text-sky-700 bg-sky-100 border-sky-200 hover:bg-sky-200'}`}
-        >
-          <Clock size={10} /> Day Starts: {formatTime(startTime)}
-        </button>
+      {/* Compact Start Time Trigger & Copy Mode Toggle */}
+      <div className="mb-2 grid grid-cols-3 w-full items-center px-1">
+        <div></div> {/* Empty spacer for perfect centering */}
+        
+        <div className="flex justify-center w-full">
+          <button
+            onClick={() => !viewingFriend && setIsEditingStartTime(true)}
+            className={`text-[8px] md:text-[9px] px-2 py-0.5 rounded-full border transition-all flex items-center gap-1 font-semibold shadow-sm ${viewingFriend ? 'cursor-default' : 'active:scale-95'} ${isDark ? 'text-sky-300 bg-sky-500/10 border-sky-500/20 hover:bg-sky-500/20 hover:shadow-[0_0_10px_rgba(14,165,233,0.15)]' : 'text-sky-700 bg-sky-100 border-sky-200 hover:bg-sky-200'}`}
+          >
+            <Clock size={10} /> <span className="whitespace-nowrap">Day Starts: {formatTime(startTime)}</span>
+          </button>
+        </div>
+
+        <div className="flex justify-end w-full">
+          {!viewingFriend && (
+            <button
+              onClick={() => {
+                setIsCopyMode(!isCopyMode);
+                setCopiedDay(null);
+              }}
+              className={`text-[8px] md:text-[9px] px-2 py-0.5 rounded-full border transition-all flex items-center gap-1 font-semibold shadow-sm active:scale-95 ${isCopyMode ? (isDark ? 'text-white bg-red-500 border-red-500' : 'text-white bg-red-500 border-red-600') : (isDark ? 'text-white/40 bg-white/5 border-white/10 hover:bg-white/10' : 'text-slate-500 bg-slate-100 border-slate-200 hover:bg-slate-200')}`}
+              title="Toggle Copy Mode"
+            >
+              <Copy size={10} className="shrink-0" /> 
+              <span className="whitespace-nowrap">{!isCopyMode ? 'Duplicate Day' : 'Cancel Mode'}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Timetable Grid Area */}
@@ -405,11 +460,16 @@ export default function Timetable() {
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
       >
+        {toastMessage && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-blue-500 text-white text-[10px] md:text-xs px-3 py-1.5 rounded-full shadow-lg font-semibold animate-in fade-in slide-in-from-top-4 pointer-events-none">
+            {toastMessage}
+          </div>
+        )}
         <div
-          className={`grid gap-x-1 ${viewMode === "weekdays" ? "min-w-[420px] md:min-w-[500px] grid-cols-[55px_repeat(5,1fr)] md:grid-cols-[100px_repeat(5,1fr)]" : "min-w-[200px] md:min-w-[260px] grid-cols-[55px_repeat(2,1fr)] md:grid-cols-[100px_repeat(2,1fr)]"}`}
+          className={`grid gap-x-1 ${viewMode === "weekdays" ? "min-w-[420px] md:min-w-[500px] grid-cols-[55px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)]" : "min-w-[200px] md:min-w-[260px] grid-cols-[55px_repeat(2,1fr)] md:grid-cols-[120px_repeat(2,1fr)]"}`}
         >
           {/* Time Column */}
-          <div className={`sticky left-0 z-40 md:min-w-[100px] backdrop-blur-md flex flex-col rounded-lg pr-0.5 md:pr-1 ${isDark ? 'bg-[#0f0f13]/90 shadow-[4px_0_10px_-3px_rgba(0,0,0,0.5)]' : 'bg-slate-50/90 shadow-[4px_0_10px_-3px_rgba(0,0,0,0.1)]'}`}>
+          <div className={`sticky left-0 z-40 md:min-w-[120px] backdrop-blur-md flex flex-col rounded-lg pr-0.5 md:pr-1 ${isDark ? 'bg-[#0f0f13]/90 shadow-[4px_0_10px_-3px_rgba(0,0,0,0.5)]' : 'bg-slate-50/90 shadow-[4px_0_10px_-3px_rgba(0,0,0,0.1)]'}`}>
             <div className={`h-6 md:h-8 flex items-center justify-center text-center font-bold uppercase tracking-widest text-[8px] md:text-[9px] mb-1 ${isDark ? 'text-white/30' : 'text-slate-400'}`}>Time</div>
 
             {generatedTimes.map((block, index) => {
@@ -452,8 +512,54 @@ export default function Timetable() {
 
             return (
               <div key={day} className={`flex flex-col p-0.5 rounded-xl transition-all duration-300 ${isToday ? (isDark ? 'bg-white/[0.04] border border-white/5 shadow-[inset_0_0_15px_rgba(255,255,255,0.02)]' : 'bg-slate-200/50 border border-slate-300/50') : ''}`}>
-                <div className={`h-6 md:h-8 flex items-center justify-center text-center font-bold uppercase tracking-widest text-[9px] md:text-[10px] mb-1 rounded-lg border backdrop-blur-sm ${headerStyle}`}>
+                <div className={`relative h-6 md:h-8 flex items-center justify-center text-center font-bold uppercase tracking-widest text-[9px] md:text-[10px] mb-1 rounded-lg border backdrop-blur-sm ${headerStyle}`}>
                   {day}
+                  {!viewingFriend && isCopyMode && (
+                    copiedDay === day ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCopiedDay(null);
+                          setIsCopyMode(!isCopyMode);
+                        }}
+                        className={`absolute right-1 p-0.5 rounded transition-all hover:scale-110 active:scale-95 ${isDark ? 'text-rose-400 hover:bg-rose-500/20' : 'text-rose-600 hover:bg-rose-500/10'}`}
+                        title="Cancel copy"
+                      >
+                        <X size={10} strokeWidth={3} />
+                      </button>
+                    ) : copiedDay ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmModal({
+                            isOpen: true,
+                            title: 'Paste Schedule',
+                            message: `Are you sure you want to paste ${copiedDay}'s schedule to ${day}? This will overwrite the existing schedule for ${day}.`,
+                            onConfirm: () => {
+                              executeCopy(copiedDay, day);
+                              setCopiedDay(null);
+                            }
+                          });
+                        }}
+                        className={`absolute right-1 p-0.5 rounded transition-all hover:scale-110 active:scale-95 animate-pulse ${isDark ? 'text-emerald-400 hover:bg-emerald-500/20' : 'text-emerald-600 hover:bg-emerald-500/10'}`}
+                        title={`Paste ${copiedDay}'s schedule here`}
+                      >
+                        <ClipboardPaste size={10} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCopiedDay(day);
+                          showToast(`Copied ${day}. Click on another column to paste there.`);
+                        }}
+                        className={`absolute right-1 p-0.5 rounded transition-all hover:scale-110 active:scale-95 ${isDark ? 'text-white/40 hover:text-white hover:bg-white/10' : 'text-black/30 hover:text-black hover:bg-black/10'}`}
+                        title={`Copy ${day}'s schedule`}
+                      >
+                        <Copy size={10} />
+                      </button>
+                    )
+                  )}
                 </div>
 
                 {/* We map the exact same height containers to ensure perfect alignment */}
@@ -759,7 +865,7 @@ function DurationCell({
           onClick={() => setEditingOverride(true)}
           className="w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors leading-none"
         >
-          <div className={`absolute top-1 flex flex-col md:flex-row items-center justify-center gap-[1px] md:gap-0.5 text-[7px] md:text-[8px] tracking-tight font-semibold font-mono select-none w-full px-0.5 ${isDark ? 'text-white/70' : 'text-slate-600'}`}>
+          <div className={`absolute top-1 flex flex-col md:flex-row items-center justify-center gap-[1px] md:gap-0.5 text-[7px] md:text-[10px] tracking-tight font-semibold font-mono select-none w-full px-0.5 ${isDark ? 'text-white/70' : 'text-slate-600'}`}>
             <span className="transition-colors group-hover:text-violet-400">
               {block.startStr.replace(" AM", "AM").replace(" PM", "PM")}
             </span>

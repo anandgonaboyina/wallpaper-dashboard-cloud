@@ -653,7 +653,7 @@ export default function SettingsModal() {
             </h2>
           </div>
           <div className="flex items-center gap-1 md:gap-2">
-            <div className="flex items-center gap-1.5 md:gap-2 mr-1 md:mr-2 border-r border-white/10 pr-2 md:pr-3">
+            <div className="hidden md:flex items-center gap-1.5 md:gap-2 mr-1 md:mr-2 border-r border-white/10 pr-2 md:pr-3">
               <span className="hidden sm:inline-block text-[9px] text-white/50 leading-tight text-right max-w-[100px]">
                 Apply changes
               </span>
@@ -689,7 +689,6 @@ export default function SettingsModal() {
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full">
           {/* Sidebar Tabs - Narrowed to w-48 on desktop */}
           <div className={`${isMobileDetailView ? 'hidden md:flex' : 'flex h-full'} flex-col w-full md:w-48 bg-black/20 border-r-0 md:border-r border-white/10 relative group shrink-0`}>
-
 
             <div
               ref={sidebarScrollRef}
@@ -774,14 +773,22 @@ export default function SettingsModal() {
 
               <button
                 onClick={() => setIsUserManualOpen(true)}
-                className={`flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-medium bg-black/40 md:bg-transparent text-white/60 hover:bg-white/5 hover:text-white border border-transparent`}
+                className={`flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-xs font-medium bg-black/40 md:bg-transparent text-white/60 hover:bg-white/5 hover:text-white border border-transparent mb-2`}
               >
                 <BookOpen className="w-4 h-4 text-blue-400" /> User Manual
               </button>
 
+              <div className="md:hidden mt-auto pt-2 border-t border-white/10 flex items-center justify-between px-2 w-full">
+                <span className="text-[9px] text-white/50 font-medium tracking-wide">Apply changes:</span>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-blue-500/20 text-white/70 hover:text-white rounded-lg transition-all border border-white/10 group"
+                >
+                  <RefreshCw className="w-3 h-3 text-blue-400 group-hover:rotate-180 transition-transform duration-500" />
+                  <span className="text-[9px] font-medium">Refresh App</span>
+                </button>
+              </div>
             </div>
-
-
           </div>
 
           {/* Content Area */}
