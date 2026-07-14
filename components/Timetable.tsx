@@ -50,7 +50,11 @@ const parseMins = (tStr: string) => {
 
 export default function Timetable() {
   const {
+    theme: globalTheme,
+    timetableThemeOverride,
+    setTimetableThemeOverride,
     timetableGrid: myTimetableGrid,
+    // ...
     timetableColors: myTimetableColors,
     weekdayTimes: myWeekdayTimes,
     weekendTimes: myWeekendTimes,
@@ -64,8 +68,8 @@ export default function Timetable() {
     viewingFriend, setViewingFriend
   } = useDashboardStore();
 
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const isDark = theme === 'dark';
+  const effectiveTheme = timetableThemeOverride || (globalTheme === 'light' ? 'light' : 'dark');
+  const isDark = effectiveTheme === 'dark';
 
   const timetableGrid = viewingFriend ? (viewingFriend.stats.timetableGrid || {}) : myTimetableGrid;
   const timetableColors = viewingFriend ? (viewingFriend.stats.timetableColors || {}) : myTimetableColors;
@@ -148,9 +152,6 @@ export default function Timetable() {
         setTimetableWeekendStartTime(parseInt(storedWeStart));
         localStorage.removeItem('timetable_start_weekend'); // Migrate to cloud
       }
-
-      const storedTheme = localStorage.getItem('timetable_theme') as 'dark' | 'light';
-      if (storedTheme) setTheme(storedTheme);
     }
     const day = new Date().getDay();
     setCurrentDayIndex(day);
@@ -160,8 +161,7 @@ export default function Timetable() {
 
   const toggleTheme = () => {
     const newTheme = isDark ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('timetable_theme', newTheme);
+    setTimetableThemeOverride(newTheme);
   };
 
   const executeCopy = (sourceDay: string, targetDay: string) => {

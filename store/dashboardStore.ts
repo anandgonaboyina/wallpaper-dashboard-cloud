@@ -266,6 +266,10 @@ interface DashboardState {
   // Theme
   theme: 'light' | 'dark' | 'auto';
   setTheme: (theme: 'light' | 'dark' | 'auto') => void;
+  notesThemeOverride: 'light' | 'dark' | null;
+  setNotesThemeOverride: (theme: 'light' | 'dark' | null) => void;
+  timetableThemeOverride: 'light' | 'dark' | null;
+  setTimetableThemeOverride: (theme: 'light' | 'dark' | null) => void;
 
   // Widget Visibility Preferences
   showHealth: boolean;
@@ -616,7 +620,11 @@ export const useDashboardStore = create<DashboardState>()(
       isHidden: false,
       _hasHydrated: false,
       theme: 'dark',
-      setTheme: (theme) => set({ theme }),
+      notesThemeOverride: null,
+      timetableThemeOverride: null,
+      setTheme: (theme) => set({ theme, notesThemeOverride: null, timetableThemeOverride: null }),
+      setNotesThemeOverride: (theme) => set({ notesThemeOverride: theme }),
+      setTimetableThemeOverride: (theme) => set({ timetableThemeOverride: theme }),
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       setLockedWallpaper: (filename) => set({ lockedWallpaper: filename }),
@@ -810,10 +818,14 @@ export const useDashboardStore = create<DashboardState>()(
       notes: [{ id: 'default', title: 'Daily Journal', entries: {} }],
       activeNoteId: 'default',
       isNotesOpen: false,
-      addNote: () => {
+      addNote: () => set((state) => {
+        const emptyNote = state.notes.find(n => n.title === 'New Note' && Object.values(n.entries).every(e => !e || e.trim() === '' || e === '<br>'));
+        if (emptyNote) {
+          return { activeNoteId: emptyNote.id };
+        }
         const newNote = { id: Date.now().toString(), title: 'New Note', entries: {} };
-        set((state) => ({ notes: [newNote, ...state.notes], activeNoteId: newNote.id }));
-      },
+        return { notes: [newNote, ...state.notes], activeNoteId: newNote.id };
+      }),
       updateNoteTitle: (id, title) => set((state) => ({
         notes: state.notes.map(n => n.id === id ? { ...n, title } : n)
       })),

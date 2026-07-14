@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
-import { Plus, X, StickyNote, Trash2, Undo, Redo, Bold, Italic, Underline, List, Download, ChevronLeft } from 'lucide-react';
+import { Sun, Moon, Plus, X, StickyNote, Trash2, Undo, Redo, Bold, Italic, Underline, List, Download, ChevronLeft } from 'lucide-react';
 import ScrollableWithArrows from './ScrollableWithArrows';
 import ConfirmationModal from './ConfirmationModal';
 
-function EditorBlock({ date, initialHtml, onChange }: { date: string; initialHtml: string; onChange: (html: string) => void }) {
+function EditorBlock({ isLight, date, initialHtml, onChange }: { isLight: boolean; date: string; initialHtml: string; onChange: (html: string) => void }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -47,7 +47,7 @@ function EditorBlock({ date, initialHtml, onChange }: { date: string; initialHtm
 
   return (
     <div className="mb-4 md:mb-8 relative group">
-      <h3 className="text-[10px] md:text-xl font-bold text-white/50 border-b border-white/10 pb-1 md:pb-2 mb-1.5 md:mb-3 select-none tracking-wide">
+      <h3 className={`text-[10px] md:text-xl font-bold ${isLight ? 'text-slate-500 border-slate-200' : 'text-white/50 border-white/10'} pb-1 md:pb-2 mb-1.5 md:mb-3 select-none tracking-wide`}>
         {date}
       </h3>
       <div
@@ -56,14 +56,23 @@ function EditorBlock({ date, initialHtml, onChange }: { date: string; initialHtm
         spellCheck={false}
         onInput={handleInput}
         onBlur={handleBlur}
-        className="select-text cursor-text outline-none text-white/90 min-h-[40px] md:min-h-[60px] text-xs md:text-lg leading-relaxed transition-all focus:bg-white/5 p-2 md:p-4 rounded-lg md:rounded-2xl border border-transparent focus:border-white/10 [&_h1]:text-lg md:[&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-1.5 md:[&_h1]:mb-4 [&_h2]:text-base md:[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-1 md:[&_h2]:mb-3 [&_p]:mb-1 md:[&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 md:[&_ul]:ml-6 [&_b]:font-bold [&_i]:italic [&_u]:underline"
+        onDoubleClick={(e) => {
+          const el = e.target as HTMLElement;
+          if (el.tagName === 'A' || el.closest('a')) {
+            const anchor = (el.tagName === 'A' ? el : el.closest('a')) as HTMLAnchorElement;
+            if (anchor.href) window.open(anchor.href, '_blank');
+          }
+        }}
+        className={`select-text cursor-text outline-none ${isLight ? 'text-slate-800 focus:bg-slate-50 focus:border-slate-200' : 'text-white/90 focus:bg-white/5 focus:border-white/10'} min-h-[40px] md:min-h-[60px] text-xs md:text-lg leading-relaxed transition-all p-2 md:p-4 rounded-lg md:rounded-2xl border border-transparent [&_h1]:text-lg md:[&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-1.5 md:[&_h1]:mb-4 [&_h2]:text-base md:[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-1 md:[&_h2]:mb-3 [&_p]:mb-1 md:[&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 md:[&_ul]:ml-6 [&_b]:font-bold [&_i]:italic [&_u]:underline [&_a]:text-blue-400 [&_a]:underline`}
       />
     </div>
   );
 }
 
 export default function NotesManager() {
-  const { isNotesOpen, toggleNotes, notes, activeNoteId, addNote, updateNoteTitle, updateNoteEntry, deleteNote, setActiveNote } = useDashboardStore();
+  const { theme: globalTheme, notesThemeOverride, setNotesThemeOverride, isNotesOpen, toggleNotes, notes, activeNoteId, addNote, updateNoteTitle, updateNoteEntry, deleteNote, setActiveNote } = useDashboardStore();
+  const effectiveTheme = notesThemeOverride || (globalTheme === 'light' ? 'light' : 'dark');
+  const isLight = effectiveTheme === 'light';
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -72,6 +81,8 @@ export default function NotesManager() {
 
   return (
     <NotepadModal
+      isLight={isLight}
+      setNotesThemeOverride={setNotesThemeOverride}
       toggleNotes={toggleNotes}
       notes={notes}
       activeNoteId={activeNoteId}
@@ -84,8 +95,9 @@ export default function NotesManager() {
   );
 }
 
-function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTitle, updateNoteEntry, deleteNote, setActiveNote }: any) {
+function NotepadModal({ isLight, setNotesThemeOverride, toggleNotes, notes, activeNoteId, addNote, updateNoteTitle, updateNoteEntry, deleteNote, setActiveNote }: any) {
   const [format, setFormat] = useState({ bold: false, italic: false, underline: false, list: false });
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Controls mobile drill-down view
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
@@ -148,7 +160,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto">
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 ${isLight ? 'bg-slate-500/20' : 'bg-black/60'} backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto`}>
       <div
         className="absolute inset-0"
         onClick={() => {
@@ -157,15 +169,22 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
         }}
       />
 
-      <div className="relative w-full max-w-6xl h-[80vh] md:h-[70vh] flex flex-col md:flex-row rounded-2xl md:rounded-3xl bg-black/80 backdrop-blur-2xl border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+      <div className={`relative w-full max-w-6xl h-[80vh] md:h-[70vh] flex flex-col md:flex-row rounded-2xl md:rounded-3xl ${isLight ? 'bg-white/90 border-slate-200' : 'bg-black/80 border-white/20'} backdrop-blur-2xl border shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300`}>
 
         {/* Top/Left Sidebar: Notes List */}
-        <div className={`${isMobileDetailView ? 'hidden md:flex' : 'flex'} w-full md:w-1/4 md:max-w-[300px] h-full bg-white/5 border-r border-white/10 flex-col shrink-0`}>
-          <div className="p-2.5 md:p-4 border-b border-white/10 flex justify-between items-center bg-white/5 shrink-0">
-            <h2 className="text-sm md:text-lg font-medium text-white tracking-wide flex items-center gap-1.5 md:gap-2">
+        <div className={`${isMobileDetailView ? 'hidden md:flex' : 'flex'} w-full md:w-1/4 md:max-w-[300px] h-full ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'} border-r flex-col shrink-0`}>
+          <div className={`p-2.5 md:p-4 border-b ${isLight ? 'border-slate-200 bg-slate-100' : 'border-white/10 bg-white/5'} flex justify-between items-center shrink-0`}>
+            <h2 className={`text-sm md:text-lg font-medium ${isLight ? 'text-slate-800' : 'text-white'} tracking-wide flex items-center gap-1.5 md:gap-2`}>
               <StickyNote className="text-yellow-400 w-4 h-4 md:w-[18px] md:h-[18px]" /> Notes
             </h2>
             <div className="flex items-center gap-0.5 md:gap-1">
+              <button
+                onClick={() => setNotesThemeOverride(isLight ? 'dark' : 'light')}
+                className={`p-1.5 md:p-2 rounded-lg md:rounded-xl transition-colors ${isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+                title="Toggle Theme"
+              >
+                {isLight ? <Moon className="w-4 h-4 md:w-5 md:h-5" /> : <Sun className="w-4 h-4 md:w-5 md:h-5" />}
+              </button>
               <button
                 onClick={() => {
                   const token = localStorage.getItem('dashboard_sync_token') || localStorage.getItem('dashboard_token');
@@ -175,14 +194,23 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                     alert('Please log in first.');
                   }
                 }}
-                className="p-1.5 md:p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg md:rounded-xl transition-colors"
+                className={`p-1.5 md:p-2 rounded-lg md:rounded-xl transition-colors ${isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
                 title="Export All Notes"
               >
                 <Download className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               <button
-                onClick={addNote}
-                className="p-1.5 md:p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg md:rounded-xl transition-colors"
+                onClick={() => {
+                  addNote();
+                  setIsMobileDetailView(true);
+                  setTimeout(() => {
+                    if (titleInputRef.current) {
+                      titleInputRef.current.focus();
+                      titleInputRef.current.select();
+                    }
+                  }, 50);
+                }}
+                className={`p-1.5 md:p-2 rounded-lg md:rounded-xl transition-colors ${isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
                 title="New Note"
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
@@ -193,7 +221,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                   toggleNotes();
                   setIsMobileDetailView(false);
                 }}
-                className="md:hidden p-1.5 text-white/60 hover:text-white hover:bg-red-500/20 rounded-lg transition-colors ml-1"
+                className={`md:hidden p-1.5 rounded-lg transition-colors ml-1 ${isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-red-100' : 'text-white/60 hover:text-white hover:bg-red-500/20'}`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -209,7 +237,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                     setActiveNote(note.id);
                     setIsMobileDetailView(true);
                   }}
-                  className={`group flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl cursor-pointer transition-all min-w-0 ${activeNoteId === note.id ? 'bg-white/20 text-white shadow-md' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
+                  className={`group flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl cursor-pointer transition-all min-w-0 ${activeNoteId === note.id ? (isLight ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'bg-white/20 text-white shadow-md') : (isLight ? 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900' : 'text-white/60 hover:bg-white/10 hover:text-white')}`}
                 >
                   <span className="font-medium truncate pr-2 text-xs md:text-base flex-1">{note.title || 'Untitled Note'}</span>
                   <div className="flex items-center gap-0.5 md:gap-1 shrink-0 transition-all">
@@ -218,7 +246,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                         e.stopPropagation();
                         downloadSingleNote(note);
                       }}
-                      className="p-1 md:p-1.5 rounded-md md:rounded-lg hover:bg-blue-500/20 hover:text-blue-400 transition-all text-white/40 group-hover:text-white/80"
+                      className={`p-1 md:p-1.5 rounded-md md:rounded-lg transition-all ${isLight ? 'hover:bg-blue-100 hover:text-blue-600 text-slate-400 group-hover:text-slate-600' : 'hover:bg-blue-500/20 hover:text-blue-400 text-white/40 group-hover:text-white/80'}`}
                       title="Download Note"
                     >
                       <Download className="w-3.5 h-3.5 md:w-[14px] md:h-[14px]" />
@@ -234,7 +262,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
                           onConfirm: () => deleteNote(note.id)
                         });
                       }}
-                      className={`p-1 md:p-1.5 rounded-md md:rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-all text-white/40 group-hover:text-white/80 ${notes.length === 1 ? 'hidden' : ''}`}
+                      className={`p-1 md:p-1.5 rounded-md md:rounded-lg transition-all ${notes.length === 1 ? 'hidden' : ''} ${isLight ? 'hover:bg-red-100 hover:text-red-600 text-slate-400 group-hover:text-slate-600' : 'hover:bg-red-500/20 hover:text-red-400 text-white/40 group-hover:text-white/80'}`}
                       title="Delete Note"
                     >
                       <Trash2 className="w-3.5 h-3.5 md:w-[14px] md:h-[14px]" />
@@ -247,38 +275,48 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
         </div>
 
         {/* Bottom/Right Pane: Editor Area */}
-        <div className={`${isMobileDetailView ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative bg-black/20 min-h-0 w-full`}>
+        <div className={`${isMobileDetailView ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative min-h-0 w-full ${isLight ? 'bg-slate-100' : 'bg-black/20'}`}>
 
           {/* Editor Top Bar */}
           {activeNote && (
-            <div className="flex items-center justify-between p-2 md:p-4 border-b border-white/10 shrink-0 bg-black/20">
+            <div className={`flex items-center justify-between p-2 md:p-4 border-b shrink-0 ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-black/20'}`}>
               <div className="flex items-center flex-1 min-w-0 pr-2 md:pr-4">
                 {isMobileDetailView && (
                   <button
                     onClick={() => setIsMobileDetailView(false)}
-                    className="md:hidden flex items-center justify-center p-1.5 mr-2 bg-white/5 border border-white/10 rounded-md text-white/60 hover:text-white transition-colors shrink-0"
+                    className={`md:hidden flex items-center justify-center p-1.5 mr-2 border rounded-md transition-colors shrink-0 ${isLight ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}`}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                 )}
                 <input
+                  ref={titleInputRef}
                   type="text"
-                  value={activeNote.title}
+                  value={activeNote.title || ''}
                   onChange={(e) => updateNoteTitle(activeNote.id, e.target.value)}
                   placeholder="Note Title"
-                  className="bg-transparent text-sm md:text-2xl font-bold text-white outline-none placeholder:text-white/20 w-full min-w-0 truncate"
+                  className={`bg-transparent text-sm md:text-2xl font-bold outline-none w-full min-w-0 truncate ${isLight ? 'text-slate-900 placeholder:text-slate-400' : 'text-white placeholder:text-white/20'}`}
                 />
               </div>
 
-              <button
-                onClick={() => {
-                  toggleNotes();
-                  setIsMobileDetailView(false);
-                }}
-                className="p-1.5 md:p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg md:rounded-xl transition-colors shrink-0"
-              >
-                <X className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
+              <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                <button
+                  onClick={() => setNotesThemeOverride(isLight ? 'dark' : 'light')}
+                  className={`p-1.5 md:p-2 rounded-lg md:rounded-xl transition-colors shrink-0 ${isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-slate-200' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                  title="Toggle Theme"
+                >
+                  {isLight ? <Moon className="w-4 h-4 md:w-5 md:h-5" /> : <Sun className="w-4 h-4 md:w-5 md:h-5" />}
+                </button>
+                <button
+                  onClick={() => {
+                    toggleNotes();
+                    setIsMobileDetailView(false);
+                  }}
+                  className={`p-1.5 md:p-2 rounded-lg md:rounded-xl transition-colors shrink-0 ${isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-slate-200' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                >
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -287,6 +325,7 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
               <ScrollableWithArrows className="px-3 md:px-6 pt-3 md:pt-6 pb-20 md:pb-32" downArrowOffset="bottom-16 md:bottom-24">
                 {existingDates.map((date) => (
                   <EditorBlock
+                    isLight={isLight}
                     key={`${activeNote.id}-${date}`}
                     date={date}
                     initialHtml={entries[date] || ''}
@@ -299,25 +338,25 @@ function NotepadModal({ toggleNotes, notes, activeNoteId, addNote, updateNoteTit
 
           {/* Floating Toolbar - Responsive Scrollable Container */}
           {activeNote && (
-            <div className="absolute bottom-2 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 md:gap-1.5 px-1.5 md:px-4 py-1.5 md:py-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg md:rounded-2xl shadow-2xl z-50 w-max max-w-[95%] overflow-x-auto no-scrollbar">
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('undo')} className="p-1.5 md:p-2.5 hover:bg-white/10 rounded-md md:rounded-xl text-white transition-colors shrink-0" title="Undo"><Undo className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('redo')} className="p-1.5 md:p-2.5 hover:bg-white/10 rounded-md md:rounded-xl text-white transition-colors shrink-0" title="Redo"><Redo className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
+            <div className={`absolute bottom-2 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 md:gap-1.5 px-1.5 md:px-4 py-1.5 md:py-2 border rounded-lg md:rounded-2xl z-50 w-max max-w-[95%] overflow-x-auto no-scrollbar ${isLight ? 'bg-white/90 backdrop-blur-xl border-slate-200 shadow-xl' : 'bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl'}`}>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('undo')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white'}`} title="Undo"><Undo className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('redo')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white'}`} title="Redo"><Redo className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
 
-              <div className="w-px h-4 md:h-8 bg-white/20 mx-0.5 md:mx-2 shrink-0" />
+              <div className={`w-px h-4 md:h-8 mx-0.5 md:mx-2 shrink-0 ${isLight ? 'bg-slate-200' : 'bg-white/20'}`} />
 
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('formatBlock', 'H1')} className="p-1.5 md:p-2.5 hover:bg-white/10 rounded-md md:rounded-xl text-white font-bold text-[9px] md:text-sm transition-colors shrink-0" title="Heading 1">H1</button>
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('formatBlock', 'H2')} className="p-1.5 md:p-2.5 hover:bg-white/10 rounded-md md:rounded-xl text-white font-bold text-[9px] md:text-sm transition-colors shrink-0" title="Heading 2">H2</button>
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('formatBlock', 'P')} className="p-1.5 md:p-2.5 hover:bg-white/10 rounded-md md:rounded-xl text-white text-[9px] md:text-sm transition-colors shrink-0" title="Normal Text">P</button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('formatBlock', 'H1')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl font-bold text-[9px] md:text-sm transition-colors shrink-0 ${isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white'}`} title="Heading 1">H1</button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('formatBlock', 'H2')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl font-bold text-[9px] md:text-sm transition-colors shrink-0 ${isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white'}`} title="Heading 2">H2</button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('formatBlock', 'P')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl text-[9px] md:text-sm transition-colors shrink-0 ${isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white'}`} title="Normal Text">P</button>
 
-              <div className="w-px h-4 md:h-8 bg-white/20 mx-0.5 md:mx-2 shrink-0" />
+              <div className={`w-px h-4 md:h-8 mx-0.5 md:mx-2 shrink-0 ${isLight ? 'bg-slate-200' : 'bg-white/20'}`} />
 
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.bold ? 'bg-blue-500 text-white' : 'hover:bg-white/10 text-white'}`} title="Bold"><Bold className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('italic')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.italic ? 'bg-blue-500 text-white' : 'hover:bg-white/10 text-white'}`} title="Italic"><Italic className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('underline')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.underline ? 'bg-blue-500 text-white' : 'hover:bg-white/10 text-white'}`} title="Underline"><Underline className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.bold ? (isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500 text-white') : (isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white')}`} title="Bold"><Bold className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('italic')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.italic ? (isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500 text-white') : (isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white')}`} title="Italic"><Italic className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('underline')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.underline ? (isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500 text-white') : (isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white')}`} title="Underline"><Underline className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
 
-              <div className="w-px h-4 md:h-8 bg-white/20 mx-0.5 md:mx-2 shrink-0" />
+              <div className={`w-px h-4 md:h-8 mx-0.5 md:mx-2 shrink-0 ${isLight ? 'bg-slate-200' : 'bg-white/20'}`} />
 
-              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('insertUnorderedList')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.list ? 'bg-blue-500 text-white' : 'hover:bg-white/10 text-white'}`} title="Bullet List"><List className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
+              <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec('insertUnorderedList')} className={`p-1.5 md:p-2.5 rounded-md md:rounded-xl transition-colors shrink-0 ${format.list ? (isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500 text-white') : (isLight ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/10 text-white')}`} title="Bullet List"><List className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /></button>
             </div>
           )}
         </div>
