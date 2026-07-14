@@ -295,21 +295,21 @@ export default function RoadmapManager() {
   const syntheticRoadmap = React.useMemo(() => {
     if (!statusFilter) return null;
 
-    const filterNodeByStatus = (node: RoadmapItem): RoadmapItem | null => {
+    const filterNodeByStatus = (node: RoadmapItem, forceKeep = false): RoadmapItem | null => {
       let newSubItems: RoadmapItem[] = [];
-      let keep = node.status === statusFilter;
+      const matchesFilter = node.status === statusFilter;
+      const shouldKeep = matchesFilter || forceKeep;
 
       if (node.subItems) {
         for (const child of node.subItems) {
-          const filteredChild = filterNodeByStatus(child);
+          const filteredChild = filterNodeByStatus(child, shouldKeep);
           if (filteredChild) {
             newSubItems.push(filteredChild);
-            keep = true;
           }
         }
       }
 
-      if (keep) {
+      if (shouldKeep || newSubItems.length > 0) {
         return { ...node, subItems: newSubItems.length > 0 ? newSubItems : undefined };
       }
       return null;
@@ -456,7 +456,9 @@ export default function RoadmapManager() {
   const handleSaveNode = (updatedItem: RoadmapItem) => {
     const updateGlobalTree = (nodes: RoadmapItem[]): RoadmapItem[] => {
       return nodes.map((node) => {
-        if (node.id === updatedItem.id) return updatedItem;
+        if (node.id === updatedItem.id) {
+          return { ...node, ...updatedItem, subItems: node.subItems };
+        }
         if (node.subItems) return { ...node, subItems: updateGlobalTree(node.subItems) };
         return node;
       });
